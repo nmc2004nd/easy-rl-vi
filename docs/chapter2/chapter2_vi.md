@@ -756,7 +756,7 @@ Thay biểu thức (2.20) vào biểu thức (2.21) ta được
 $$
   \begin{aligned}
     Q^{*}(s, a)&=R(s, a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V^{*}\left(s^{\prime}\right) \\
-    &=R(s,a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) \max _{a} Q^{*}(s', a')
+    &=R(s,a)+\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) \max _{a'} Q^{*}(s', a')
     \end{aligned}
 $$
 
@@ -773,13 +773,12 @@ $$
     &=\max_{a} \mathbb{E}[G_t|s_t=s,a_t=a]\\  
     &=\max_{a}\mathbb{E}[r_{t+1}+\gamma G_{t+1}|s_t=s,a_t=a]\\
     &=\max_{a}\mathbb{E}[r_{t+1}+\gamma V^*(s_{t+1})|s_t=s,a_t=a]\\
-    &=\max_{a}\mathbb{E}[r_{t+1}]+ \max_a \mathbb{E}[\gamma V^*(s_{t+1})|s_t=s,a_t=a]\\
-    &=\max_{a} R(s,a) + \max_a\gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V^{*}\left(s^{\prime}\right)\\
+    &=\max_{a}\big(\mathbb{E}[r_{t+1}|s_t=s,a_t=a]+ \gamma\,\mathbb{E}[V^*(s_{t+1})|s_t=s,a_t=a]\big)\\
     &=\max_{a} \left(R(s,a) + \gamma \sum_{s^{\prime} \in S} p\left(s^{\prime} \mid s, a\right) V^{*}\left(s^{\prime}\right)\right)
     \end{aligned}
 $$
 
-> **Ghi chú của người dịch:** dòng thứ 5 tách $\max_a$ thành $\max_a \mathbb{E}[r_{t+1}] + \max_a \mathbb{E}[\gamma V^*(s_{t+1}) \mid s_t=s, a_t=a]$ là không đúng nói chung, vì $\max_a (x_a + y_a) \le \max_a x_a + \max_a y_a$ và dấu bằng chỉ xảy ra khi cùng một $a$ làm cả hai số hạng lớn nhất. Kết quả cuối vẫn đúng: từ dòng thứ 4, chỉ cần dùng tuyến tính của kỳ vọng **bên trong** $\max_a$ là ra thẳng dòng cuối. Tương tự, ở công thức thay (2.20) vào (2.21) phía trên, $\max_{a} Q^{*}(s', a')$ nên đọc là $\max_{a'} Q^{*}(s', a')$.
+> **Ghi chú của người dịch:** bản gốc ở dòng thứ 5 viết $\max_{a}\mathbb{E}[r_{t+1}]+\max_a \mathbb{E}[\gamma V^*(s_{t+1})\mid s_t=s,a_t=a]$, tức là tách $\max$. Đây có lẽ là viết nhầm: ý đúng là tách **kỳ vọng** (tuyến tính của kỳ vọng) và giữ nguyên một $\max_a$ bao cả hai số hạng, vì tách $\max$ là sai nói chung ($\max_a (x_a+y_a) \le \max_a x_a + \max_a y_a$). Bản dịch đã sửa dòng 5 và bỏ dòng 6 của bản gốc (cũng đang tách $\max$), vì sau khi sửa thì dòng tiếp theo chính là kết quả cuối. Tương tự, ở công thức thay (2.20) vào (2.21) phía trên, bản gốc viết $\max_{a} Q^{*}(s', a')$, bản dịch đã sửa thành $\max_{a'} Q^{*}(s', a')$.
 
 Ta có được sự chuyển đổi của hàm giá trị trạng thái.
 

@@ -860,7 +860,7 @@
         "Phần $G_{t+1}$ xử lý như MRP, nhưng nhớ rằng từ $s_{t+1}$ tác tử đi theo chính sách tối ưu.",
         "Mọi biến đổi tiếp theo đều làm **bên trong** $\\max_a$; đừng tách $\\max$ ra."
       ],
-      "note": "Trong sách (cuối mục 2.3.11) có một dòng tách $\\max_a$ thành $\\max_a\\mathbb{E}[r_{t+1}]+\\max_a\\mathbb{E}[\\gamma V^*(s_{t+1})]$; bước đó không đúng nói chung. Chứng minh ở đây đi thẳng từ dòng 3 sang kết quả nên không cần bước tách."
+      "note": "Bản gốc của sách (cuối mục 2.3.11) có một dòng tách $\\max_a$ thành $\\max_a\\mathbb{E}[r_{t+1}]+\\max_a\\mathbb{E}[\\gamma V^*(s_{t+1})]$; có lẽ là viết nhầm, ý đúng là tách kỳ vọng như ở dòng cuối đây. Bản dịch của chương 2 đã sửa dòng đó và ghi chú."
     },
     {
       "id": "p2-optimal-q",
