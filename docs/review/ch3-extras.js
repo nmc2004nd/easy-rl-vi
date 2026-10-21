@@ -688,10 +688,32 @@
     onResize(function () {});
   }
 
+  // ======================================================================
+  // TAB "Mô phỏng": liên kết tới các trang docs/viz
+  // ======================================================================
+  var VIZ = [
+    ['td-control.html', 'Mục 3.2–3.4', 'Sarsa và Q-learning từng bước', 'Bảng $Q$ cập nhật từng bước bằng số thật trên vách đá và kho báu; hệ số chiết khấu $\\gamma$.'],
+    ['nstep-td.html', 'Mục 3.3.2', 'TD $n$ bước', 'Cập nhật trễ $n$ bước; ô nào nhận thông tin sau một tập; chọn $n$ tốt nhất.'],
+    ['mc-control.html', 'Mục 3.4', 'Monte Carlo điều khiển', 'Sinh tập rồi quét ngược $G \\leftarrow \\gamma G + r$; khởi đầu khám phá và $\\varepsilon$-tham lam.']
+  ];
+  function renderViz(root, ctx) {
+    root.innerHTML = '';
+    root.classList.add('rx');
+    var b = h('<section class="blk"><h2>Mô phỏng thuật toán</h2>' +
+      '<p class="lead">Chạy từng bước các thuật toán của chương, kèm phép tính bằng số thật. Mở trong cùng tab; bấm “← Các mô phỏng” để quay lại danh sách.</p>' +
+      '<div class="lanes">' + VIZ.map(function (v) {
+        return '<a class="lane" style="display:block;text-decoration:none;color:inherit" href="../viz/' + v[0] + '"><div class="lt">' + v[2] +
+          ' <span>· ' + v[1] + '</span></div><div class="rxs">' + v[3] + '</div></a>';
+      }).join('') + '</div></section>');
+    root.appendChild(b);
+    ctx.typeset(b);
+  }
+
   window.ReviewExtras = {
     tabs: [
       { id: 'lab', label: 'Thí nghiệm', render: renderLab },
-      { id: 'map', label: 'Sơ đồ', render: renderMap }
+      { id: 'map', label: 'Sơ đồ', render: renderMap },
+      { id: 'viz', label: 'Mô phỏng', render: renderViz }
     ]
   };
 })();

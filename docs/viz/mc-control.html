@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monte Carlo điều khiển · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .qbox { max-width: 400px; width: 100%; margin: 0 auto; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Monte Carlo điều khiển</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter3/chapter3_vi?id=_34-Điều-khiển-không-mô-hình">Mục 3.4</a></div>
+    </div>
+    <p class="lead">Hình 3.25 và 3.26. Monte Carlo phải <b>đi hết một tập</b> rồi mới học: sau đó quét ngược quỹ đạo, tính lợi tức bằng $G \leftarrow \gamma G + r_{t+1}$, lấy trung bình vào $Q(s_t, a_t)$ và cải thiện chính sách tham lam.</p>
+  </div>
+  <div class="only-embed open-full"><a href="mc-control.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <span class="lb">Thuật toán</span>
+      <div class="seg" id="mode">
+        <button type="button" data-v="es" aria-pressed="true">Khởi đầu khám phá (hình 3.25)</button>
+        <button type="button" data-v="eg" aria-pressed="false">$\varepsilon$-tham lam (hình 3.26)</button>
+      </div>
+      <span class="lb eg-only">$\varepsilon$ giảm theo</span>
+      <div class="seg eg-only" id="sched">
+        <button type="button" data-v="sqrt" aria-pressed="true">$1/\sqrt{k}$</button>
+        <button type="button" data-v="k" aria-pressed="false">$1/k$ (như sách)</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="ep">Hết tập</button>
+      <button type="button" class="btn" id="fast">+100 tập</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <p class="note" id="envnote" style="margin:4px 0"></p>
+    <div class="stats"><span>Tập <b id="epn">1</b></span><span id="epsinfo"></span><span id="phase" class="phase"></span></div>
+    <div class="two-col">
+      <div>
+        <div class="qbox" id="gbox"></div>
+        <div class="scale" id="scale"></div>
+      </div>
+      <div>
+        <div class="tscroll" id="tbox"><table class="tr"><thead><tr><th>$t$</th><th>$s_t$</th><th>$a_t$</th><th>$r_{t+1}$</th><th>$G_t$</th><th>cập nhật</th></tr></thead><tbody id="rows"></tbody></table></div>
+      </div>
+    </div>
+    <div class="calc" id="calc"></div>
+    <div class="insight" id="insight"></div>
+  </div>
+
+  <div class="blk">
+    <h2>Lợi tức mỗi tập</h2>
+    <div class="legend"><span class="li"><span class="sw" style="background:var(--s1)"></span>lợi tức $G_0$ của tập</span></div>
+    <div id="chart"></div>
+    <p class="note">Đường tối ưu từ $S$ tới $G$ dài 6 bước, lợi tức $-6$. Với khởi đầu khám phá, tập bắt đầu ở ô ngẫu nhiên nên lợi tức thay đổi nhiều.</p>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'];
+  var R = 4, C = 4, N = 16, START = 12, GOAL = 3, PIT = 6, GAMMA = 1;
+  // chính sách tất định có thể đi vòng tròn mãi nên phải cắt tập; ε-tham lam thoát vòng chậm khi ε nhỏ
+  function cap() { return mode() === 'es' ? 25 : 100; }
+  var DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1];
+  function mv(s, a) { var r = Math.floor(s / C) + DR[a], c = s % C + DC[a]; if (r < 0 || c < 0 || r >= R || c >= C) return s; return r * C + c; }
+  function envStep(s, a) { var t = mv(s, a); if (t === GOAL) return { s2: t, r: -1, done: true }; if (t === PIT) return { s2: t, r: -100, done: true }; return { s2: t, r: -1, done: false }; }
+  function isTerm(s) { return s === GOAL || s === PIT; }
+  function rc(s) { return '(' + Math.floor(s / C) + ',' + s % C + ')'; }
+  function mode() { return V_.$('#mode [aria-pressed=true]').dataset.v; }
+  function sched() { return V_.$('#sched [aria-pressed=true]').dataset.v; }
+  function argmax(q) { var b = 0; for (var a = 1; a < 4; a++) if (q[a] > q[b]) b = a; return b; }
+
+  var st, view;
+  function reset() {
+    player && player.stop();
+    var Q = [], Ret = [], Nn = [], pi = [];
+    for (var s = 0; s < N; s++) { Q.push([0, 0, 0, 0]); Ret.push([[], [], [], []]); Nn.push([0, 0, 0, 0]); pi.push(Math.floor(Math.random() * 4)); }
+    st = { Q: Q, Ret: Ret, Nn: Nn, pi: pi, k: 1, phase: 'idle', rows: [], s: null, i: -1, G: 0, last: null, hist: [] };
+    V_.$('#envnote').innerHTML = mode() === 'es'
+      ? 'Lưới 4×4, mỗi bước $-1$, đích $G$ (kết thúc), hố $-100$ (kết thúc); $\\gamma = 1$. Mỗi tập bắt đầu từ một cặp $(s_0, a_0)$ <b>ngẫu nhiên</b>, sau đó đi theo chính sách tất định $\\pi$ (mũi tên; ban đầu ngẫu nhiên). Cập nhật <b>lần thăm đầu tiên</b>, $Q$ = trung bình các lợi tức. Tập bị cắt sau ' + cap() + ' bước (chính sách tất định có thể đi vòng tròn).'
+      : 'Lưới 4×4, mỗi bước $-1$, đích $G$ (kết thúc), hố $-100$ (kết thúc); $\\gamma = 1$. Mỗi tập bắt đầu ở $S$, chọn hành động $\\varepsilon$-tham lam theo $Q$, $\\varepsilon$ giảm dần theo số thứ tự tập $k$. Cập nhật <b>mọi lần thăm</b> bằng trung bình tăng dần $Q \\leftarrow Q + \\frac{1}{N}(G - Q)$. Tập bị cắt sau ' + cap() + ' bước.';
+    V_.texAll(V_.$('#envnote'));
+    render();
+  }
+
+  function micro() {
+    var es = mode() === 'es';
+    if (st.phase === 'idle') {
+      st.rows = []; st.last = { kind: 'start' };
+      if (es) { var ns = []; for (var s = 0; s < N; s++) if (!isTerm(s)) ns.push(s); st.s = ns[Math.floor(Math.random() * ns.length)]; st.a0 = Math.floor(Math.random() * 4); }
+      else { st.s = START; st.eps = sched() === 'k' ? 1 / st.k : 1 / Math.sqrt(st.k); }
+      st.s0 = st.s; st.phase = 'gen'; st.trunc = false;
+      return;
+    }
+    if (st.phase === 'gen') {
+      var s = st.s, a, rnd = false;
+      if (es) a = st.rows.length === 0 ? st.a0 : st.pi[s];
+      else if (Math.random() < st.eps) { a = Math.floor(Math.random() * 4); rnd = true; }
+      else a = argmax(st.Q[s]);
+      var o = envStep(s, a);
+      st.rows.push({ s: s, a: a, r: o.r, rnd: rnd, G: null, note: '' });
+      st.s = o.s2; st.last = { kind: 'gen', s: s, a: a, r: o.r, s2: o.s2, done: o.done, rnd: rnd };
+      if (o.done || st.rows.length >= cap()) { st.trunc = !o.done; st.phase = 'back'; st.i = st.rows.length - 1; st.G = 0; }
+      return;
+    }
+    if (st.phase === 'back') {
+      var i = st.i, row = st.rows[i], Gold = st.G;
+      st.G = GAMMA * st.G + row.r; row.G = st.G;
+      var rec = { kind: 'back', i: i, s: row.s, a: row.a, r: row.r, Gold: Gold, G: st.G };
+      if (es) {
+        var seen = false;
+        for (var j = 0; j < i; j++) if (st.rows[j].s === row.s && st.rows[j].a === row.a) { seen = true; break; }
+        if (seen) { row.note = 'bỏ qua'; rec.skip = true; }
+        else {
+          var L = st.Ret[row.s][row.a]; L.push(st.G);
+          rec.old = st.Q[row.s][row.a];
+          st.Q[row.s][row.a] = L.reduce(function (x, y) { return x + y; }, 0) / L.length;
+          rec.nw = st.Q[row.s][row.a]; rec.list = L.slice();
+          rec.piOld = st.pi[row.s]; st.pi[row.s] = argmax(st.Q[row.s]); rec.piNew = st.pi[row.s];
+          row.note = '✓';
+        }
+      } else {
+        st.Nn[row.s][row.a]++;
+        rec.old = st.Q[row.s][row.a]; rec.n = st.Nn[row.s][row.a];
+        st.Q[row.s][row.a] = rec.old + (st.G - rec.old) / rec.n;
+        rec.nw = st.Q[row.s][row.a];
+        row.note = '✓';
+      }
+      st.last = rec;
+      st.i--;
+      if (st.i < 0) { st.phase = 'idle'; st.hist.push(st.G); st.k++; rec.end = true; }
+    }
+  }
+
+  function render() {
+    var es = mode() === 'es', last = st.last;
+    // thang màu cắt ở 30 để hố −100 không làm các ô khác nhạt hết
+    var mx = 10; st.Q.forEach(function (q) { q.forEach(function (v) { mx = Math.max(mx, Math.abs(v)); }); }); mx = Math.min(mx, 30);
+    for (var s = 0; s < N; s++) {
+      var term = isTerm(s);
+      view.set(s, { kind: term ? 'term' : '', q: st.Q[s], maxAbs: mx, nums: true, dec: 'auto', label: s === START ? 'S' : s === GOAL ? 'G' : s === PIT ? '−100' : '',
+        value: s === PIT ? -100 : s === GOAL ? 0 : null, dir: !term && es ? st.pi[s] : null, arrow: !term && !es && st.Q[s].some(function (v) { return v !== 0; }), aria: 'ô ' + rc(s) });
+    }
+    view.agent(st.phase === 'gen' ? st.s : -1);
+    if (last && last.kind === 'back') view.mark(last.s, last.a);
+    else if (last && last.kind === 'gen') view.mark(last.s, last.a);
+    else view.mark(null);
+    V_.scaleBar(V_.$('#scale'), mx, true);
+    // bảng quỹ đạo
+    var body = V_.$('#rows');
+    body.innerHTML = st.rows.map(function (r, i) {
+      var cls = st.phase === 'back' || (last && last.kind === 'back') ? (last && last.kind === 'back' && last.i === i ? 'now' : r.G != null ? 'done' : '') : (i === st.rows.length - 1 ? 'now' : '');
+      if (r.note === 'bỏ qua') cls += ' skip';
+      return '<tr class="' + cls + '"><td>' + i + '</td><td>' + rc(r.s) + '</td><td>' + ['↑', '→', '↓', '←'][r.a] + (r.rnd ? '*' : '') + '</td><td>' + r.r + '</td><td>' + (r.G == null ? '' : r.G) + '</td><td>' + r.note + '</td></tr>';
+    }).join('');
+    var now = body.querySelector('tr.now'), tb = V_.$('#tbox');
+    if (now) tb.scrollTop = Math.max(0, now.offsetTop - tb.clientHeight / 2);
+    V_.$('#epn').textContent = st.k + (st.phase === 'idle' && st.hist.length ? ' (chưa bắt đầu)' : '');
+    var ev = sched() === 'k' ? 1 / st.k : 1 / Math.sqrt(st.k);
+    V_.$('#epsinfo').innerHTML = es ? '' : '$\\varepsilon = ' + (sched() === 'k' ? '1/' + st.k : '1/\\sqrt{' + st.k + '}') + ' = ' + V_.round(ev, 3) + '$';
+    V_.$$('.eg-only').forEach(function (x) { x.style.display = es ? 'none' : ''; });
+    V_.texAll(V_.$('#epsinfo'));
+    var ph = V_.$('#phase');
+    ph.className = 'phase ' + (st.phase === 'gen' ? 'on' : st.phase === 'back' ? 'on' : 'ok');
+    ph.textContent = st.phase === 'gen' ? '① Sinh tập theo chính sách' : st.phase === 'back' ? '② Quét ngược, cập nhật Q' : 'Chờ tập mới';
+    showCalc(); insight(); drawChart();
+    V_.postHeight();
+  }
+  function num(x) { return String(V_.round(x, 3)); }
+  function numP(x) { var s = num(x); return x < 0 ? '(' + s + ')' : s; }
+  function showCalc() {
+    var el = V_.$('#calc'), L = st.last, es = mode() === 'es';
+    if (!L) { el.innerHTML = '<span class="hint">Bấm “Bước tiếp” để bắt đầu tập đầu tiên.</span>'; return; }
+    if (L.kind === 'start') {
+      el.innerHTML = '<span class="hint">' + (es ? 'Khởi đầu khám phá: chọn ngẫu nhiên $s_0 = ' + rc(st.s0) + '$ và $a_0 = ' + AN[st.a0] + '$. Mọi cặp $(s, a)$ đều có xác suất được chọn, nên mọi cặp đều được thử.' : 'Tập ' + st.k + ' bắt đầu ở $S$ với $\\varepsilon = ' + V_.round(st.eps, 3) + '$.') + '</span>';
+      V_.texAll(el); return;
+    }
+    if (L.kind === 'gen') {
+      el.innerHTML = '<span class="hint">Ở $' + rc(L.s) + '$ làm $' + AN[L.a] + '$' + (es && st.rows.length === 1 ? ' ($a_0$ ngẫu nhiên)' : es ? ' (theo $\\pi$)' : L.rnd ? ' (bước ngẫu nhiên, đánh dấu *)' : ' (tham lam theo $Q$)') + ', nhận $r = ' + L.r + '$, sang ' + (L.done ? (L.s2 === GOAL ? 'đích, tập kết thúc' : 'hố, tập kết thúc') : '$' + rc(L.s2) + '$') + '. ' +
+        (L.done || st.phase === 'back' ? 'Bắt đầu quét ngược từ $t = ' + (st.rows.length - 1) + '$.' : '<b>Chưa</b> cập nhật gì: Monte Carlo phải đợi hết tập.') + (st.trunc && st.phase === 'back' ? ' (Tập bị cắt sau ' + cap() + ' bước.)' : '') + '</span>';
+      V_.texAll(el); return;
+    }
+    var t = 'G &\\leftarrow \\gamma G + r_{' + (L.i + 1) + '} = ' + GAMMA + '\\cdot ' + numP(L.Gold) + ' + ' + numP(L.r) + ' = ' + num(L.G);
+    if (L.skip) {
+      V_.tex(el, '\\begin{aligned}' + t + '\\end{aligned}', true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">Cặp $(' + rc(L.s) + ', ' + AN[L.a] + ')$ đã xuất hiện ở bước sớm hơn trong tập, nên đây <b>không phải lần thăm đầu tiên</b>: bỏ qua. (Vẫn phải cộng $r$ vào $G$.)</p>');
+    } else if (es) {
+      var lst = L.list.length <= 5 ? L.list.map(numP).join(' + ') : numP(L.list[0]) + ' + \\cdots + ' + numP(L.list[L.list.length - 1]);
+      t += '\\\\ Q(s_{' + L.i + '}, a_{' + L.i + '}) &= \\text{trung bình}(' + (L.list.length <= 5 ? lst : L.list.length + '\\text{ lợi tức}') + ') = ' + (L.list.length > 1 && L.list.length <= 5 ? '\\tfrac{' + lst + '}{' + L.list.length + '} = ' : '') + num(L.nw) +
+        '\\\\ \\pi(s_{' + L.i + '}) &\\leftarrow \\arg\\max_a Q(s_{' + L.i + '}, a) = ' + AN[L.piNew];
+      V_.tex(el, '\\begin{aligned}' + t + '\\end{aligned}', true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">$s_{' + L.i + '} = ' + rc(L.s) + '$, $a_{' + L.i + '} = ' + AN[L.a] + '$. ' + (L.piOld !== L.piNew ? 'Chính sách ở ô này <b>đổi</b> từ $' + AN[L.piOld] + '$ sang $' + AN[L.piNew] + '$.' : 'Chính sách ở ô này giữ nguyên.') + '</p>');
+    } else {
+      t += '\\\\ Q(s_{' + L.i + '}, a_{' + L.i + '}) &\\leftarrow ' + num(L.old) + ' + \\tfrac{1}{' + L.n + '}\\big(' + num(L.G) + ' - ' + numP(L.old) + '\\big) = ' + num(L.nw);
+      V_.tex(el, '\\begin{aligned}' + t + '\\end{aligned}', true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">$s_{' + L.i + '} = ' + rc(L.s) + '$, $a_{' + L.i + '} = ' + AN[L.a] + '$, đây là lần thứ $N = ' + L.n + '$ cặp này được cập nhật.</p>');
+    }
+    V_.texAll(el.lastChild);
+  }
+  function greedyLen() {
+    var s = START, n = 0, es = mode() === 'es';
+    while (!isTerm(s) && n < 20) { s = mv(s, es ? st.pi[s] : argmax(st.Q[s])); n++; }
+    return s === GOAL ? n : null;
+  }
+  function insight() {
+    var el = V_.$('#insight'), es = mode() === 'es', n = st.hist.length, h;
+    if (st.phase === 'gen') h = 'Đang <b>sinh tập</b>. Khác TD, Monte Carlo không cập nhật gì trong lúc đi, vì chưa biết lợi tức thật $G_t$.';
+    else if (st.phase === 'back') h = 'Đang <b>quét ngược</b> từ cuối tập: mỗi bước chỉ cần một phép $G \\leftarrow \\gamma G + r_{t+1}$, thay vì cộng lại cả tổng từ đầu. ' + (es ? 'Hàng xám “bỏ qua” là cặp $(s, a)$ không phải lần thăm đầu tiên (đã sửa điều kiện so với hình gốc, xem ghi chú của người dịch dưới hình 3.25).' : '');
+    else if (n === 0) h = 'Bảng $Q$ bắt đầu bằng 0. Mỗi tập gồm hai pha: ① sinh tập, ② quét ngược để cập nhật.';
+    else {
+      var gl = greedyLen();
+      h = 'Đã học ' + n + ' tập. Đi theo chính sách ' + (es ? '$\\pi$' : 'tham lam') + ' từ $S$: ' + (gl == null ? '<b>chưa</b> tới được đích (trung bình mẫu hội tụ chậm; bấm “+100 tập” thêm vài lần).' : 'tới đích sau <b>' + gl + '</b> bước' + (gl === 6 ? ' (tối ưu).' : ' (tối ưu là 6).'));
+      h += es ? ' Khởi đầu khám phá đảm bảo mọi cặp $(s, a)$ đều được thử, nhưng đòi hỏi “dịch chuyển tức thời” tác tử tới trạng thái tùy ý: điều này thường <b>không làm được</b> trong môi trường thật. Vì vậy sách chuyển sang $\\varepsilon$-tham lam (hình 3.26).'
+        : (sched() === 'k' ? ' Với $\\varepsilon = 1/k$ như sách, sau khoảng 20 tập tác tử gần như không khám phá nữa, trong khi $Q$ vẫn là trung bình của <b>cả những tập đầu rất tệ</b>; nên tác tử có thể kẹt ở chính sách chưa tối ưu (chạy lại vài lần để thấy). $1/\\sqrt{k}$ giảm chậm hơn nên ổn định hơn. Cả hai đều thỏa điều kiện GLIE (khám phá vô hạn lần, rồi tiến tới tham lam).' : ' $\\varepsilon = 1/\\sqrt{k}$ giảm dần: lúc đầu khám phá nhiều, về sau gần như tham lam. Sách dùng $1/k$, giảm nhanh hơn; thử chọn để so sánh. Hành động có dấu * trong bảng là bước ngẫu nhiên.');
+    }
+    el.innerHTML = h; V_.texAll(el);
+  }
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'Lợi tức', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 1, yMin: -40, yMax: 0, aria: 'Lợi tức mỗi tập' });
+  function drawChart() {
+    var h = st.hist, w = h.length > 60 ? 10 : 1;
+    chart.set([h.map(function (_, i) { var s = 0, n = 0; for (var j = Math.max(0, i - w + 1); j <= i; j++) { s += h[j]; n++; } return s / n; })]);
+  }
+  function step() { micro(); render(); return true; }
+  function finishEp() {
+    player.stop();
+    if (st.phase === 'idle') micro();
+    var g = 0; while (st.phase !== 'idle' && g++ < 400) micro();
+    render();
+  }
+  function fast() {
+    player.stop();
+    for (var e = 0; e < 100; e++) { if (st.phase === 'idle') micro(); var g = 0; while (st.phase !== 'idle' && g++ < 400) micro(); }
+    render();
+  }
+
+  view = V_.QGrid(V_.$('#gbox'), R, C, { aria: 'Bảng Q và chính sách' });
+  var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
+  V_.$('#ep').addEventListener('click', finishEp);
+  V_.$('#fast').addEventListener('click', fast);
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#sched').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    V_.$$('#sched button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    reset();
+  });
+  V_.$('#mode').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    V_.$$('#mode button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    reset();
+  });
+  V_.onTheme(render);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

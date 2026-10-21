@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sarsa và Q-learning · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .agrid { margin-top: 10px; }
+  .agrid .cap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; font-size: .88rem; font-weight: 700; margin-bottom: 4px; }
+  .agrid .cap span { font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .agrid.narrow { max-width: 380px; margin-left: auto; margin-right: auto; }
+  .upd + .upd { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .upd h3 { margin: 0 0 4px; font-size: .95rem; }
+  .selq { font-size: .85rem; color: var(--muted); margin-top: 4px; min-height: 1.4em; font-variant-numeric: tabular-nums; }
+  .strip { display: grid; grid-template-columns: repeat(13, minmax(0, 1fr)); gap: 3px; margin-top: 8px; }
+  .strip button { aspect-ratio: 1; border: 0; border-radius: 6px; font: inherit; font-weight: 700; font-size: clamp(.5rem, 1.9vw, .82rem); cursor: pointer; padding: 0; font-variant-numeric: tabular-nums; }
+  .strip button.sel { box-shadow: 0 0 0 3px var(--s1); }
+  .strip-lb { display: flex; justify-content: space-between; font-size: .78rem; color: var(--muted); margin-top: 3px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Sarsa và Q-learning từng bước</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter3/chapter3_vi?id=_34-Điều-khiển-không-mô-hình">Mục 3.4</a></div>
+    </div>
+    <p class="lead">Mỗi ô chia 4 tam giác là $Q(s,\uparrow), Q(s,\rightarrow), Q(s,\downarrow), Q(s,\leftarrow)$, tô màu theo giá trị (cam: âm, xanh: dương). Tác tử (chấm vàng) đi theo $\varepsilon$-tham lam; tam giác viền vàng là ô vừa được cập nhật, kèm phép tính bằng số thật ở bên dưới. Mũi tên là hành động tham lam $\arg\max_a Q(s,a)$.</p>
+  </div>
+  <div class="only-embed open-full"><a href="td-control.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <span class="lb">Bản đồ</span>
+      <div class="seg" id="map">
+        <button type="button" data-v="cliff" aria-pressed="true">Vách đá (hình 3.9)</button>
+        <button type="button" data-v="gold" aria-pressed="false">Kho báu (hình 3.16)</button>
+      </div>
+      <span class="lb">Thuật toán</span>
+      <div class="seg" id="alg">
+        <button type="button" data-v="sarsa" aria-pressed="false">Sarsa</button>
+        <button type="button" data-v="q" aria-pressed="false">Q-learning</button>
+        <button type="button" data-v="both" aria-pressed="true">Cả hai</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="ep">Hết tập</button>
+      <button type="button" class="btn" id="fast">+50 tập</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <div class="ctrl">
+      <label for="eps">$\varepsilon$</label><input id="eps" type="range" min="0" max="0.5" step="0.05" value="0.1"><span class="val" id="eps-v"></span>
+      <label for="alpha">$\alpha$</label><input id="alpha" type="range" min="0.05" max="1" step="0.05" value="0.5"><span class="val" id="alpha-v"></span>
+      <label for="gamma">$\gamma$</label><input id="gamma" type="range" min="0" max="1" step="0.05" value="1"><span class="val" id="gamma-v"></span>
+    </div>
+    <div id="grids"></div>
+    <div class="scale" id="scale"></div>
+    <div class="insight" id="insight"></div>
+  </div>
+
+  <div class="layout">
+    <div class="blk">
+      <h2>Phép cập nhật vừa thực hiện</h2>
+      <div id="upd"></div>
+      <p class="note">Bấm vào một ô để xem 4 giá trị $Q$ của ô đó (hiện dưới mỗi lưới).</p>
+    </div>
+    <div class="blk">
+      <h2 id="chart-title">Tổng thưởng mỗi tập</h2>
+      <div class="legend" id="legend"></div>
+      <div id="chart"></div>
+      <p class="note" id="chart-note"></p>
+    </div>
+    <div class="blk">
+      <h2>Hệ số chiết khấu trên đường đi tối ưu (hình 3.10)</h2>
+      <p class="lead" style="margin:0">Đường sát vách có 13 bước, mỗi bước $-1$. Giá trị của ô còn $k$ bước tới đích là $G = -1 - \gamma - \cdots - \gamma^{k-1}$, tính ngược từ đích bằng $G_t = r_{t+1} + \gamma G_{t+1}$ như (3.1).</p>
+      <div class="ctrl"><label for="g2">$\gamma$</label><input id="g2" type="range" min="0" max="1" step="0.05" value="0.6"><span class="val" id="g2-v"></span>
+        <div class="seg" id="g2p"><button type="button" data-v="0" aria-pressed="false">0</button><button type="button" data-v="0.6" aria-pressed="true">0.6</button><button type="button" data-v="1" aria-pressed="false">1</button></div></div>
+      <div class="strip" id="strip"></div>
+      <div class="strip-lb"><span>$S$ (còn 13 bước)</span><span>còn 1 bước → $G$</span></div>
+      <div class="calc" id="gcalc"></div>
+      <div class="insight" id="gins"></div>
+    </div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'], AW = ['↑', '→', '↓', '←'];
+  var DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1];
+  var MAPS = {
+    // Vách đá: 4×12, mỗi bước −1, rơi vách −100 và quay về S (không kết thúc)
+    cliff: { rows: 4, cols: 12, start: 36, gamma: 1, maxAbs: 14, metric: 'ret',
+      kind: function (s) { var r = Math.floor(s / 12), c = s % 12; return s === 47 ? 'term' : r === 3 && c > 0 && c < 11 ? 'cliff' : ''; },
+      label: function (s) { return s === 36 ? 'S' : s === 47 ? 'G' : ''; },
+      termR: {} },
+    // Kho báu: 5×5, thưởng 0 mỗi bước, +1 ở kho báu, −1 ở hố, hai ô tường
+    gold: { rows: 5, cols: 5, start: 20, gamma: 0.9, maxAbs: 1, metric: 'len',
+      kind: function (s) { return s === 4 || s === 8 ? 'term' : s === 11 || s === 12 ? 'wall' : ''; },
+      label: function (s) { return s === 20 ? 'S' : s === 4 ? '+1' : s === 8 ? '−1' : ''; },
+      termR: { 4: 1, 8: -1 } }
+  };
+  var M, kinds, learners, sel = null, nEp = 0;
+  function mapName() { return V_.$('#map [aria-pressed=true]').dataset.v; }
+  function algMode() { return V_.$('#alg [aria-pressed=true]').dataset.v; }
+  function eps() { return +V_.$('#eps').value; }
+  function alpha() { return +V_.$('#alpha').value; }
+  function gamma() { return +V_.$('#gamma').value; }
+  function rc(s) { return '(' + Math.floor(s / M.cols) + ',' + s % M.cols + ')'; }
+
+  // ---------- môi trường ----------
+  function envStep(s, a) {
+    var r = Math.floor(s / M.cols) + DR[a], c = s % M.cols + DC[a];
+    if (r < 0 || c < 0 || r >= M.rows || c >= M.cols) { r = Math.floor(s / M.cols); c = s % M.cols; }
+    var t = r * M.cols + c;
+    if (kinds[t] === 'wall') t = s;
+    if (kinds[t] === 'cliff') return { s2: M.start, r: -100, done: false, fell: t };
+    if (kinds[t] === 'term') return { s2: t, r: mapName() === 'cliff' ? -1 : M.termR[t], done: true };
+    return { s2: t, r: mapName() === 'cliff' ? -1 : 0, done: false };
+  }
+  function choose(Q, s) {
+    if (Math.random() < eps()) return { a: Math.floor(Math.random() * 4), rnd: true };
+    var q = Q[s], mx = Math.max.apply(null, q), b = [];
+    for (var a = 0; a < 4; a++) if (q[a] === mx) b.push(a);
+    return { a: b[Math.floor(Math.random() * b.length)], rnd: false };
+  }
+
+  // ---------- tác tử ----------
+  function Learner(alg) {
+    var Q = []; for (var s = 0; s < M.rows * M.cols; s++) Q.push([0, 0, 0, 0]);
+    return { alg: alg, Q: Q, s: null, a: null, aRnd: false, t: 0, ret: 0, falls: 0, ep: 0, hist: [], last: null };
+  }
+  // một bước tương tác + một lần cập nhật; trả về bản ghi để hiển thị
+  function micro(L) {
+    var g = gamma(), al = alpha();
+    if (L.s == null) {
+      L.s = M.start; L.t = 0; L.ret = 0; L.falls = 0;
+      if (L.alg === 'sarsa') { var c0 = choose(L.Q, L.s); L.a = c0.a; L.aRnd = c0.rnd; }
+      L.last = { start: true };
+      return L.last;
+    }
+    var s = L.s, a, rnd;
+    if (L.alg === 'sarsa') { a = L.a; rnd = L.aRnd; } else { var c = choose(L.Q, s); a = c.a; rnd = c.rnd; }
+    var o = envStep(s, a), old = L.Q[s][a], rec = { s: s, a: a, rnd: rnd, r: o.r, s2: o.s2, done: o.done, fell: o.fell, old: old };
+    L.t++; L.ret += o.r; if (o.fell != null) L.falls++;
+    if (L.alg === 'sarsa') {
+      if (!o.done) { var c2 = choose(L.Q, o.s2); rec.a2 = c2.a; rec.rnd2 = c2.rnd; rec.qn = L.Q[o.s2][c2.a]; } else rec.qn = 0;
+      rec.target = o.r + g * rec.qn;
+    } else {
+      rec.qs = o.done ? null : L.Q[o.s2].slice();
+      rec.qn = o.done ? 0 : Math.max.apply(null, L.Q[o.s2]);
+      rec.target = o.r + g * rec.qn;
+    }
+    L.Q[s][a] = old + al * (rec.target - old);
+    rec.nw = L.Q[s][a];
+    L.s = o.s2;
+    if (L.alg === 'sarsa') { L.a = rec.a2; L.aRnd = rec.rnd2; }
+    if (o.done || L.t >= 1000) {
+      rec.end = true; rec.trunc = !o.done;
+      L.ep++; L.hist.push(M.metric === 'ret' ? L.ret : L.t); L.lastRet = L.ret; L.lastLen = L.t;
+      L.s = null;
+    }
+    L.last = rec;
+    return rec;
+  }
+
+  // ---------- giao diện ----------
+  var views = [];
+  function build() {
+    player && player.stop();
+    M = MAPS[mapName()];
+    kinds = []; for (var s = 0; s < M.rows * M.cols; s++) kinds.push(M.kind(s));
+    V_.$('#gamma').value = M.gamma;
+    var mode = algMode();
+    learners = mode === 'both' ? [Learner('sarsa'), Learner('q')] : [Learner(mode)];
+    sel = null; nEp = 0;
+    var box = V_.$('#grids'); box.innerHTML = ''; views = [];
+    learners.forEach(function (L, k) {
+      var d = document.createElement('div');
+      d.className = 'agrid' + (M.cols <= 6 ? ' narrow' : '');
+      d.innerHTML = '<div class="cap">' + (L.alg === 'sarsa' ? 'Sarsa' : 'Q-learning') + ' <span class="st"></span></div><div class="g"></div><div class="selq"></div>';
+      box.appendChild(d);
+      var v = V_.QGrid(d.querySelector('.g'), M.rows, M.cols, { aria: 'Bảng Q của ' + (L.alg === 'sarsa' ? 'Sarsa' : 'Q-learning'), onClick: function (s) { sel = s; render(); } });
+      views.push({ v: v, st: d.querySelector('.st'), selq: d.querySelector('.selq') });
+    });
+    chart = null; V_.$('#chart').innerHTML = '';
+    chart = V_.LineChart(V_.$('#chart'), { series: learners.map(function (L) { return { name: L.alg === 'sarsa' ? 'Sarsa' : 'Q-learning', color: L.alg === 'sarsa' ? '--s1' : '--s2' }; }),
+      xLabel: 'Tập', xName: 'Tập', dec: 1, aria: 'Kết quả mỗi tập', yMin: M.metric === 'ret' ? -200 : 0 });
+    V_.$('#legend').innerHTML = learners.map(function (L) { return '<span class="li"><span class="sw" style="background:var(' + (L.alg === 'sarsa' ? '--s1' : '--s2') + ')"></span>' + (L.alg === 'sarsa' ? 'Sarsa' : 'Q-learning') + '</span>'; }).join('');
+    V_.$('#chart-title').textContent = M.metric === 'ret' ? 'Tổng thưởng mỗi tập' : 'Số bước mỗi tập';
+    labels(); render(); showUpd(); drawChart();
+  }
+  function labels() {
+    V_.$('#eps-v').textContent = V_.fmt(eps(), 2);
+    V_.$('#alpha-v').textContent = V_.fmt(alpha(), 2);
+    V_.$('#gamma-v').textContent = V_.fmt(gamma(), 2);
+  }
+  function curMax() {
+    var mx = M.maxAbs;
+    learners.forEach(function (L) { L.Q.forEach(function (q) { q.forEach(function (v) { mx = Math.max(mx, Math.abs(v)); }); }); });
+    return mx;
+  }
+  function render() {
+    var mx = curMax();
+    learners.forEach(function (L, k) {
+      var vw = views[k], v = vw.v;
+      for (var s = 0; s < M.rows * M.cols; s++) {
+        var kd = kinds[s];
+        v.set(s, { kind: kd, q: L.Q[s], maxAbs: mx, label: M.label(s), nums: M.cols <= 6, dec: 2, arrow: kd === '' && L.Q[s].some(function (x) { return x !== 0; }),
+          value: kd === 'term' ? (M.termR[s] || 0) : null, aria: 'ô ' + rc(s) });
+        v.cls(s, 'sel', s === sel);
+        v.cls(s, 'fall', false);
+      }
+      v.agent(L.s == null ? (L.last && L.last.end ? -1 : M.start) : L.s);
+      var r = L.last;
+      if (r && !r.start) { v.mark(r.s, r.a); if (r.fell != null) v.cls(r.fell, 'fall', true); } else v.mark(null);
+      vw.st.textContent = 'tập ' + (L.ep + (L.s != null ? 1 : 0)) + ' · bước ' + L.t + ' · tổng thưởng ' + V_.fmt(L.ret, 0) + (L.falls ? ' · rơi ' + L.falls + ' lần' : '') +
+        (L.lastRet != null ? ' · tập trước: ' + (M.metric === 'ret' ? V_.fmt(L.lastRet, 0) : L.lastLen + ' bước') : '');
+      vw.selq.innerHTML = sel == null || kinds[sel] !== '' ? '' : 'Ô ' + rc(sel) + ': ' + L.Q[sel].map(function (q, a) { return 'Q(' + AW[a] + ') = ' + V_.fmt(q, 2); }).join(' · ');
+    });
+    V_.scaleBar(V_.$('#scale'), mx, mapName() === 'cliff');
+    insight();
+  }
+  function num(x) { return String(V_.round(x, 3)); }
+  function numP(x) { var s = num(x); return x < 0 ? '(' + s + ')' : s; }
+  function showUpd() {
+    var box = V_.$('#upd'); box.innerHTML = '';
+    learners.forEach(function (L) {
+      var d = document.createElement('div'); d.className = 'upd';
+      var nm = L.alg === 'sarsa' ? 'Sarsa' : 'Q-learning', r = L.last;
+      d.innerHTML = '<h3 style="color:var(' + (L.alg === 'sarsa' ? '--s1' : '--s2') + ')">' + nm + '</h3><div class="chips"></div><div class="calc"></div>';
+      box.appendChild(d);
+      var chips = d.querySelector('.chips'), calc = d.querySelector('.calc');
+      if (!r) { calc.innerHTML = '<span class="hint">Bấm “Bước tiếp” hoặc “▶ Phát”. Bảng $Q$ khởi tạo bằng 0.</span>'; V_.texAll(calc); return; }
+      if (r.start) {
+        calc.innerHTML = '<span class="hint">Bắt đầu tập mới ở $S$.' + (L.alg === 'sarsa' ? ' Sarsa chọn sẵn hành động đầu tiên $A = ' + AN[L.a] + '$' + (L.aRnd ? ' (bước ngẫu nhiên)' : ' (tham lam)') + ' theo $\\varepsilon$-tham lam.' : ' Q-learning sẽ chọn hành động ở bước tiếp theo.') + '</span>';
+        V_.texAll(calc); return;
+      }
+      var tk = function (t, cls) { return '<span class="tk ' + (cls || 'use') + '">' + t + '</span>'; };
+      var sTxt = '$s=' + rc(r.s) + '$', aTxt = '$a=' + AN[r.a] + '$' + (r.rnd ? ' ngẫu nhiên' : ''), rTxt = '$r=' + num(r.r) + '$', s2Txt = '$s\'=' + (r.done ? '\\text{kết thúc}' : rc(r.s2)) + '$';
+      if (L.alg === 'sarsa') {
+        chips.innerHTML = tk(sTxt) + tk(aTxt) + tk(rTxt) + tk(s2Txt) + (r.done ? tk('$a\'$: không cần', 'skip') : tk('$a\'=' + AN[r.a2] + '$' + (r.rnd2 ? ' ngẫu nhiên' : ' tham lam'), 'use now'));
+      } else {
+        chips.innerHTML = tk(sTxt) + tk(aTxt) + tk(rTxt) + tk(s2Txt) + tk('$a\'$ không dùng', 'skip');
+      }
+      V_.texAll(chips);
+      var g = gamma(), al = alpha(), tgt;
+      if (r.done) tgt = 'r = ' + num(r.r) + '\\quad(\\text{$s\'$ kết thúc nên } Q(s\',\\cdot) = 0)';
+      else if (L.alg === 'sarsa') tgt = 'r + \\gamma Q(s\', a\') \\\\ &= ' + num(r.r) + ' + ' + num(g) + '\\cdot ' + numP(r.qn) + ' = ' + num(r.target);
+      else {
+        var mx = Math.max.apply(null, r.qs);
+        var lst = r.qs.map(function (q) { var t = num(q); return Math.abs(q - mx) < 1e-12 ? '\\colorbox{' + V_.cssVar('--hl-soft') + '}{$' + t + '$}' : t; }).join(',\\,');
+        tgt = 'r + \\gamma \\max_{a\'} Q(s\', a\') \\\\ &= ' + num(r.r) + ' + ' + num(g) + '\\cdot\\max\\{' + lst + '\\} = ' + num(r.target);
+      }
+      var t = '\\begin{aligned}\\text{mục tiêu} &= ' + tgt + '\\\\ Q(s, a) &\\leftarrow ' + num(r.old) + ' + ' + num(al) + '\\,\\big(' + num(r.target) + ' - ' + numP(r.old) + '\\big) \\\\ &= ' + num(r.nw) + '\\end{aligned}';
+      V_.tex(calc, t, true);
+      var notes = [];
+      if (r.fell != null) notes.push('Rơi xuống vách: $r=-100$, tác tử quay về $S$ và tập <b>chưa</b> kết thúc.');
+      if (L.alg === 'sarsa' && !r.done && r.rnd2) notes.push('$a\'$ là bước <b>ngẫu nhiên</b>, nhưng Sarsa vẫn dùng $Q(s\',a\')$ của nó trong mục tiêu, và bước sau sẽ <b>thực sự</b> làm $a\'$ (on-policy).');
+      if (L.alg === 'q' && r.rnd) notes.push('Hành động $a$ là bước <b>ngẫu nhiên</b> của chính sách hành vi; mục tiêu vẫn dùng $\\max$ của chính sách tham lam (off-policy).');
+      if (r.end) notes.push(r.trunc ? 'Tập bị cắt sau 1000 bước.' : 'Tập kết thúc.');
+      if (notes.length) { calc.insertAdjacentHTML('beforeend', '<p class="hint">' + notes.join(' ') + '</p>'); V_.texAll(calc.lastChild); }
+    });
+    V_.postHeight();
+  }
+  var chart;
+  function smooth(a, w) { return a.map(function (_, i) { var s = 0, n = 0; for (var j = Math.max(0, i - w + 1); j <= i; j++) { s += a[j]; n++; } return s / n; }); }
+  function drawChart() {
+    var w = Math.max.apply(null, learners.map(function (L) { return L.hist.length; })) > 60 ? 10 : 1;
+    chart.set(learners.map(function (L) { return smooth(L.hist, w); }));
+    V_.$('#chart-note').textContent = (w > 1 ? 'Trung bình trượt 10 tập. ' : '') + (M.metric === 'ret' ? 'Trục dọc cắt ở −200 (các tập đầu thấp hơn nhiều). Đường tối ưu cho tổng thưởng −13.' : 'Đường ngắn nhất từ S tới kho báu: 8 bước.');
+  }
+  function insight() {
+    var el = V_.$('#insight'), L0 = learners[0], h;
+    var total = Math.max.apply(null, learners.map(function (L) { return L.ep; }));
+    if (mapName() === 'gold') {
+      var cnt = learners.map(function (L) { var n = 0; L.Q.forEach(function (q, s) { if (kinds[s] === '' && q.some(function (x) { return Math.abs(x) > 1e-9; })) n++; }); return n; });
+      h = 'Sau <b>' + total + '</b> tập, số ô đã có giá trị $Q$ khác 0: ' + learners.map(function (L, k) { return (L.alg === 'sarsa' ? 'Sarsa ' : 'Q-learning ') + '<b>' + cnt[k] + '</b>/20'; }).join(', ') + '. ' +
+        'Ở tập đầu, chỉ ô ngay cạnh kho báu (hoặc hố) có giá trị; mỗi tập sau, giá trị “loang” ngược thêm về phía $S$ vì mục tiêu TD dùng $Q$ của ô kế tiếp. Đó là ý “tăng cường” trong mục 3.2 và hình 3.16.';
+    } else if (total === 0) {
+      h = 'Bảng $Q$ bắt đầu bằng 0, nên mọi hướng đều “hấp dẫn” như nhau; mỗi bước $-1$ làm ô vừa đi qua kém hấp dẫn hơn, đẩy tác tử sang ô chưa thử. Bấm “Hết tập” vài lần, rồi “+50 tập”.';
+    } else if (learners.length === 2 && total >= 100) {
+      h = 'So sánh mũi tên: Q-learning học đường <b>sát vách</b> (tối ưu) vì mục tiêu dùng $\\max$; Sarsa học đường <b>vòng xa vách</b> vì mục tiêu tính cả các bước ngẫu nhiên có thể làm nó rơi. Biểu đồ: trong lúc huấn luyện, Sarsa thường có tổng thưởng cao hơn vì Q-learning hay rơi vách. Kéo $\\varepsilon$ về 0 rồi chạy tiếp: hai đường dần giống nhau.';
+    } else {
+      h = 'Đã chạy <b>' + total + '</b> tập. Giá trị $Q$ lan ngược từ $G$ về $S$ qua từng tập. ' + (learners.length === 2 ? 'Chạy tới khoảng 100 tập để thấy hai đường đi khác nhau.' : 'Chọn “Cả hai” để so sánh hai thuật toán trên cùng bản đồ.');
+    }
+    el.innerHTML = h; V_.texAll(el);
+  }
+  function step() { learners.forEach(micro); render(); showUpd(); drawChart(); return true; }
+  function finishEp() {
+    player.stop();
+    learners.forEach(function (L) { var guard = 0; if (L.s == null) micro(L); while (L.s != null && guard++ < 2000) micro(L); });
+    render(); showUpd(); drawChart();
+  }
+  function fast() {
+    player.stop();
+    learners.forEach(function (L) { for (var e = 0; e < 50; e++) { var guard = 0; if (L.s == null) micro(L); while (L.s != null && guard++ < 2000) micro(L); } });
+    render(); showUpd(); drawChart();
+  }
+
+  // ---------- khối hệ số chiết khấu ----------
+  var gSel = 12;
+  function gval(k, g) { var v = 0; for (var i = 0; i < k; i++) v = -1 + g * v; return v; }
+  function drawG() {
+    var g = +V_.$('#g2').value;
+    V_.$('#g2-v').textContent = V_.fmt(g, 2);
+    V_.$$('#g2p button').forEach(function (b) { b.setAttribute('aria-pressed', Math.abs(+b.dataset.v - g) < 1e-9 ? 'true' : 'false'); });
+    var box = V_.$('#strip'); box.innerHTML = '';
+    for (var i = 0; i < 13; i++) {
+      var k = 13 - i, v = gval(k, g), c = V_.valueColor(v, 13), b = document.createElement('button');
+      b.type = 'button'; b.textContent = V_.fmt(v, Math.abs(v) >= 10 ? 0 : 1);
+      b.style.background = c.bg; b.style.color = c.fg; b.className = i === gSel ? 'sel' : '';
+      b.setAttribute('aria-label', 'còn ' + k + ' bước, G = ' + V_.fmt(v, 3));
+      (function (i) { b.onclick = function () { gSel = i; drawG(); }; })(i);
+      box.appendChild(b);
+    }
+    var k = 13 - gSel, rows = [];
+    for (var j = 1; j <= Math.min(k, 6); j++) {
+      var prev = gval(j - 1, g), cur = gval(j, g);
+      rows.push('G_{\\text{còn ' + j + '}} &= -1 + ' + num(g) + '\\cdot ' + numP(V_.round(prev, 4)) + ' = ' + num(V_.round(cur, 4)));
+    }
+    if (k > 6) rows.push('&\\;\\vdots', 'G_{\\text{còn ' + k + '}} &= ' + num(V_.round(gval(k, g), 4)));
+    V_.tex(V_.$('#gcalc'), '\\begin{aligned}' + rows.join('\\\\') + '\\end{aligned}', true);
+    var ins;
+    if (g === 0) ins = '$\\gamma = 0$: mọi ô đều là $-1$, tác tử <b>thiển cận</b>, không phân biệt được ô gần đích với ô xa đích.';
+    else if (g === 1) ins = '$\\gamma = 1$: giá trị bằng âm số bước còn lại, từ $-13$ đến $-1$. Đây là cách tính của hình 3.10b (cộng toàn bộ phần thưởng tương lai).';
+    else ins = 'Với $\\gamma = ' + num(g) + '$, giá trị không xuống thấp hơn $\\dfrac{-1}{1-\\gamma} = ' + num(V_.round(-1 / (1 - g), 3)) + '$: các ô ở xa đích có giá trị <b>gần như bằng nhau</b>, nên tác tử ở xa khó nhận ra hướng nào gần đích hơn. $\\gamma$ càng gần 1 thì nhìn càng xa.';
+    V_.$('#gins').innerHTML = ins; V_.texAll(V_.$('#gins'));
+    V_.postHeight();
+  }
+
+  var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
+  V_.$('#ep').addEventListener('click', finishEp);
+  V_.$('#fast').addEventListener('click', fast);
+  V_.$('#reset').addEventListener('click', build);
+  ['#map', '#alg'].forEach(function (id) {
+    V_.$(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      V_.$$(id + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      build();
+    });
+  });
+  ['#eps', '#alpha', '#gamma'].forEach(function (id) { V_.$(id).addEventListener('input', labels); });
+  V_.$('#g2').addEventListener('input', drawG);
+  V_.$('#g2p').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; V_.$('#g2').value = b.dataset.v; drawG(); });
+  V_.onTheme(function () { render(); showUpd(); drawG(); });
+  var q = new URLSearchParams(location.search);
+  if (q.get('map') === 'gold') { V_.$$('#map button').forEach(function (x) { x.setAttribute('aria-pressed', x.dataset.v === 'gold' ? 'true' : 'false'); }); }
+  V_.texAll();
+  build(); drawG();
+})();
+</script>
+</body>
+</html>

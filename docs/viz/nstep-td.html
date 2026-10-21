@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TD n bước · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .gbox.main { max-width: 460px; flex-basis: 100%; }
+  .pathsvg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .gholder { position: relative; }
+  .cell.upd { box-shadow: inset 0 0 0 3px var(--s2); }
+  .cell.boot { box-shadow: inset 0 0 0 3px var(--s1); }
+  .cell.win { outline: 2px dashed var(--hl); outline-offset: -2px; }
+  .tline { display: flex; gap: 3px; overflow-x: auto; padding: 4px 0 8px; }
+  .tc { flex: none; width: 46px; text-align: center; border-radius: 8px; background: var(--surface-2); padding: 3px 0; font-size: .74rem; font-variant-numeric: tabular-nums; border: 2px solid transparent; }
+  .tc .t { color: var(--muted); }
+  .tc .s { font-weight: 700; font-size: .8rem; }
+  .tc .r { color: var(--muted); }
+  .tc.win { background: var(--hl-soft); }
+  .tc.upd { border-color: var(--s2); }
+  .tc.boot { border-color: var(--s1); }
+  .tc.now { box-shadow: 0 0 0 2px var(--hl); }
+  .tc.fut { opacity: .35; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>TD $n$ bước</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter3/chapter3_vi?id=_332-sai-phân-thời-gian">Mục 3.3.2</a></div>
+    </div>
+    <p class="lead">Hình 3.18 và biểu thức (3.2). Mục tiêu $n$ bước $G_t^{n} = r_{t+1} + \gamma r_{t+2} + \cdots + \gamma^{n-1} r_{t+n} + \gamma^{n} V(s_{t+n})$ dùng $n$ phần thưởng thật rồi mới bootstrapping. Nên ô $s_t$ chỉ được cập nhật khi tác tử đã đi tới $s_{t+n}$: <b>cập nhật trễ $n$ bước</b>.</p>
+  </div>
+  <div class="only-embed open-full"><a href="nstep-td.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <h2>1. Một tập: ô nào được cập nhật?</h2>
+    <p class="note" style="margin:0 0 6px">Lưới 5×7, thưởng 0 mỗi bước, $+1$ khi tới đích $G$; $\gamma = 0.9$, $\alpha = 0.5$, $V$ khởi tạo bằng 0. Tác tử đi theo một quỹ đạo cố định (đường xám) để so sánh các giá trị $n$ trên cùng một tập.</p>
+    <div class="ctrl">
+      <span class="lb">$n$</span>
+      <div class="seg" id="nsel">
+        <button type="button" data-v="1" aria-pressed="true">1 (TD)</button>
+        <button type="button" data-v="2" aria-pressed="false">2</button>
+        <button type="button" data-v="4" aria-pressed="false">4</button>
+        <button type="button" data-v="8" aria-pressed="false">8</button>
+        <button type="button" data-v="999" aria-pressed="false">∞ (MC)</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="finish">Hết tập</button>
+      <button type="button" class="btn" id="again">Chạy lại tập này (giữ $V$)</button>
+      <button type="button" class="btn" id="reset">Đặt lại $V$</button>
+      <button type="button" class="btn" id="newpath">Quỹ đạo khác</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <div class="stats"><span>Tập thứ <b id="epi">1</b></span><span>Bước $t$ = <b id="tt">0</b></span><span>Ô được cập nhật $\tau$ = <b id="tau">–</b></span><span>Số ô có $V \ne 0$: <b id="nz">0</b></span></div>
+    <div class="legend"><span class="li"><span class="sw box" style="background:var(--s2)"></span>ô được cập nhật $s_\tau$</span><span class="li"><span class="sw box" style="background:var(--s1)"></span>ô bootstrapping $s_{\tau+n}$</span><span class="li"><span class="sw box" style="background:var(--hl)"></span>tác tử $s_t$</span></div>
+    <div class="gwrap"><div class="gbox main"><div class="gholder" id="gbox"></div></div></div>
+    <div class="scale" id="scale"></div>
+    <div class="tline" id="tline"></div>
+    <div class="calc" id="calc"></div>
+    <div class="insight" id="insight"></div>
+  </div>
+
+  <div class="blk">
+    <h2>2. Chọn $n$ nào? Bước ngẫu nhiên 19 trạng thái</h2>
+    <p class="note" style="margin:0 0 6px">Bổ sung của người dịch (Sutton & Barto, hình 7.2). Chuỗi 19 trạng thái, bắt đầu ở giữa, mỗi bước sang trái/phải với xác suất 0.5; ra mép trái $-1$, mép phải $+1$; $\gamma = 1$. Sai số RMS so với giá trị thật, lấy trung bình trên 10 tập đầu và 100 lần chạy.</p>
+    <div class="ctrl"><label for="alpha">$\alpha$</label><input id="alpha" type="range" min="0.05" max="1" step="0.05" value="0.4"><span class="val" id="alpha-v"></span></div>
+    <div class="legend"><span class="li"><span class="sw" style="background:var(--s1)"></span>sai số RMS sau 10 tập đầu</span></div>
+    <div id="chart"></div>
+    <div class="insight" id="ins2"></div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz;
+  var R = 5, C = 7, N = R * C, START = 28, GOAL = 6, GAMMA = 0.9, ALPHA = 0.5;
+  var DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1];
+  function mv(s, a) { var r = Math.floor(s / C) + DR[a], c = s % C + DC[a]; if (r < 0 || c < 0 || r >= R || c >= C) return s; return r * C + c; }
+  function rc(s) { return '(' + Math.floor(s / C) + ',' + s % C + ')'; }
+
+  // quỹ đạo: đi lệch về phía đích, có ngẫu nhiên để có vòng vèo
+  var seed = 3, path;
+  function makePath() {
+    var rnd = V_.seeded(seed), s, p;
+    for (var tries = 0; tries < 200; tries++) {
+      s = START; p = [s];
+      while (s !== GOAL && p.length < 40) {
+        var r = Math.floor(s / C), c = s % C, a;
+        var u = rnd();
+        if (u < 0.55) a = rnd() < (c < C - 1 ? 0.5 : 0) ? 1 : 0;         // lên hoặc sang phải
+        else a = Math.floor(rnd() * 4);
+        var t = mv(s, a);
+        if (t === s) continue;
+        s = t; p.push(s);
+      }
+      if (s === GOAL && p.length >= 14 && p.length <= 26) return p;
+    }
+    return p;
+  }
+
+  var n, V, st, view, epi;
+  function nVal() { return +V_.$('#nsel [aria-pressed=true]').dataset.v; }
+  function resetEp() {
+    st = { t: 0, T: path.length - 1, tau: null, last: null, done: false };
+  }
+  function resetAll() { player && player.stop(); V = new Array(N).fill(0); epi = 1; resetEp(); render(); }
+
+  // một vòng lặp t của thuật toán TD n bước (Sutton & Barto, mục 7.1)
+  function step() {
+    if (st.done) return false;
+    var t = st.t, T = st.T, nn = Math.min(n, T); // n ≥ T cho cùng kết quả với n = T (lợi tức Monte Carlo)
+    var tau = t - nn + 1;
+    st.tau = null; st.last = null;
+    if (tau >= 0) {
+      var G = 0, terms = [], hi = Math.min(tau + nn, T);
+      for (var i = tau + 1; i <= hi; i++) {
+        var r = path[i] === GOAL ? 1 : 0;
+        G += Math.pow(GAMMA, i - tau - 1) * r;
+        terms.push({ k: i - tau - 1, r: r });
+      }
+      var boot = null;
+      if (tau + nn < T) { boot = path[tau + nn]; G += Math.pow(GAMMA, nn) * V[boot]; }
+      var s = path[tau], old = V[s];
+      V[s] = old + ALPHA * (G - old);
+      st.tau = tau; st.last = { s: s, old: old, nw: V[s], G: G, terms: terms, boot: boot, bootV: boot == null ? null : V[boot] };
+      if (tau === T - 1) st.done = true;
+    }
+    if (!st.done) st.t = t + 1;
+    render();
+    return !st.done;
+  }
+
+  function maxAbs() { return 0.5; }
+  function render() {
+    var nn = Math.min(n, st.T), t = Math.min(st.t, st.T), last = st.last;
+    var showBoot = last && last.boot != null;
+    for (var s = 0; s < N; s++) {
+      var c = V_.valueColor(V[s], maxAbs());
+      view.set(s, { v: s === GOAL ? '+1' : V[s] === 0 ? '' : V_.fmt(V[s], 2), bg: s === GOAL ? '' : c.bg, fg: c.fg, aria: 'ô ' + rc(s) + ', V = ' + V_.fmt(V[s], 3), id: s === START ? 'S' : s === GOAL ? 'G' : '' });
+      view.cls(s, 'term', s === GOAL);
+      view.cls(s, 'upd', !!last && last.s === s);
+      view.cls(s, 'boot', showBoot && last.boot === s);
+      view.cls(s, 'agent', path[t] === s);
+    }
+    drawPath();
+    // dòng thời gian
+    var tl = V_.$('#tline'), html = '';
+    for (var i = 0; i <= st.T; i++) {
+      var cls = 'tc';
+      if (i > t) cls += ' fut';
+      if (i === t) cls += ' now';
+      if (st.tau != null && i >= st.tau && i <= Math.min(st.tau + nn, st.T)) cls += ' win';
+      if (st.tau != null && i === st.tau) cls += ' upd';
+      if (showBoot && i === st.tau + nn) cls += ' boot';
+      html += '<div class="' + cls + '"><div class="t">t=' + i + '</div><div class="s">' + rc(path[i]) + '</div><div class="r">' + (i === 0 ? '' : 'r=' + (path[i] === GOAL ? 1 : 0)) + '</div></div>';
+    }
+    tl.innerHTML = html;
+    var cur = tl.querySelector('.now'); if (cur) tl.scrollLeft = Math.max(0, cur.offsetLeft - tl.clientWidth / 2);
+    V_.$('#epi').textContent = epi;
+    V_.$('#tt').textContent = t + (st.t >= st.T ? ' (đã tới G)' : '');
+    V_.$('#tau').textContent = st.tau == null ? (st.t < Math.min(n, st.T) - 1 ? 'chưa (cần đi đủ ' + (n > 100 ? 'hết tập' : n + ' bước') + ')' : '–') : st.tau;
+    V_.$('#nz').textContent = V.filter(function (v) { return Math.abs(v) > 1e-12; }).length;
+    V_.scaleBar(V_.$('#scale'), maxAbs(), false);
+    showCalc(); insight();
+    V_.$('#step').disabled = st.done; V_.$('#finish').disabled = st.done;
+    V_.postHeight();
+  }
+  function drawPath() {
+    var box = V_.$('#gbox'), svg = box.querySelector('.pathsvg');
+    if (!svg) { svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.setAttribute('class', 'pathsvg'); svg.setAttribute('viewBox', '0 0 ' + C + ' ' + R); svg.setAttribute('preserveAspectRatio', 'none'); box.appendChild(svg); }
+    var pts = path.map(function (s, i) { var j = ((i * 7) % 5 - 2) * 0.03; return ((s % C) + 0.5 + j) + ',' + (Math.floor(s / C) + 0.5 + j); }).join(' ');
+    svg.innerHTML = '<polyline points="' + pts + '" fill="none" stroke="' + V_.cssVar('--muted') + '" stroke-width="0.045" stroke-linejoin="round" stroke-linecap="round" opacity=".55"/>';
+  }
+  function num(x) { return String(V_.round(x, 4)); }
+  function showCalc() {
+    var el = V_.$('#calc'), L = st.last;
+    if (!L) {
+      var need = n > 100 ? 'tới hết tập' : n + ' bước';
+      el.innerHTML = '<span class="hint">' + (st.t === 0 ? 'Bấm “Bước tiếp”. ' : '') + 'Với $n = ' + (n > 100 ? '\\infty' : n) + '$, ô đầu tiên $s_0$ chỉ được cập nhật khi tác tử đã đi ' + need + '.</span>';
+      V_.texAll(el); return;
+    }
+    var tau = st.tau, nn = n > 100 ? '\\infty' : n;
+    var sym = L.terms.map(function (q) { return (q.k ? (q.k === 1 ? '\\gamma ' : '\\gamma^{' + q.k + '}') : '') + 'r_{' + (tau + q.k + 1) + '}'; });
+    var vals = L.terms.map(function (q) { return (q.k ? num(Math.pow(GAMMA, q.k)) + '\\cdot ' : '') + q.r; });
+    if (L.boot != null) {
+      var kk = L.terms.length;
+      sym.push('\\gamma^{' + kk + '} V(s_{' + (tau + kk) + '})');
+      vals.push(num(Math.pow(GAMMA, kk)) + '\\cdot ' + num(L.bootV));
+    }
+    if (sym.length > 5) { sym = sym.slice(0, 2).concat(['\\cdots'], sym.slice(-2)); vals = vals.slice(0, 2).concat(['\\cdots'], vals.slice(-2)); }
+    var t = '\\begin{aligned}G_{' + tau + '}^{' + nn + '} &= ' + sym.join(' + ') + '\\\\ &= ' + vals.join(' + ') + ' = ' + num(L.G) + '\\\\ V(s_{' + tau + '}) &\\leftarrow ' + num(L.old) + ' + ' + ALPHA + '\\,(' + num(L.G) + ' - ' + num(L.old) + ') = ' + num(L.nw) + '\\end{aligned}';
+    V_.tex(el, t, true);
+    el.insertAdjacentHTML('beforeend', '<p class="hint">$s_{' + tau + '} = ' + rc(L.s) + '$. ' + (L.boot == null ? 'Cửa sổ chạm tới cuối tập nên không cần bootstrapping: đây là lợi tức thật (như Monte Carlo).' : 'Phần cuối $V(s_{' + (tau + L.terms.length) + '})$ là ước lượng hiện tại (bootstrapping).') + '</p>');
+    V_.texAll(el.lastChild);
+  }
+  function insight() {
+    var el = V_.$('#insight'), nz = V.filter(function (v) { return Math.abs(v) > 1e-12; }).length, h;
+    if (!st.done) h = 'Tác tử ở bước $t$ thì ô được cập nhật là $s_{t-n+1}$, trễ $n-1$ bước. Khi tác tử tới $G$, các ô còn lại ở cuối quỹ đạo vẫn được cập nhật nốt (mục tiêu không còn phần bootstrapping).';
+    else if (epi === 1) h = 'Hết tập đầu tiên: <b>' + nz + '</b> ô có $V \\ne 0$. ' + (n === 1 ? 'Với TD(0), chỉ ô <b>ngay trước đích</b> nhận được thông tin về phần thưởng, vì các ô khác bootstrapping từ $V = 0$.' : n > 100 ? 'Với Monte Carlo, <b>mọi ô</b> trên quỹ đạo đều nhận thông tin ngay sau một tập, nhưng mỗi giá trị dựa trên một lợi tức ngẫu nhiên duy nhất (phương sai lớn).' : 'Với $n = ' + n + '$, khoảng ' + n + ' ô cuối quỹ đạo nhận được phần thưởng: thông tin lan ngược $n$ ô mỗi tập.') + ' Bấm “Chạy lại tập này” để xem giá trị lan tiếp ở tập thứ hai, hoặc đổi $n$.';
+    else h = 'Sau ' + epi + ' tập (cùng một quỹ đạo): <b>' + nz + '</b> ô có $V \\ne 0$. $n$ càng lớn, phần thưởng lan về đầu quỹ đạo càng nhanh; $n$ nhỏ thì phải lặp lại nhiều tập.';
+    el.innerHTML = h; V_.texAll(el);
+  }
+  function finish() { player.stop(); var g = 0; while (!st.done && g++ < 500) step(); }
+
+  function build() {
+    path = makePath();
+    var box = V_.$('#gbox'); box.innerHTML = '';
+    view = V_.GridView(box, R, C, { dense: true });
+    resetAll();
+  }
+
+  // ---------- khối 2: bước ngẫu nhiên 19 trạng thái ----------
+  var NS = 19, TRUE = []; for (var i = 1; i <= NS; i++) TRUE.push(-1 + 2 * i / (NS + 1));
+  var NLIST = [1, 2, 4, 8, 16, 32, Infinity];
+  function rwErr(nn, alpha) {
+    var tot = 0, RUNS = 100, EP = 10;
+    for (var run = 0; run < RUNS; run++) {
+      var rnd = V_.seeded(500 + run), Vr = new Array(NS + 2).fill(0);
+      for (var e = 0; e < EP; e++) {
+        var s = 10, st = [s], rw = [0];
+        while (s > 0 && s < NS + 1) { s += rnd() < 0.5 ? -1 : 1; st.push(s); rw.push(s === 0 ? -1 : s === NS + 1 ? 1 : 0); }
+        var T = st.length - 1;
+        for (var tau = 0; tau < T; tau++) {
+          var hi = Math.min(tau + nn, T), G = 0;
+          for (var k = tau + 1; k <= hi; k++) G += rw[k];
+          if (tau + nn < T) G += Vr[st[tau + nn]];
+          Vr[st[tau]] += alpha * (G - Vr[st[tau]]);
+        }
+        var se = 0; for (var j = 1; j <= NS; j++) se += (Vr[j] - TRUE[j - 1]) * (Vr[j] - TRUE[j - 1]);
+        tot += Math.sqrt(se / NS);
+      }
+    }
+    return tot / (RUNS * EP);
+  }
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'RMS', color: '--s1' }], xName: 'n =', xLabel: 'số bước n', dec: 3, dots: true, aria: 'Sai số theo số bước n' });
+  function block2() {
+    var a = +V_.$('#alpha').value;
+    V_.$('#alpha-v').textContent = V_.fmt(a, 2);
+    var ys = NLIST.map(function (nn) { var e = rwErr(nn, a); return e > 0.8 ? 0.8 : e; });
+    chart.set([ys], NLIST.map(function (x) { return x === Infinity ? '∞' : x; }));
+    var best = 0; ys.forEach(function (y, i) { if (y < ys[best]) best = i; });
+    var bn = NLIST[best] === Infinity ? '\\infty' : NLIST[best];
+    V_.$('#ins2').innerHTML = 'Với $\\alpha = ' + a + '$, sai số nhỏ nhất ở $n = ' + bn + '$ (' + V_.fmt(ys[best], 3) + '). ' +
+      'Thường $n$ <b>ở giữa</b> (4–8) tốt nhất: $n = 1$ lan thông tin chậm (độ chệch lớn vì dựa vào $V$ còn sai), $n = \\infty$ (Monte Carlo) dùng nguyên lợi tức ngẫu nhiên nên phương sai lớn. Tăng $\\alpha$ thì $n$ lớn bị phạt nặng hơn. Sai số lớn hơn 0.8 được cắt ở 0.8.';
+    V_.texAll(V_.$('#ins2'));
+    V_.postHeight();
+  }
+
+  var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
+  V_.$('#finish').addEventListener('click', finish);
+  V_.$('#again').addEventListener('click', function () { player.stop(); if (st.done) epi++; resetEp(); render(); });
+  V_.$('#reset').addEventListener('click', resetAll);
+  V_.$('#newpath').addEventListener('click', function () { player.stop(); seed++; build(); });
+  V_.$('#nsel').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    V_.$$('#nsel button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    n = nVal(); resetAll();
+  });
+  var t2 = null;
+  V_.$('#alpha').addEventListener('input', function () { V_.$('#alpha-v').textContent = V_.fmt(+V_.$('#alpha').value, 2); clearTimeout(t2); t2 = setTimeout(block2, 120); });
+  V_.onTheme(function () { render(); });
+  n = nVal();
+  V_.texAll();
+  build(); block2();
+})();
+</script>
+</body>
+</html>

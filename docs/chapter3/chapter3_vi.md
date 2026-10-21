@@ -122,6 +122,8 @@ $$
 </div>
 <div align=center>Hình 3.10 Hệ số chiết khấu</div>
 
+> 🎬 Thử kéo $\gamma$ từ 0 đến 1 và xem giá trị dọc đường đi thay đổi ra sao ở khối cuối của [mô phỏng Sarsa và Q-learning](viz/td-control.html ':ignore :target=_blank') (phần bổ sung của người dịch; mô phỏng đầy đủ được nhúng ở mục 3.4.2).
+
 
 Tương tự hình 3.11, cuối cùng thứ ta cần giải chính là một bảng Q, số hàng của nó là số lượng tất cả các trạng thái, thường có thể dùng tọa độ để biểu diễn trạng thái của ô, cũng có thể dùng 1, 2, 3, 4, 5, 6, 7 để biểu diễn các vị trí khác nhau. Các cột của bảng Q biểu thị 4 hành động lên, xuống, trái, phải.
 Lúc đầu, bảng Q được khởi tạo toàn bộ bằng 0. Tác tử liên tục tương tác với môi trường để có các quỹ đạo khác nhau, khi số lần tương tác đủ nhiều, ta có thể ước lượng tổng phần thưởng trung bình của mỗi hành động ở mỗi trạng thái, từ đó cập nhật bảng Q. Việc cập nhật bảng Q chính là khái niệm tăng cường (reinforcement) sắp được giới thiệu tiếp theo.
@@ -264,6 +266,8 @@ Sau khi huấn luyện lặp lại, trạng thái của các ô xung quanh ô c�
 </div>
 <div align=center>Hình 3.16 Minh họa thế giới lưới của học sai phân thời gian</div>
 
+> 🎬 Phiên bản tiếng Việt của minh họa này: mở [mô phỏng Sarsa và Q-learning với bản đồ Kho báu](viz/td-control.html?map=gold ':ignore :target=_blank'), bấm “+50 tập” vài lần và xem giá trị lan ra từ ô có phần thưởng (phần bổ sung của người dịch).
+
 Dưới đây ta chính thức giới thiệu phương pháp sai phân thời gian.
 Sai phân thời gian là phương pháp nằm giữa Monte Carlo và quy hoạch động, nó là không mô hình, không cần ma trận chuyển trạng thái và hàm phần thưởng của quá trình quyết định Markov.
 Ngoài ra, phương pháp sai phân thời gian có thể học từ các tập chưa hoàn chỉnh, và kết hợp ý tưởng bootstrapping.
@@ -361,6 +365,10 @@ Sau khi có mục tiêu sai phân thời gian, ta dùng phương pháp học tă
 $$
 V\left(s_{t}\right) \leftarrow V\left(s_{t}\right)+\alpha\left(G_{t}^{n}-V\left(s_{t}\right)\right)
 $$
+
+> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): chạy một tập với $n = 1, 2, 4, 8, \infty$ và xem ô nào được cập nhật, vì sao cập nhật trễ $n$ bước; phần dưới so sánh sai số theo $n$ trên bài bước ngẫu nhiên 19 trạng thái. [Mở trang riêng](viz/nstep-td.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/nstep-td.html?embed" style="height:1452px" title="Mô phỏng TD n bước" loading="lazy"></iframe>
 
 ### 3.3.3 Bootstrapping và lấy mẫu trong phương pháp quy hoạch động, Monte Carlo và sai phân thời gian
 Bootstrapping nghĩa là khi cập nhật có dùng ước lượng. Phương pháp Monte Carlo không dùng bootstrapping, vì nó cập nhật dựa trên lợi tức thực tế.
@@ -539,6 +547,10 @@ $$
 \\ \hline
 \end{array}
 $$
+
+> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): chạy thuật toán ở hình 3.25 (khởi đầu khám phá, lần thăm đầu tiên) và hình 3.26 ($\varepsilon$-tham lam) từng bước: sinh tập, rồi quét ngược tính $G$ và cập nhật bảng $Q$. [Mở trang riêng](viz/mc-control.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/mc-control.html?embed" style="height:1148px" title="Mô phỏng Monte Carlo điều khiển" loading="lazy"></iframe>
 
 So với phương pháp Monte Carlo, phương pháp sai phân thời gian có các ưu thế sau: phương sai thấp, có thể học trực tuyến, có thể học từ chuỗi chưa hoàn chỉnh.
 Vì vậy ta có thể đưa cả phương pháp sai phân thời gian vào vòng lặp điều khiển (control loop) để ước lượng bảng Q, rồi dùng khám phá $\varepsilon$-tham lam để cải thiện. Như vậy có thể cập nhật giá trị của các trạng thái đã thu thập được ngay khi tập chưa kết thúc.
@@ -788,6 +800,10 @@ Như hình 3.34b, ta phân tích từng bước Q-learning, điểm khác duy nh
 <img width="550" src="../img/ch3/3.19.png"/>
 </div>
 <div align=center>Hình 3.34 Khác biệt giữa Sarsa và Q-learning</div>
+
+> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): chạy Sarsa và Q-learning song song trên bài toán vách đá, xem từng phép cập nhật bảng $Q$ bằng số thật, và vì sao hai thuật toán học ra hai đường đi khác nhau. [Mở trang riêng](viz/td-control.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/td-control.html?embed" style="height:2005px" title="Mô phỏng Sarsa và Q-learning" loading="lazy"></iframe>
 
 
 
