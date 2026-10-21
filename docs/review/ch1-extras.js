@@ -452,37 +452,38 @@
       vpm: { t: 'Có mô hình + diễn viên-nhà phê bình', d: 'Đủ cả ba thành phần: mô hình, chính sách và hàm giá trị. Hình 1.20 trong sách đặt các phương pháp có mô hình ở phần giao với vòng "Mô hình".', ex: [] },
       out: { t: 'Nhấn vào một vùng', d: 'Sơ đồ này là hình 1.20 trong sách: mỗi tác tử có <b>một, hai hoặc cả ba</b> thành phần. Vùng nằm ngoài vòng "Mô hình" là <b>không mô hình (model-free)</b>; vùng giao với vòng "Mô hình" là <b>có mô hình (model-based)</b>.', ex: [] }
     };
-    var C = { v: { x: 150, y: 125, r: 92 }, p: { x: 270, y: 125, r: 92 }, m: { x: 210, y: 228, r: 92 } };
+    var C = { v: { x: 130, y: 160, r: 120 }, p: { x: 270, y: 160, r: 120 }, m: { x: 200, y: 265, r: 120 } };
+    var VW = 400, VH = 428; // kích thước khung vẽ (vị trí nhãn được tính để cách mọi đường tròn ≥ 10 đơn vị)
     var b2 = h('<section class="blk"><h2>2. Các loại tác tử: tác tử có những thành phần nào?</h2>' +
       '<p class="lead">Nhấn vào từng vùng để xem tác tử loại đó học gì và thuật toán tiêu biểu (kèm notebook). Mục 1.4.4.</p>' +
       '<div class="venn-wrap"><div><div class="venn"></div><div class="venn-note">Phần nằm ngoài vòng "Mô hình" là không mô hình (model-free); phần giao với vòng "Mô hình" là có mô hình (model-based).</div></div><div class="detail" aria-live="polite"></div></div></section>');
     root.appendChild(b2);
     function vennSvg(sel) {
-      var s = '<svg viewBox="0 0 420 352" role="img" aria-label="Sơ đồ Venn các loại tác tử"><defs>';
+      var s = '<svg viewBox="0 0 ' + VW + ' ' + VH + '" role="img" aria-label="Sơ đồ Venn các loại tác tử"><defs>';
       ['v', 'p', 'm'].forEach(function (k) { s += '<clipPath id="cp-' + k + '"><circle cx="' + C[k].x + '" cy="' + C[k].y + '" r="' + C[k].r + '"/></clipPath>'; });
       if (sel && sel !== 'out') {
         var outs = ['v', 'p', 'm'].filter(function (k) { return sel.indexOf(k) < 0; });
-        s += '<mask id="mk"><rect width="420" height="352" fill="#fff"/>' + outs.map(function (k) { return '<circle cx="' + C[k].x + '" cy="' + C[k].y + '" r="' + C[k].r + '" fill="#000"/>'; }).join('') + '</mask>';
+        s += '<mask id="mk"><rect width="' + VW + '" height="' + VH + '" fill="#fff"/>' + outs.map(function (k) { return '<circle cx="' + C[k].x + '" cy="' + C[k].y + '" r="' + C[k].r + '" fill="#000"/>'; }).join('') + '</mask>';
       }
       s += '</defs>';
       var colors = { v: 'var(--s1)', p: 'var(--s2)', m: 'var(--s3)' };
       ['v', 'p', 'm'].forEach(function (k) { s += '<circle cx="' + C[k].x + '" cy="' + C[k].y + '" r="' + C[k].r + '" fill="' + colors[k] + '" fill-opacity=".10"/>'; });
       if (sel && sel !== 'out') {
-        var g = '<rect width="420" height="352" fill="var(--accent)" fill-opacity=".35" mask="url(#mk)"/>';
+        var g = '<rect width="' + VW + '" height="' + VH + '" fill="var(--accent)" fill-opacity=".35" mask="url(#mk)"/>';
         sel.split('').forEach(function (k) { g = '<g clip-path="url(#cp-' + k + ')">' + g + '</g>'; });
         s += g;
       }
       ['v', 'p', 'm'].forEach(function (k) { s += '<circle class="ring" cx="' + C[k].x + '" cy="' + C[k].y + '" r="' + C[k].r + '" stroke="' + colors[k] + '"/>'; });
-      s += '<text class="ttl" x="96" y="26" text-anchor="middle">Hàm giá trị</text><text class="ttl" x="324" y="26" text-anchor="middle">Chính sách</text>' +
-           '<text class="ttl" x="210" y="346" text-anchor="middle">Mô hình</text>';
+      s += '<text class="ttl" x="62" y="22" text-anchor="middle">Hàm giá trị</text><text class="ttl" x="338" y="22" text-anchor="middle">Chính sách</text>' +
+           '<text class="ttl" x="200" y="418" text-anchor="middle">Mô hình</text>';
       function lbl(x, y, a, b, cls) {
         return '<text class="' + (cls || 'rl') + '" x="' + x + '" y="' + (b ? y - 7 : y) + '" text-anchor="middle">' + a + '</text>' +
           (b ? '<text class="' + (cls || 'rl') + '" x="' + x + '" y="' + (y + 8) + '" text-anchor="middle">' + b + '</text>' : '');
       }
-      s += lbl(103, 110, 'Dựa trên', 'giá trị') + lbl(317, 110, 'Dựa trên', 'chính sách') + lbl(210, 82, 'Actor-', 'critic') +
-           lbl(160, 189, 'Mô hình', '+ giá trị', 'rl2') + lbl(258, 189, 'Mô hình', '+ chính sách', 'rl2') + lbl(210, 158, 'Đủ cả 3', null, 'rl2') +
-           lbl(210, 278, 'Lập kế hoạch');
-      s += '<rect class="hit" width="420" height="352" fill="transparent"/></svg>';
+      s += lbl(92, 122, 'Dựa trên', 'giá trị') + lbl(312, 126, 'Dựa trên', 'chính sách') + lbl(200, 122, 'Actor-', 'critic') +
+           lbl(128, 250, 'Mô hình', '+ giá trị', 'rl2') + lbl(272, 254, 'Mô hình', '+ chính sách', 'rl2') + lbl(200, 186, 'Đủ cả 3', null, 'rl2') +
+           lbl(200, 330, 'Lập kế hoạch');
+      s += '<rect class="hit" width="' + VW + '" height="' + VH + '" fill="transparent"/></svg>';
       return s;
     }
     var vsel = null;
@@ -496,7 +497,7 @@
       var svg = box.querySelector('svg');
       svg.querySelector('.hit').addEventListener('click', function (ev) {
         var r = svg.getBoundingClientRect();
-        vsel = regionAt((ev.clientX - r.left) * 420 / r.width, (ev.clientY - r.top) * 352 / r.height);
+        vsel = regionAt((ev.clientX - r.left) * VW / r.width, (ev.clientY - r.top) * VH / r.height);
         drawVenn();
       });
       var R = REG[vsel] || REG.out;
