@@ -168,6 +168,8 @@ $$
     \end{aligned}    
 $$
 
+> **Ghi chú của người dịch:** ở dòng thứ 3, vì đang xét đồng thời các biến phụ thuộc vào trạng thái gốc $s$, xác suất có điều kiện của $g'$ được viết tường minh hơn là dưới cả điều kiện $s'$ và $s$, tức là thay $p(g' \mid s')$ thành $p(g' \mid s', s)$. Hai cách viết bằng nhau nhờ tính chất Markov: khi đã biết $s'$ thì $g'$ không còn phụ thuộc vào $s$.
+
 **2. Suy ra phương trình Bellman**
 
 Quá trình suy ra phương trình Bellman như sau:
