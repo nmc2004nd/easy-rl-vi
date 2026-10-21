@@ -258,6 +258,22 @@ Trước tiên ta dùng phương pháp Monte Carlo để tính giá trị. Như 
 </div>
  <div align=center>Hình 2.6 Phương pháp Monte Carlo tính giá trị của quá trình phần thưởng Markov</div>
 
+Bản dịch thuật toán ở hình 2.6:
+
+$$
+\begin{array}{rl}
+\hline
+1{:} & i \leftarrow 0,\ G_t \leftarrow 0 \\
+2{:} & \textbf{khi } i \neq N \textbf{ thì thực hiện:} \\
+3{:} & \quad \text{sinh quỹ đạo của một tập (episode), bắt đầu từ trạng thái } s \text{ tại thời điểm } t \\
+4{:} & \quad \text{dùng quỹ đạo vừa sinh để tính lợi tức } g=\sum_{i=t}^{H-1} \gamma^{i-t} r_i \\
+5{:} & \quad G_t \leftarrow G_t+g,\ i \leftarrow i+1 \\
+6{:} & \textbf{kết thúc vòng lặp} \\
+7{:} & V_t(s) \leftarrow G_t / N
+\\ \hline
+\end{array}
+$$
+
 
 
 Ví dụ ta muốn tính giá trị của trạng thái $s_4$, có thể bắt đầu từ trạng thái $s_4$, sinh ngẫu nhiên nhiều quỹ đạo. Thả chiếc thuyền vào ma trận chuyển trạng thái, rồi nó sẽ "trôi theo dòng nước", sinh ra quỹ đạo. Mỗi quỹ đạo cho một lợi tức, ta thu được rất nhiều lợi tức, ví dụ 100 hay 1000 lợi tức, rồi lấy trung bình trực tiếp, kết quả đó tương đương với giá trị hiện tại của $s_4$, vì giá trị $V(s_4)$ của $s_4$ định nghĩa việc trong tương lai ta có thể nhận được bao nhiêu phần thưởng. Đây chính là phương pháp lấy mẫu Monte Carlo.
@@ -272,6 +288,21 @@ Phương pháp quy hoạch động dựa trên ước lượng giá trị của 
 <img width="550" src="../img/ch2/2.7.png"/>
 </div>
  <div align=center>Hình 2.7 Thuật toán quy hoạch động tính giá trị của quá trình phần thưởng Markov</div>
+
+Bản dịch thuật toán ở hình 2.7:
+
+$$
+\begin{array}{rl}
+\hline
+1{:} & \text{với mọi trạng thái } s \in S:\ V'(s) \leftarrow 0,\ V(s) \leftarrow \infty \\
+2{:} & \textbf{khi } \|V-V'\| > \epsilon \textbf{ thì thực hiện:} \\
+3{:} & \quad V \leftarrow V' \\
+4{:} & \quad \text{với mọi trạng thái } s \in S:\ V'(s)=R(s)+\gamma \sum_{s' \in S} P(s' \mid s) V(s') \\
+5{:} & \textbf{kết thúc vòng lặp} \\
+6{:} & \textbf{trả về } V'(s) \text{ với mọi trạng thái } s \in S
+\\ \hline
+\end{array}
+$$
 
 
 
