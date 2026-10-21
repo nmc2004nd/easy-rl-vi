@@ -8,6 +8,7 @@
 - [🎬 Chương 2 Mô phỏng thuật toán](viz/index.html ':ignore :target=_self')
 - [Chương 3 Phương pháp dạng bảng](chapter3/chapter3_vi)
 - [Chương 3 Bài tập](chapter3/chapter3_questions&keywords_vi)
+- [🧠 Chương 3 Ôn tập (flashcard + quiz)](review/index.html?ch=3 ':ignore :target=_self')
 - [Dự án 1 Dùng Q-learning giải bài toán tìm đường bên vách đá](chapter3/project1_vi)
 - [Chương 4 Gradient chính sách](chapter4/chapter4_vi)
 - [Chương 4 Bài tập](chapter4/chapter4_questions&keywords_vi)

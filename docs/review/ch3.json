@@ -1,0 +1,741 @@
+{
+ "chapter": 3,
+ "title": "Chương 3 · Phương pháp dạng bảng",
+ "chapterLink": "../#/chapter3/chapter3_vi",
+ "exerciseLink": "../#/chapter3/chapter3_questions&keywords_vi",
+ "extras": "ch3-extras.js",
+ "cards": [
+  {
+   "id": "c3-tabular",
+   "tag": "Khái niệm",
+   "ref": "3",
+   "front": "Phương pháp dạng bảng (tabular method) là gì? Kể tên ba thuật toán trong chương.",
+   "back": "Phương pháp biểu diễn giá trị/chính sách bằng **bảng tra cứu**: mỗi trạng thái (hoặc cặp trạng thái-hành động) có **một ô riêng**.\nTrong chương: **Monte Carlo**, **Sarsa**, **Q-learning**. Đều là phương pháp **dựa trên giá trị** (value-based)."
+  },
+  {
+   "id": "c3-tuple",
+   "tag": "Khái niệm",
+   "ref": "3.1 · Bài tập 3-1",
+   "front": "Bộ bốn của MDP trong học tăng cường gồm những gì? Thêm gì thì thành bộ năm?",
+   "back": "$(S, A, P, R)$: trạng thái, hành động, xác suất chuyển trạng thái $p[s_{t+1}, r_t \\mid s_t, a_t]$, phần thưởng.\nThêm hệ số chiết khấu $\\gamma$ thành **bộ năm** $(S, A, P, R, \\gamma)$."
+  },
+  {
+   "id": "c3-model",
+   "tag": "So sánh",
+   "ref": "3.1.3",
+   "front": "Có mô hình (model-based) và không mô hình (model-free) khác nhau ở đâu?",
+   "back": "**Có mô hình**: biết $P(s' \\mid s, a)$ và $R(s, a)$ → dùng quy hoạch động (lặp chính sách, lặp giá trị), **không cần tương tác** với môi trường.\n**Không mô hình**: **không biết** $P$ và $R$ → tác tử phải **tương tác**, thu thập quỹ đạo rồi học từ dữ liệu (MC, TD, Sarsa, Q-learning).\nNgay cả khi biết mô hình, nếu mô hình **quá lớn** (cờ vây, Atari) cũng phải dùng không mô hình."
+  },
+  {
+   "id": "c3-qtable",
+   "tag": "Khái niệm",
+   "ref": "3.2",
+   "front": "Bảng Q (Q-table) có hàng, cột là gì? Khởi tạo thế nào?",
+   "back": "**Hàng**: các trạng thái. **Cột**: các hành động (ví dụ lên, xuống, trái, phải). Ô $(s, a)$ chứa $Q(s, a)$ = tổng phần thưởng tương lai kỳ vọng khi ở $s$ làm $a$.\nThường **khởi tạo bằng 0**, rồi cập nhật dần qua tương tác. Bảng đã học xong giống một **cuốn cẩm nang**: tra hàng $s$, chọn cột có $Q$ lớn nhất."
+  },
+  {
+   "id": "c3-future",
+   "tag": "Vì sao",
+   "ref": "3.2",
+   "front": "Vì sao đánh giá một hành động bằng **tổng phần thưởng tương lai** chứ không phải phần thưởng tức thời?",
+   "back": "Vì phần thưởng thường **bị trễ**. Ví dụ xe cứu thương: vượt đèn đỏ có phần thưởng tức thời thấp, nhưng đưa bệnh nhân đến viện kịp thời có phần thưởng tương lai rất cao.\nChỉ cộng hết phần thưởng về sau thì $Q(s, a)$ mới phản ánh **giá trị thật** của hành động."
+  },
+  {
+   "id": "c3-continuing",
+   "tag": "Vì sao",
+   "ref": "3.2",
+   "front": "Với **nhiệm vụ liên tục** (continuing task), vì sao cần hệ số chiết khấu $\\gamma$?",
+   "back": "Nhiệm vụ không có điểm kết thúc nên tổng phần thưởng không chiết khấu có thể **vô hạn** và quá xa thì không còn ý nghĩa (ví dụ biến động cổ phiếu sau 10 năm).\nVới $\\gamma \\in [0, 1)$, số hạng $\\gamma^n r$ càng về sau càng nhỏ: tương lai xa ảnh hưởng ít đến giá trị hiện tại."
+  },
+  {
+   "id": "c3-cliff",
+   "tag": "Ví dụ",
+   "ref": "3.2",
+   "front": "Mô tả bài toán đi bên vách đá (cliff walking): phần thưởng, khi nào kết thúc?",
+   "back": "Lưới 4×12, đi từ **S** (góc dưới trái) đến **G** (góc dưới phải); giữa S và G là vách đá.\nMỗi bước: $-1$. Rơi xuống vách: $-100$ và **quay về S**, trò chơi **không** kết thúc. Chỉ kết thúc khi đến G.\nĐường tối ưu: đi sát mép vách, 13 bước, tổng thưởng $-13$."
+  },
+  {
+   "id": "c3-gamma-calc",
+   "tag": "Tính tay",
+   "ref": "3.2 · (3.1)",
+   "front": "Vách đá, $\\gamma = 0{,}6$, mỗi bước $-1$, $G_{13} = 0$. Tính $G_{12}, G_{11}, G_{10}$ bằng cách suy ngược.",
+   "back": "Dùng $G_t = r_{t+1} + \\gamma G_{t+1}$:\n$$G_{12} = -1 + 0{,}6 \\cdot 0 = -1$$\n$$G_{11} = -1 + 0{,}6 \\cdot (-1) = -1{,}6$$\n$$G_{10} = -1 + 0{,}6 \\cdot (-1{,}6) = -1{,}96$$\nKhi $t$ lùi xa đích, $G_t \\to \\dfrac{-1}{1 - 0{,}6} = -2{,}5$: với $\\gamma$ nhỏ, tác tử gần như không \\\"nhìn thấy\\\" đích ở xa."
+  },
+  {
+   "id": "c3-reinforce",
+   "tag": "Khái niệm",
+   "ref": "3.2",
+   "front": "Trong sách, \\\"tăng cường\\\" (reinforcement) nghĩa là gì? Liên hệ với khái niệm nào?",
+   "back": "Dùng **giá trị của trạng thái tiếp theo** để cập nhật giá trị của trạng thái hiện tại. Đó chính là **bootstrapping**.\nVí dụ Pavlov: thức ăn (phần thưởng) làm tiếng chuông (trạng thái trước) trở nên có giá trị; lặp lại thì giá trị lan ngược về các trạng thái sớm hơn (vết móng gấu → gấu → gấu tấn công)."
+  },
+  {
+   "id": "c3-mc-eval",
+   "tag": "Công thức",
+   "ref": "3.3.1",
+   "front": "Đánh giá chính sách bằng Monte Carlo: hai bước ước lượng $V(s)$?",
+   "back": "(1) Mỗi khi thăm $s$ ở bước $t$ của một tập:\n$$N(s) \\leftarrow N(s) + 1, \\qquad S(s) \\leftarrow S(s) + G_t$$\n(2) Ước lượng $V(s) = S(s) / N(s)$.\nTheo luật số lớn: $N(s) \\to \\infty$ thì $V(s) \\to V_\\pi(s)$."
+  },
+  {
+   "id": "c3-inc-mean",
+   "tag": "Công thức",
+   "ref": "3.3.1",
+   "front": "Viết công thức **trung bình tăng dần** (incremental mean). Phần nào giống tốc độ học?",
+   "back": "$$\\mu_t = \\mu_{t-1} + \\frac{1}{t}\\left(x_t - \\mu_{t-1}\\right)$$\n$x_t - \\mu_{t-1}$ là **phần dư** (residual); $\\frac{1}{t}$ đóng vai trò **tốc độ học**.\nLợi ích: không cần lưu mọi mẫu, chỉ cần trung bình cũ và mẫu mới."
+  },
+  {
+   "id": "c3-inc-mc",
+   "tag": "Công thức",
+   "ref": "3.3.1",
+   "front": "Monte Carlo tăng dần: công thức cập nhật $V(s_t)$? Thay $\\frac{1}{N}$ bằng gì?",
+   "back": "$$N(s_t) \\leftarrow N(s_t) + 1, \\qquad V(s_t) \\leftarrow V(s_t) + \\frac{1}{N(s_t)}\\big(G_t - V(s_t)\\big)$$\nThay $\\frac{1}{N(s_t)}$ bằng hằng số $\\alpha$:\n$$V(s_t) \\leftarrow V(s_t) + \\alpha\\big(G_t - V(s_t)\\big)$$\n$\\alpha$ cố định cho trọng số lớn hơn cho các tập gần đây (hữu ích khi chính sách thay đổi)."
+  },
+  {
+   "id": "c3-mc-limit",
+   "tag": "Khái niệm",
+   "ref": "3.3.1",
+   "front": "Monte Carlo cần gì và **không** cần gì? Hạn chế lớn nhất?",
+   "back": "**Không cần**: hàm chuyển trạng thái, hàm phần thưởng, bootstrapping.\n**Cần**: các tập **hoàn chỉnh** để tính $G_t$ thật.\nHạn chế: chỉ dùng được cho MDP **có kết thúc** (episodic)."
+  },
+  {
+   "id": "c3-mc-vs-dp",
+   "tag": "So sánh",
+   "ref": "3.3.1",
+   "front": "Monte Carlo có ưu thế gì so với quy hoạch động?",
+   "back": "1. **Không cần mô hình**: dùng được khi môi trường chưa biết.\n2. Chỉ cập nhật **các trạng thái trên quỹ đạo** đã đi; quy hoạch động phải quét **tất cả** trạng thái mỗi vòng, rất chậm khi có hàng triệu trạng thái."
+  },
+  {
+   "id": "c3-td0",
+   "tag": "Công thức",
+   "ref": "3.3.2 · (3.1)",
+   "front": "Viết công thức cập nhật TD(0) cho $V(s_t)$.",
+   "back": "$$V(s_t) \\leftarrow V(s_t) + \\alpha\\big(r_{t+1} + \\gamma V(s_{t+1}) - V(s_t)\\big)$$\nĐi **một bước**, nhận $r_{t+1}$, rồi dùng ước lượng $V(s_{t+1})$ thay cho phần lợi tức còn lại."
+  },
+  {
+   "id": "c3-td-target",
+   "tag": "Công thức",
+   "ref": "3.3.2",
+   "front": "Mục tiêu TD (TD target) và sai số TD (TD error) là gì?",
+   "back": "**Mục tiêu TD**: $r_{t+1} + \\gamma V(s_{t+1})$ (phần thưởng thật một bước + ước lượng phần còn lại).\n**Sai số TD**: $\\delta_t = r_{t+1} + \\gamma V(s_{t+1}) - V(s_t)$.\nCập nhật TD(0) viết gọn: $V(s_t) \\leftarrow V(s_t) + \\alpha\\,\\delta_t$."
+  },
+  {
+   "id": "c3-td-estimate",
+   "tag": "Vì sao",
+   "ref": "3.3.2",
+   "front": "Vì sao mục tiêu TD chỉ là một **ước lượng** của $V_\\pi(s_t)$? (hai lý do)",
+   "back": "1. Nó **lấy mẫu** kỳ vọng: chỉ dùng một $r_{t+1}, s_{t+1}$ thay vì lấy trung bình theo mọi khả năng.\n2. Nó dùng $V$ **ước lượng hiện tại**, không phải $V_\\pi$ thật (bootstrapping)."
+  },
+  {
+   "id": "c3-td-vs-mc",
+   "tag": "So sánh",
+   "ref": "3.3.2",
+   "front": "Bốn ưu điểm của TD so với Monte Carlo theo sách?",
+   "back": "1. **Học trực tuyến**: cập nhật sau mỗi bước; MC phải đợi hết tập.\n2. Học được từ **chuỗi chưa hoàn chỉnh**.\n3. Dùng được cho **nhiệm vụ liên tục** (không kết thúc).\n4. Tận dụng **tính chất Markov** nên hiệu quả hơn trong môi trường Markov. (Ngược lại, MC không giả định Markov nên hợp hơn với môi trường không Markov.)"
+  },
+  {
+   "id": "c3-drive",
+   "tag": "Ví dụ",
+   "ref": "3.3.2",
+   "front": "Ví dụ lái xe đi làm: TD và MC phản ứng thế nào khi bị kẹt xe ở ngã tư A?",
+   "back": "**TD**: cập nhật **ngay tại A** thời gian dự kiến đến B, C… và đến công ty.\n**MC**: không cập nhật gì cho đến khi **tới công ty**, rồi mới sửa thời gian ở mọi ngã tư.\nTD học được **trước khi biết kết quả cuối**."
+  },
+  {
+   "id": "c3-nstep",
+   "tag": "Công thức",
+   "ref": "3.3.2 · (3.2)",
+   "front": "Lợi tức $n$ bước $G_t^{n}$? Với $n = 1$ và $n = \\infty$ ta được gì?",
+   "back": "$$G_t^{n} = r_{t+1} + \\gamma r_{t+2} + \\cdots + \\gamma^{n-1} r_{t+n} + \\gamma^{n} V(s_{t+n})$$\n$n = 1$: mục tiêu **TD(0)**. $n = \\infty$ (đến hết tập): lợi tức **Monte Carlo**.\nCập nhật: $V(s_t) \\leftarrow V(s_t) + \\alpha\\big(G_t^{n} - V(s_t)\\big)$."
+  },
+  {
+   "id": "c3-boot-sample",
+   "tag": "So sánh",
+   "ref": "3.3.3",
+   "front": "DP, MC, TD: phương pháp nào dùng **bootstrapping**, phương pháp nào dùng **lấy mẫu**?",
+   "back": "**DP**: bootstrapping ✓, lấy mẫu ✗ (tính kỳ vọng đầy đủ bằng mô hình).\n**MC**: bootstrapping ✗ (dùng lợi tức thật), lấy mẫu ✓.\n**TD**: bootstrapping ✓, lấy mẫu ✓.\nMẹo nhớ: bootstrapping = \\\"mục tiêu có chứa $V$\\\"; lấy mẫu = \\\"không cộng trên mọi $s'$\\\"."
+  },
+  {
+   "id": "c3-unified",
+   "tag": "Khái niệm",
+   "ref": "3.3.3 · hình 3.22",
+   "front": "Góc nhìn thống nhất (hình 3.22): xếp DP, MC, TD, tìm kiếm vét cạn theo **độ rộng** và **độ sâu** của backup.",
+   "back": "**Nông + hẹp**: TD (một bước, một mẫu).\n**Nông + rộng**: DP (một bước, mọi nhánh).\n**Sâu + hẹp**: MC (cả tập, một nhánh).\n**Sâu + rộng**: tìm kiếm vét cạn.\nTD rộng ra → DP; TD sâu ra → MC."
+  },
+  {
+   "id": "c3-gpi",
+   "tag": "Vì sao",
+   "ref": "3.4",
+   "front": "Trong điều khiển không mô hình, vì sao phải ước lượng $Q(s, a)$ chứ không phải $V(s)$?",
+   "back": "Cải thiện tham lam từ $V$ cần\n$$\\pi'(s) = \\arg\\max_a \\Big[R(s, a) + \\gamma \\sum_{s'} P(s' \\mid s, a) V(s')\\Big]$$\ntức cần $R$ và $P$, mà không mô hình thì không có. Từ $Q$ thì chỉ cần $\\pi'(s) = \\arg\\max_a Q(s, a)$.\nĐây là **lặp chính sách tổng quát** (GPI): đánh giá bằng MC/TD + cải thiện tham lam."
+  },
+  {
+   "id": "c3-es",
+   "tag": "Khái niệm",
+   "ref": "3.4 · hình 3.25",
+   "front": "**Khởi đầu khám phá** (exploring starts) là giả định gì? Để làm gì?",
+   "back": "Mỗi tập bắt đầu từ một cặp $(s_0, a_0)$ **chọn ngẫu nhiên**, mọi cặp đều có xác suất $> 0$.\nĐảm bảo **mọi cặp trạng thái-hành động** đều được lấy mẫu vô hạn lần, nhờ đó ước lượng $Q$ tốt và lặp chính sách hội tụ."
+  },
+  {
+   "id": "c3-eps",
+   "tag": "Công thức",
+   "ref": "3.4",
+   "front": "Chính sách $\\varepsilon$-tham lam chọn hành động thế nào? Xác suất của hành động tham lam là bao nhiêu?",
+   "back": "Với xác suất $1 - \\varepsilon$: chọn $\\arg\\max_a Q(s, a)$; với xác suất $\\varepsilon$: chọn ngẫu nhiên đều trong $|A|$ hành động.\n$$\\pi(a \\mid s) = \\begin{cases} \\frac{\\varepsilon}{|A|} + 1 - \\varepsilon & a = \\arg\\max_{a'} Q(s, a') \\\\ \\frac{\\varepsilon}{|A|} & \\text{còn lại} \\end{cases}$$\nThường giảm $\\varepsilon$ dần theo thời gian (ví dụ $\\varepsilon = 1/k$)."
+  },
+  {
+   "id": "c3-eps-improve",
+   "tag": "Công thức",
+   "ref": "3.4",
+   "front": "Định lý cải thiện $\\varepsilon$-tham lam phát biểu gì?",
+   "back": "Với mọi chính sách $\\varepsilon$-tham lam $\\pi$, chính sách $\\varepsilon$-tham lam $\\pi'$ theo $Q_\\pi$ là một cải thiện:\n$$V_\\pi(s) \\le V_{\\pi'}(s) \\quad \\text{với mọi } s$$\nMấu chốt: $\\max_a Q_\\pi(s, a) \\ge$ mọi trung bình có trọng số của $Q_\\pi(s, \\cdot)$. Chứng minh ở tab **Chứng minh**."
+  },
+  {
+   "id": "c3-bias-var",
+   "tag": "Vì sao",
+   "ref": "3.4 · Phỏng vấn 3-6",
+   "front": "MC và TD: phương pháp nào **không chệch**? Phương pháp nào có **phương sai** lớn hơn? Vì sao?",
+   "back": "**MC**: không chệch ($\\mathbb{E}[G_t] = V_\\pi$), nhưng **phương sai lớn** vì $G_t$ cộng rất nhiều phần thưởng ngẫu nhiên của cả tập.\n**TD**: **có chệch** (vì dùng $V(s_{t+1})$ ước lượng, có thể sai), nhưng **phương sai nhỏ** vì chỉ phụ thuộc một bước ngẫu nhiên.\nHình 3.27: độ chệch là tâm lệch khỏi hồng tâm; phương sai là độ tản của các điểm bắn."
+  },
+  {
+   "id": "c3-sarsa",
+   "tag": "Công thức",
+   "ref": "3.4.1 · (3.4)",
+   "front": "Công thức cập nhật Sarsa? Vì sao gọi là \\\"Sarsa\\\"?",
+   "back": "$$Q(s_t, a_t) \\leftarrow Q(s_t, a_t) + \\alpha\\big[r_{t+1} + \\gamma Q(s_{t+1}, a_{t+1}) - Q(s_t, a_t)\\big]$$\nMỗi lần cập nhật cần bộ năm $(s_t, a_t, r_{t+1}, s_{t+1}, a_{t+1})$: **S**tate, **A**ction, **R**eward, **S**tate, **A**ction."
+  },
+  {
+   "id": "c3-qlearn",
+   "tag": "Công thức",
+   "ref": "3.4.2",
+   "front": "Công thức cập nhật Q-learning? Khác Sarsa ở đâu?",
+   "back": "$$Q(s_t, a_t) \\leftarrow Q(s_t, a_t) + \\alpha\\big[r_{t+1} + \\gamma \\max_{a} Q(s_{t+1}, a) - Q(s_t, a_t)\\big]$$\nChỉ khác ở **mục tiêu**: Sarsa dùng $Q(s_{t+1}, a_{t+1})$ của hành động **thật sự sẽ làm**; Q-learning dùng $\\max_a Q(s_{t+1}, a)$, **không cần** $a_{t+1}$."
+  },
+  {
+   "id": "c3-on-off",
+   "tag": "So sánh",
+   "ref": "3.4.2 · Phỏng vấn 3-1",
+   "front": "On-policy và off-policy khác nhau căn bản ở đâu? Sarsa, Q-learning thuộc loại nào?",
+   "back": "Khác ở chỗ **chính sách sinh dữ liệu** (hành vi $\\mu$) và **chính sách được học** (mục tiêu $\\pi$) có trùng nhau không.\n**On-policy** (Sarsa): một chính sách, vừa tương tác vừa được tối ưu.\n**Off-policy** (Q-learning): hành vi $\\mu$ = $\\varepsilon$-tham lam để khám phá; mục tiêu $\\pi$ = tham lam theo $Q$."
+  },
+  {
+   "id": "c3-cliff-paths",
+   "tag": "Vì sao",
+   "ref": "3.4.3",
+   "front": "Trên vách đá với $\\varepsilon$-tham lam, vì sao Sarsa chọn đường **xa vách** còn Q-learning chọn đường **sát vách**?",
+   "back": "Sarsa học giá trị của **chính chính sách đang chạy**, gồm cả những bước ngẫu nhiên. Đi sát vách thì thỉnh thoảng một bước ngẫu nhiên sẽ rơi ($-100$), nên $Q$ của các ô sát vách thấp → Sarsa tránh xa.\nQ-learning học giá trị của **chính sách tham lam** (không có bước ngẫu nhiên) → đường sát vách là tối ưu.\nBổ sung của người dịch (Sutton & Barto, ví dụ 6.6): khi **đang huấn luyện** với $\\varepsilon$ cố định, Sarsa lại có tổng thưởng mỗi tập **cao hơn** vì Q-learning hay rơi vách. Xem tab **Thí nghiệm**."
+  },
+  {
+   "id": "c3-off-benefit",
+   "tag": "Khái niệm",
+   "ref": "3.4.2",
+   "front": "Ba lợi ích của học off-policy?",
+   "back": "1. Dùng chính sách **khám phá** mạnh để học chính sách **tối ưu**.\n2. Học từ hành vi của **người hoặc tác tử khác** (học bắt chước).\n3. **Tái sử dụng** quỹ đạo của các chính sách cũ, tiết kiệm tài nguyên."
+  },
+  {
+   "id": "c3-sarsa-lambda",
+   "tag": "Công thức",
+   "ref": "3.4.1",
+   "front": "Lợi tức Q của Sarsa($\\lambda$) được tạo từ các lợi tức $n$ bước thế nào?",
+   "back": "$$Q_t^{\\lambda} = (1 - \\lambda) \\sum_{n=1}^{\\infty} \\lambda^{n-1} Q_t^{n}$$\nTrung bình có trọng số của mọi $Q_t^n$, trọng số $(1-\\lambda)\\lambda^{n-1}$ có tổng bằng 1. $\\lambda = 0$: Sarsa một bước; $\\lambda \\to 1$: Monte Carlo.\nCập nhật: $Q(s_t, a_t) \\leftarrow Q(s_t, a_t) + \\alpha\\big(Q_t^{\\lambda} - Q(s_t, a_t)\\big)$."
+  },
+  {
+   "id": "c3-td-calc",
+   "tag": "Tính tay",
+   "ref": "3.3.2",
+   "front": "$V(s) = 0$, $V(s') = 2$, đi từ $s$ sang $s'$ nhận $r = 1$, $\\gamma = 0{,}9$, $\\alpha = 0{,}1$. Tính sai số TD và $V(s)$ mới.",
+   "back": "$$\\delta = 1 + 0{,}9 \\cdot 2 - 0 = 2{,}8$$\n$$V(s) \\leftarrow 0 + 0{,}1 \\cdot 2{,}8 = 0{,}28$$"
+  },
+  {
+   "id": "c3-update-calc",
+   "tag": "Tính tay",
+   "ref": "3.4.1–3.4.2",
+   "front": "$Q(s, a) = 2$, nhận $r = -1$, $\\gamma = 0{,}9$, $\\alpha = 0{,}5$. Ở $s'$: $Q(s', \\cdot) = [4, 5]$ và $\\varepsilon$-tham lam lấy mẫu ra $a' = $ hành động thứ nhất. Tính $Q(s, a)$ mới theo Sarsa và theo Q-learning.",
+   "back": "**Sarsa** (dùng $a'$ thật): mục tiêu $= -1 + 0{,}9 \\cdot 4 = 2{,}6$\n$$Q \\leftarrow 2 + 0{,}5\\,(2{,}6 - 2) = 2{,}3$$\n**Q-learning** (dùng max): mục tiêu $= -1 + 0{,}9 \\cdot 5 = 3{,}5$\n$$Q \\leftarrow 2 + 0{,}5\\,(3{,}5 - 2) = 2{,}75$$\nKhác nhau vì bước khám phá đã chọn hành động kém hơn: Sarsa \\\"tính\\\" nó vào, Q-learning bỏ qua."
+  },
+  {
+   "id": "c3-vb-pb",
+   "tag": "So sánh",
+   "ref": "Phỏng vấn 3-4",
+   "front": "Phương pháp dựa trên giá trị (value-based) và dựa trên chính sách (policy-based) khác nhau thế nào? (ba ý chính)",
+   "back": "1. **Chính sách sinh ra**: value-based thường cho chính sách **tất định** (argmax); policy-based cho chính sách **ngẫu nhiên**.\n2. **Không gian hành động**: value-based hợp với **rời rạc**; policy-based hợp với **liên tục** (ví dụ lấy mẫu từ phân phối chuẩn).\n3. **Cách tìm**: value-based tìm $\\pi^*$ **gián tiếp** qua $Q^*$ (Q-learning); policy-based **tham số hóa trực tiếp** chính sách rồi tối ưu lợi tức (REINFORCE, gradient chính sách)."
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Tác tử **không biết** $P(s' \\mid s, a)$ và $R(s, a)$, phải tương tác với môi trường để học. Đây là học tăng cường:",
+   "options": [
+    "Không mô hình (model-free)",
+    "Có mô hình (model-based)",
+    "Học có giám sát",
+    "Quy hoạch động"
+   ],
+   "answer": 0,
+   "explain": "Không biết hàm chuyển và hàm phần thưởng nên phải học từ quỹ đạo thu thập được: đó là không mô hình.",
+   "ref": "3.1.2"
+  },
+  {
+   "q": "Vách đá, $\\gamma = 0{,}6$, mỗi bước $-1$. Biết $G_{11} = -1{,}6$. Tính $G_{10}$.",
+   "options": [
+    "$-1{,}96$",
+    "$-2{,}6$",
+    "$-1{,}6$",
+    "$-0{,}96$"
+   ],
+   "answer": 0,
+   "explain": "$G_{10} = r_{11} + \\gamma G_{11} = -1 + 0{,}6 \\cdot (-1{,}6) = -1{,}96$.",
+   "ref": "3.2"
+  },
+  {
+   "q": "Trong trung bình tăng dần $\\mu_t = \\mu_{t-1} + \\frac{1}{t}(x_t - \\mu_{t-1})$, đại lượng $\\frac{1}{t}$ đóng vai trò gì?",
+   "options": [
+    "Tốc độ học",
+    "Hệ số chiết khấu",
+    "Sai số TD",
+    "Xác suất khám phá"
+   ],
+   "answer": 0,
+   "explain": "$x_t - \\mu_{t-1}$ là phần dư, $\\frac{1}{t}$ là bước cập nhật giống tốc độ học. Thay bằng hằng số $\\alpha$ ta được MC tăng dần.",
+   "ref": "3.3.1"
+  },
+  {
+   "q": "Phương pháp nào **chỉ** dùng được cho MDP có kết thúc (episodic)?",
+   "options": [
+    "Monte Carlo",
+    "TD(0)",
+    "Sarsa",
+    "Q-learning"
+   ],
+   "answer": 0,
+   "explain": "Monte Carlo cần lợi tức thật $G_t$, mà $G_t$ chỉ tính được khi tập kết thúc. Các phương pháp TD cập nhật sau mỗi bước nên dùng được cả cho nhiệm vụ liên tục.",
+   "ref": "3.3.1"
+  },
+  {
+   "q": "$V(s) = 1$, $V(s') = 3$, $r = 0$, $\\gamma = 1$, $\\alpha = 0{,}5$. Sau một cập nhật TD(0), $V(s)$ bằng:",
+   "options": [
+    "2",
+    "1",
+    "3",
+    "1,5"
+   ],
+   "answer": 0,
+   "explain": "$\\delta = 0 + 1 \\cdot 3 - 1 = 2$, nên $V(s) \\leftarrow 1 + 0{,}5 \\cdot 2 = 2$.",
+   "ref": "3.3.2"
+  },
+  {
+   "q": "Phương pháp nào dùng **lấy mẫu** nhưng **không** dùng bootstrapping?",
+   "options": [
+    "Monte Carlo",
+    "Quy hoạch động",
+    "TD(0)",
+    "Sarsa"
+   ],
+   "answer": 0,
+   "explain": "MC lấy mẫu quỹ đạo và dùng lợi tức thật, không dựa vào ước lượng $V$ khác. DP bootstrapping không lấy mẫu; TD và Sarsa làm cả hai.",
+   "ref": "3.3.3"
+  },
+  {
+   "q": "Trong lợi tức $n$ bước $G_t^{n}$, khi $n \\to \\infty$ (đến hết tập) thì cập nhật trở thành:",
+   "options": [
+    "Monte Carlo",
+    "TD(0)",
+    "Quy hoạch động",
+    "Q-learning"
+   ],
+   "answer": 0,
+   "explain": "Không còn số hạng $\\gamma^n V(s_{t+n})$ (vì đã tới trạng thái kết thúc), chỉ còn tổng phần thưởng thật: đó là lợi tức Monte Carlo.",
+   "ref": "3.3.2 · (3.2)"
+  },
+  {
+   "q": "Trong góc nhìn thống nhất (hình 3.22), phương pháp nào backup **nông** (một bước) nhưng **rộng** (mọi nhánh)?",
+   "options": [
+    "Quy hoạch động",
+    "Monte Carlo",
+    "TD(0)",
+    "Tìm kiếm vét cạn"
+   ],
+   "answer": 0,
+   "explain": "DP tính kỳ vọng trên mọi hành động và mọi trạng thái kế tiếp, nhưng chỉ nhìn một bước rồi dùng $V$ đã có.",
+   "ref": "3.3.3"
+  },
+  {
+   "q": "Vì sao điều khiển không mô hình ước lượng $Q(s, a)$ thay vì $V(s)$?",
+   "options": [
+    "Vì cải thiện tham lam từ $V$ cần biết $R$ và $P$",
+    "Vì $Q$ có ít ô hơn $V$",
+    "Vì $V$ không hội tụ",
+    "Vì $Q$ không cần khám phá"
+   ],
+   "answer": 0,
+   "explain": "$\\pi'(s) = \\arg\\max_a [R(s, a) + \\gamma \\sum_{s'} P(s' \\mid s, a) V(s')]$ cần mô hình; còn $\\arg\\max_a Q(s, a)$ thì không.",
+   "ref": "3.4"
+  },
+  {
+   "q": "$|A| = 4$, $\\varepsilon = 0{,}2$. Chính sách $\\varepsilon$-tham lam chọn hành động tham lam với xác suất:",
+   "options": [
+    "0,85",
+    "0,8",
+    "0,2",
+    "0,95"
+   ],
+   "answer": 0,
+   "explain": "$1 - \\varepsilon + \\frac{\\varepsilon}{|A|} = 0{,}8 + 0{,}05 = 0{,}85$: hành động tham lam còn có thể được chọn trong phần ngẫu nhiên.",
+   "ref": "3.4"
+  },
+  {
+   "q": "Phát biểu nào **đúng** về MC và TD?",
+   "options": [
+    "MC không chệch, phương sai lớn; TD có chệch, phương sai nhỏ",
+    "MC có chệch, phương sai nhỏ; TD không chệch, phương sai lớn",
+    "Cả hai đều không chệch và phương sai như nhau",
+    "TD không chệch vì dùng sai số TD"
+   ],
+   "answer": 0,
+   "explain": "$G_t$ là mẫu không chệch của $V_\\pi$ nhưng cộng nhiều biến ngẫu nhiên; mục tiêu TD dùng $V(s_{t+1})$ ước lượng nên có chệch, nhưng chỉ phụ thuộc một bước ngẫu nhiên.",
+   "ref": "Phỏng vấn 3-6"
+  },
+  {
+   "q": "Sarsa cần những gì cho **một** lần cập nhật?",
+   "options": [
+    "$(s_t, a_t, r_{t+1}, s_{t+1}, a_{t+1})$",
+    "$(s_t, a_t, r_{t+1}, s_{t+1})$",
+    "Cả quỹ đạo đến khi kết thúc",
+    "$P(s' \\mid s, a)$ và $R(s, a)$"
+   ],
+   "answer": 0,
+   "explain": "Mục tiêu Sarsa là $r_{t+1} + \\gamma Q(s_{t+1}, a_{t+1})$ nên cần cả hành động kế tiếp. Q-learning chỉ cần bốn phần tử đầu.",
+   "ref": "3.4.1"
+  },
+  {
+   "q": "$Q(s, a) = 0$, $r = 1$, $\\gamma = 1$, $\\alpha = 0{,}5$, $Q(s', \\cdot) = [2, 6]$, hành động kế tiếp được chọn là hành động thứ nhất. Q-learning cập nhật $Q(s, a)$ thành:",
+   "options": [
+    "3,5",
+    "1,5",
+    "3",
+    "7"
+   ],
+   "answer": 0,
+   "explain": "Q-learning dùng max: mục tiêu $= 1 + 6 = 7$, nên $Q \\leftarrow 0 + 0{,}5 \\cdot 7 = 3{,}5$. (Sarsa sẽ dùng 2 và ra $1{,}5$.)",
+   "ref": "3.4.2"
+  },
+  {
+   "q": "Q-learning là off-policy vì:",
+   "options": [
+    "Mục tiêu dùng $\\max_a Q(s', a)$ của chính sách tham lam, khác chính sách $\\varepsilon$-tham lam đang sinh dữ liệu",
+    "Nó không dùng bảng Q",
+    "Nó chỉ học sau khi tập kết thúc",
+    "Nó cần mô hình môi trường"
+   ],
+   "answer": 0,
+   "explain": "Chính sách mục tiêu (tham lam) khác chính sách hành vi ($\\varepsilon$-tham lam), nên là off-policy.",
+   "ref": "3.4.2 · Phỏng vấn 3-2"
+  },
+  {
+   "q": "Vách đá, $\\varepsilon = 0{,}1$ cố định. Sau khi học, đường đi tham lam của Sarsa thường:",
+   "options": [
+    "Đi xa mép vách hơn đường của Q-learning",
+    "Đi sát mép vách như Q-learning",
+    "Rơi xuống vách",
+    "Không tới được đích"
+   ],
+   "answer": 0,
+   "explain": "Sarsa tính cả rủi ro của bước ngẫu nhiên vào $Q$, nên đường sát vách có giá trị thấp và nó chọn đường an toàn hơn.",
+   "ref": "3.4.3"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p3-return-recursion",
+   "ref": "3.2 · (3.1)",
+   "title": "Lợi tức đệ quy: $G_t = r_{t+1} + \\gamma G_{t+1}$",
+   "start": "Định nghĩa lợi tức chiết khấu $G_t = r_{t+1} + \\gamma r_{t+2} + \\gamma^2 r_{t+3} + \\cdots$",
+   "goal": "$$G_t = r_{t+1} + \\gamma G_{t+1}$$",
+   "steps": [
+    {
+     "tex": "G_t = r_{t+1} + \\gamma r_{t+2} + \\gamma^2 r_{t+3} + \\cdots"
+    },
+    {
+     "tex": "= r_{t+1} + \\gamma\\big(r_{t+2} + \\gamma r_{t+3} + \\cdots\\big)",
+     "why": {
+      "options": [
+       "Rút thừa số chung $\\gamma$ ra khỏi các số hạng từ $r_{t+2}$",
+       "Tuyến tính của kỳ vọng",
+       "Tính chất Markov",
+       "Cho $\\gamma = 1$"
+      ],
+      "answer": 0,
+      "explain": "Mọi số hạng từ $r_{t+2}$ trở đi đều có ít nhất một thừa số $\\gamma$, rút ra ngoài ngoặc."
+     }
+    },
+    {
+     "tex": "= r_{t+1} + \\gamma G_{t+1}",
+     "why": {
+      "options": [
+       "Biểu thức trong ngoặc đúng là định nghĩa của $G_{t+1}$",
+       "Vì $G_{t+1} = V(s_{t+1})$",
+       "Bootstrapping",
+       "Trung bình tăng dần"
+      ],
+      "answer": 0,
+      "explain": "Thay $t$ bằng $t+1$ trong định nghĩa: $G_{t+1} = r_{t+2} + \\gamma r_{t+3} + \\cdots$. Ở đây không lấy kỳ vọng nên đẳng thức đúng trên **từng quỹ đạo**."
+     }
+    }
+   ],
+   "hints": [
+    "Mọi số hạng sau $r_{t+1}$ có chung thừa số nào?",
+    "So biểu thức trong ngoặc với định nghĩa $G_t$ khi thay $t \\to t+1$."
+   ],
+   "note": "Nhờ công thức này, ví dụ vách đá (3.1) tính $G_{12}, G_{11}, \\ldots$ **ngược từ đích**: $G_{13} = 0$, $G_{12} = -1$, $G_{11} = -1{,}6$… Thuật toán MC ở hình 3.25 cũng dùng đúng vòng lặp $G \\leftarrow \\gamma G + r_{t+1}$ chạy từ cuối tập về đầu."
+  },
+  {
+   "id": "p3-incremental-mean",
+   "ref": "3.3.1",
+   "title": "Trung bình tăng dần",
+   "start": "Cho các mẫu $x_1, \\ldots, x_t$ và trung bình thực nghiệm $\\mu_t = \\frac{1}{t}\\sum_{j=1}^{t} x_j$.",
+   "goal": "$$\\mu_t = \\mu_{t-1} + \\frac{1}{t}\\left(x_t - \\mu_{t-1}\\right)$$",
+   "steps": [
+    {
+     "tex": "\\mu_t = \\frac{1}{t}\\sum_{j=1}^{t} x_j"
+    },
+    {
+     "tex": "= \\frac{1}{t}\\Big(x_t + \\sum_{j=1}^{t-1} x_j\\Big)",
+     "why": {
+      "options": [
+       "Tách số hạng cuối $x_t$ ra khỏi tổng",
+       "Tuyến tính của kỳ vọng",
+       "Luật số lớn",
+       "Thay $\\frac{1}{t}$ bằng $\\alpha$"
+      ],
+      "answer": 0,
+      "explain": "Chỉ viết lại tổng: $\\sum_{j=1}^{t} x_j = x_t + \\sum_{j=1}^{t-1} x_j$."
+     }
+    },
+    {
+     "tex": "= \\frac{1}{t}\\big(x_t + (t-1)\\,\\mu_{t-1}\\big)",
+     "why": {
+      "options": [
+       "Định nghĩa $\\mu_{t-1}$ cho $\\sum_{j=1}^{t-1} x_j = (t-1)\\mu_{t-1}$",
+       "Vì $x_t = \\mu_{t-1}$",
+       "Luật số lớn",
+       "Phần dư bằng 0"
+      ],
+      "answer": 0,
+      "explain": "Nhân hai vế của $\\mu_{t-1} = \\frac{1}{t-1}\\sum_{j=1}^{t-1} x_j$ với $t-1$."
+     }
+    },
+    {
+     "tex": "= \\frac{1}{t}\\big(x_t + t\\,\\mu_{t-1} - \\mu_{t-1}\\big)",
+     "why": {
+      "options": [
+       "Khai triển $(t-1)\\mu_{t-1}$",
+       "Thêm bớt $x_t$",
+       "Tách số hạng cuối",
+       "Đổi thứ tự tổng"
+      ],
+      "answer": 0,
+      "explain": "Phân phối: $(t-1)\\mu_{t-1} = t\\mu_{t-1} - \\mu_{t-1}$."
+     }
+    },
+    {
+     "tex": "= \\mu_{t-1} + \\frac{1}{t}\\big(x_t - \\mu_{t-1}\\big)",
+     "why": {
+      "options": [
+       "Tách $\\frac{1}{t}\\cdot t\\,\\mu_{t-1} = \\mu_{t-1}$ ra ngoài, gom phần còn lại",
+       "Luật số lớn",
+       "Cho $t \\to \\infty$",
+       "Bootstrapping"
+      ],
+      "answer": 0,
+      "explain": "$\\frac{1}{t}(t\\mu_{t-1}) = \\mu_{t-1}$; hai số hạng còn lại là $\\frac{1}{t}(x_t - \\mu_{t-1})$."
+     }
+    }
+   ],
+   "hints": [
+    "Tách $x_t$ khỏi tổng.",
+    "Tổng của $t-1$ mẫu đầu viết được qua $\\mu_{t-1}$ thế nào?",
+    "Khai triển $(t-1)\\mu_{t-1}$ rồi tách $\\mu_{t-1}$ ra ngoài."
+   ],
+   "note": "Mọi luật cập nhật trong chương đều có dạng **ước lượng mới = ước lượng cũ + bước × (mục tiêu − ước lượng cũ)**. MC: mục tiêu là $G_t$; TD: $r_{t+1} + \\gamma V(s_{t+1})$; Sarsa: $r_{t+1} + \\gamma Q(s_{t+1}, a_{t+1})$; Q-learning: $r_{t+1} + \\gamma \\max_a Q(s_{t+1}, a)$."
+  },
+  {
+   "id": "p3-mc-td-errors",
+   "ref": "3.3.2 (bổ sung)",
+   "title": "Sai số Monte Carlo bằng tổng các sai số TD",
+   "start": "Bổ sung của người dịch (Sutton & Barto, biểu thức 6.6). Một tập kết thúc ở bước $T$; giữ $V$ cố định trong tập, $V(s_T) = 0$. Sai số TD: $\\delta_k = r_{k+1} + \\gamma V(s_{k+1}) - V(s_k)$.",
+   "goal": "$$G_t - V(s_t) = \\sum_{k=t}^{T-1} \\gamma^{k-t}\\,\\delta_k$$",
+   "steps": [
+    {
+     "tex": "G_t - V(s_t) = r_{t+1} + \\gamma G_{t+1} - V(s_t)"
+    },
+    {
+     "tex": "= r_{t+1} + \\gamma V(s_{t+1}) - V(s_t) + \\gamma G_{t+1} - \\gamma V(s_{t+1})",
+     "why": {
+      "options": [
+       "Thêm rồi bớt cùng một lượng $\\gamma V(s_{t+1})$",
+       "Tính chất Markov",
+       "Tuyến tính của kỳ vọng",
+       "Vì $G_{t+1} = V(s_{t+1})$"
+      ],
+      "answer": 0,
+      "explain": "Cộng và trừ $\\gamma V(s_{t+1})$ không làm đổi giá trị, nhưng làm xuất hiện đúng dạng sai số TD."
+     }
+    },
+    {
+     "tex": "= \\delta_t + \\gamma\\big(G_{t+1} - V(s_{t+1})\\big)",
+     "why": {
+      "options": [
+       "Ba số hạng đầu là định nghĩa $\\delta_t$",
+       "Bootstrapping",
+       "Luật số lớn",
+       "Cho $\\gamma = 1$"
+      ],
+      "answer": 0,
+      "explain": "$\\delta_t = r_{t+1} + \\gamma V(s_{t+1}) - V(s_t)$; hai số hạng sau rút $\\gamma$ ra."
+     }
+    },
+    {
+     "tex": "= \\delta_t + \\gamma\\delta_{t+1} + \\gamma^2\\big(G_{t+2} - V(s_{t+2})\\big)",
+     "why": {
+      "options": [
+       "Áp dụng lại chính đẳng thức vừa có cho $G_{t+1} - V(s_{t+1})$",
+       "Tuyến tính của kỳ vọng",
+       "Tính chất Markov",
+       "Trung bình tăng dần"
+      ],
+      "answer": 0,
+      "explain": "Đẳng thức $G_k - V(s_k) = \\delta_k + \\gamma(G_{k+1} - V(s_{k+1}))$ đúng với mọi $k$; thay $k = t+1$."
+     }
+    },
+    {
+     "tex": "= \\sum_{k=t}^{T-1}\\gamma^{k-t}\\delta_k + \\gamma^{T-t}\\big(G_T - V(s_T)\\big)",
+     "why": {
+      "options": [
+       "Lặp lại đến bước kết thúc $T$",
+       "Luật số lớn",
+       "Đổi thứ tự lấy tổng",
+       "Kỳ vọng toàn phần"
+      ],
+      "answer": 0,
+      "explain": "Mỗi lần thay thế sinh thêm một số hạng $\\gamma^{k-t}\\delta_k$, cho đến khi chạm $T$."
+     }
+    },
+    {
+     "tex": "= \\sum_{k=t}^{T-1}\\gamma^{k-t}\\delta_k",
+     "why": {
+      "options": [
+       "$G_T = 0$ và $V(s_T) = 0$ tại trạng thái kết thúc",
+       "Vì $\\gamma^{T-t} = 0$",
+       "Vì $\\delta_T = 0$",
+       "Vì tập vô hạn"
+      ],
+      "answer": 0,
+      "explain": "Sau trạng thái kết thúc không còn phần thưởng nên $G_T = 0$, và theo quy ước $V(\\text{kết thúc}) = 0$."
+     }
+    }
+   ],
+   "hints": [
+    "Bắt đầu bằng $G_t = r_{t+1} + \\gamma G_{t+1}$.",
+    "Thêm bớt $\\gamma V(s_{t+1})$ để làm xuất hiện $\\delta_t$.",
+    "Đẳng thức thu được có dạng đệ quy; áp dụng lặp đến $T$ và dùng $G_T = V(s_T) = 0$."
+   ],
+   "note": "Ý nghĩa: sai số mà MC sửa một lần ở cuối tập **bằng tổng các sai số TD** chiết khấu dọc đường. TD sửa từng phần ngay khi gặp; MC đợi gom tất cả. Đây là cầu nối giữa hai phương pháp (và là nền của TD($\\lambda$))."
+  },
+  {
+   "id": "p3-eps-greedy",
+   "ref": "3.4",
+   "title": "Cải thiện $\\varepsilon$-tham lam không làm giá trị kém đi",
+   "start": "$\\pi$ là chính sách $\\varepsilon$-tham lam (mọi hành động có $\\pi(a \\mid s) \\ge \\frac{\\varepsilon}{|A|}$); $\\pi'$ là $\\varepsilon$-tham lam theo $Q_\\pi$: $\\pi'(a \\mid s) = \\frac{\\varepsilon}{|A|} + (1-\\varepsilon)\\,[a = \\arg\\max Q_\\pi(s, \\cdot)]$.",
+   "goal": "$$\\sum_{a} \\pi'(a \\mid s)\\,Q_\\pi(s, a) \\;\\ge\\; V_\\pi(s)$$",
+   "steps": [
+    {
+     "tex": "\\sum_{a} \\pi'(a \\mid s)\\,Q_\\pi(s, a)"
+    },
+    {
+     "tex": "= \\frac{\\varepsilon}{|A|}\\sum_{a} Q_\\pi(s, a) + (1-\\varepsilon)\\max_a Q_\\pi(s, a)",
+     "why": {
+      "options": [
+       "Thay định nghĩa của $\\pi'$: phần đều $\\frac{\\varepsilon}{|A|}$ cho mọi hành động, thêm $1-\\varepsilon$ cho hành động tham lam",
+       "Tuyến tính của kỳ vọng",
+       "Định nghĩa $V_\\pi$",
+       "Bất đẳng thức Jensen"
+      ],
+      "answer": 0,
+      "explain": "Hành động tham lam được thêm $1 - \\varepsilon$, và $Q_\\pi$ của nó chính là $\\max_a Q_\\pi(s, a)$."
+     }
+    },
+    {
+     "tex": "\\ge \\frac{\\varepsilon}{|A|}\\sum_{a} Q_\\pi(s, a) + (1-\\varepsilon)\\sum_{a} \\frac{\\pi(a \\mid s) - \\frac{\\varepsilon}{|A|}}{1-\\varepsilon}\\,Q_\\pi(s, a)",
+     "why": {
+      "options": [
+       "Giá trị lớn nhất $\\ge$ mọi trung bình có trọng số; các trọng số $\\frac{\\pi(a \\mid s) - \\varepsilon/|A|}{1-\\varepsilon}$ không âm và có tổng bằng 1",
+       "Vì $\\pi = \\pi'$",
+       "Tính chất Markov",
+       "Vì $\\varepsilon \\to 0$"
+      ],
+      "answer": 0,
+      "explain": "Trọng số không âm vì $\\pi$ là $\\varepsilon$-tham lam ($\\pi(a \\mid s) \\ge \\frac{\\varepsilon}{|A|}$); tổng $= \\frac{1 - \\varepsilon}{1 - \\varepsilon} = 1$. Mà $\\max \\ge$ mọi tổ hợp lồi."
+     }
+    },
+    {
+     "tex": "= \\sum_{a} \\pi(a \\mid s)\\,Q_\\pi(s, a) = V_\\pi(s)",
+     "why": {
+      "options": [
+       "Rút gọn: các số hạng $\\pm\\frac{\\varepsilon}{|A|}Q_\\pi$ triệt tiêu, rồi dùng $V_\\pi(s) = \\sum_a \\pi(a \\mid s) Q_\\pi(s, a)$",
+       "Phương trình tối ưu Bellman",
+       "Luật số lớn",
+       "Định nghĩa $\\pi'$"
+      ],
+      "answer": 0,
+      "explain": "$(1-\\varepsilon)$ triệt tiêu với mẫu số, còn $-\\frac{\\varepsilon}{|A|}\\sum_a Q_\\pi$ triệt tiêu với số hạng đầu."
+     }
+    }
+   ],
+   "hints": [
+    "Viết tổng theo $\\pi'$: tách phần đều và phần thêm cho hành động tham lam.",
+    "So sánh $\\max_a Q_\\pi(s, a)$ với một trung bình có trọng số của $Q_\\pi(s, \\cdot)$. Chọn trọng số sao cho lát nữa ra đúng $\\pi$.",
+    "Trọng số $\\frac{\\pi(a \\mid s) - \\varepsilon/|A|}{1-\\varepsilon}$: kiểm tra không âm và tổng bằng 1."
+   ],
+   "note": "Từ $\\mathbb{E}_{a \\sim \\pi'}[Q_\\pi(s, a)] \\ge V_\\pi(s)$ với mọi $s$, định lý cải thiện chính sách (chứng minh ở chương 2) cho $V_{\\pi'}(s) \\ge V_\\pi(s)$. Sách viết vế trái là $Q_\\pi(s, \\pi'(s))$, ở đây ghi rõ thành tổng vì $\\pi'$ là chính sách ngẫu nhiên."
+  },
+  {
+   "id": "p3-qlearning-target",
+   "ref": "3.4.2",
+   "title": "Mục tiêu Q-learning: từ $A'$ tham lam đến $\\max$",
+   "start": "Chính sách mục tiêu tham lam: $\\pi(s_{t+1}) = \\arg\\max_{a'} Q(s_{t+1}, a')$. Mục tiêu kiểu Sarsa với hành động kế tiếp $A'$ lấy từ $\\pi$: $r_{t+1} + \\gamma Q(s_{t+1}, A')$.",
+   "goal": "$$r_{t+1} + \\gamma Q(s_{t+1}, A') = r_{t+1} + \\gamma \\max_{a'} Q(s_{t+1}, a')$$",
+   "steps": [
+    {
+     "tex": "r_{t+1} + \\gamma Q(s_{t+1}, A')"
+    },
+    {
+     "tex": "= r_{t+1} + \\gamma Q\\big(s_{t+1}, \\arg\\max_{a'} Q(s_{t+1}, a')\\big)",
+     "why": {
+      "options": [
+       "$A'$ được chọn bởi chính sách **mục tiêu** tham lam, không phải chính sách hành vi",
+       "$A'$ lấy mẫu bằng $\\varepsilon$-tham lam",
+       "Kỳ vọng toàn phần",
+       "Tính chất Markov"
+      ],
+      "answer": 0,
+      "explain": "Đây chính là chỗ off-policy: hành động dùng trong mục tiêu đến từ $\\pi$ (tham lam), còn hành động thật sự thực hiện đến từ $\\mu$ ($\\varepsilon$-tham lam)."
+     }
+    },
+    {
+     "tex": "= r_{t+1} + \\gamma \\max_{a'} Q(s_{t+1}, a')",
+     "why": {
+      "options": [
+       "Định nghĩa: giá trị hàm tại điểm argmax chính là giá trị max",
+       "Bất đẳng thức Jensen",
+       "Tuyến tính của kỳ vọng",
+       "Vì $Q$ hội tụ"
+      ],
+      "answer": 0,
+      "explain": "$f(\\arg\\max_x f(x)) = \\max_x f(x)$ với mọi hàm $f$."
+     }
+    }
+   ],
+   "hints": [
+    "$A'$ do chính sách nào chọn trong mục tiêu của Q-learning?",
+    "$f(\\arg\\max f) = ?$"
+   ],
+   "note": "Vì mục tiêu chỉ cần $\\max$, Q-learning **không cần biết** $a_{t+1}$: chỉ cần $(s_t, a_t, r_{t+1}, s_{t+1})$. Sarsa dùng $A'$ do chính chính sách $\\varepsilon$-tham lam chọn, nên phải đợi chọn xong $a_{t+1}$."
+  }
+ ]
+}
