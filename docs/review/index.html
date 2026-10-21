@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
 <style>
   :root {
     --bg: #f6f7f9;
@@ -160,6 +163,9 @@
   .lvl.learn { background: var(--hard-soft); color: var(--hard); }
   .lvl.known { background: var(--good-soft); color: var(--good); }
   .note { font-size: .85rem; color: var(--muted); margin-top: 12px; }
+  .katex { font-size: 1.05em; }
+  .katex-display { margin: .6em 0; overflow-x: auto; overflow-y: hidden; padding: 2px 0; }
+  code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .88em; background: var(--surface-2); border-radius: 5px; padding: 1px 5px; }
   .hidden { display: none !important; }
   .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 10px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
   .toast.show { opacity: .95; }
@@ -247,8 +253,27 @@
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-  // Định dạng tối giản: **đậm** và xuống dòng
-  function fmt(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
+  // Định dạng tối giản: **đậm**, `code` và xuống dòng; công thức $...$ / $$...$$ do KaTeX hiển thị sau khi gắn vào trang
+  function fmt(s) {
+    return esc(s)
+      .replace(/\n*(\$\$[\s\S]+?\$\$)\n*/g, '$1') // công thức khối tự xuống dòng, bỏ dòng trống thừa quanh nó
+      .replace(/`([^`]+)`/g, '<code>$1</code>')
+      .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  }
+  // Hiển thị công thức LaTeX trong một vùng; nếu KaTeX chưa tải xong thì thử lại sau
+  function typeset(el, tries) {
+    if (!el) return;
+    if (window.renderMathInElement) {
+      try {
+        window.renderMathInElement(el, {
+          delimiters: [{ left: '$$', right: '$$', display: true }, { left: '$', right: '$', display: false }],
+          throwOnError: false
+        });
+      } catch (e) {}
+    } else if ((tries || 0) < 50) {
+      setTimeout(function () { typeset(el, (tries || 0) + 1); }, 100);
+    }
+  }
   function shuffle(a) {
     a = a.slice();
     for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
@@ -377,6 +402,7 @@
       html += '<div class="kbd">Phím tắt: <kbd>Space</kbd> lật thẻ</div>';
     }
     area.innerHTML = html;
+    typeset(area);
     var cardEl = document.getElementById('the-card');
     if (!flipped) cardEl.onclick = flip;
     area.querySelectorAll('.grade').forEach(function (b) { b.onclick = function () { grade(b.getAttribute('data-grade')); }; });
@@ -443,6 +469,7 @@
         '<div class="row">' + (quiz.wrong.length ? '<button class="btn primary" id="btn-retry-wrong">Làm lại câu sai</button>' : '') +
         '<button class="btn" id="btn-retry-all">Làm lại tất cả</button></div>' +
         (full ? '' : '<p class="note">Lượt làm lại câu sai không tính vào điểm cao nhất.</p>') + '</div>';
+      typeset(area);
       var w = quiz.wrong.slice();
       var b1 = document.getElementById('btn-retry-wrong'); if (b1) b1.onclick = function () { startQuiz(w); };
       document.getElementById('btn-retry-all').onclick = function () { startQuiz(); };
@@ -471,6 +498,7 @@
     }
     html += '</div>';
     area.innerHTML = html;
+    typeset(area);
     area.querySelectorAll('.opt').forEach(function (b) { b.onclick = function () { answer(parseInt(b.getAttribute('data-k'), 10)); }; });
     var nb = document.getElementById('btn-next'); if (nb) nb.onclick = nextQuestion;
   }
@@ -517,6 +545,7 @@
       '</div>' +
       '<p class="note">Tiến độ chỉ lưu trong trình duyệt này. Muốn chuyển sang máy khác, bấm "Xuất tiến độ" để tải file, rồi "Nhập tiến độ" ở máy kia. Xóa dữ liệu trình duyệt sẽ mất tiến độ.</p>' +
       '<table><thead><tr><th>Thẻ</th><th>Mức</th><th>Ôn tiếp</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    typeset(document.getElementById('progress-area'));
 
     document.getElementById('btn-export').onclick = function () {
       var blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });

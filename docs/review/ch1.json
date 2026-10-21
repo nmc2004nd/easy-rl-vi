@@ -64,8 +64,8 @@
       "id": "c1-history",
       "tag": "Công thức",
       "ref": "1.2.3",
-      "front": "Lịch sử (history) H_t là gì, và trạng thái liên hệ với nó thế nào?",
-      "back": "H_t = o₁, a₁, r₁, …, o_t, a_t, r_t: chuỗi **quan sát, hành động, phần thưởng**.\nTrạng thái là một **hàm của lịch sử**: S_t = f(H_t)."
+      "front": "Lịch sử (history) $H_t$ là gì, và trạng thái liên hệ với nó thế nào?",
+      "back": "$H_t = o_1, a_1, r_1, \\ldots, o_t, a_t, r_t$: chuỗi **quan sát, hành động, phần thưởng**.\nTrạng thái là một **hàm của lịch sử**: $S_t = f(H_t)$."
     },
     {
       "id": "c1-state-obs",
@@ -79,14 +79,14 @@
       "tag": "So sánh",
       "ref": "1.2.3",
       "front": "Môi trường quan sát được hoàn toàn và quan sát được một phần khác nhau thế nào? Mỗi loại thường được mô hình hóa bằng gì?",
-      "back": "**Hoàn toàn (fully observed)**: tác tử thấy toàn bộ trạng thái môi trường, o_t = s_t → mô hình hóa bằng **MDP**.\n**Một phần (partially observed)**: chỉ thấy một phần, ví dụ blackjack chỉ thấy bài đã lật, Atari chỉ thấy khung hình hiện tại → mô hình hóa bằng **POMDP**."
+      "back": "**Hoàn toàn (fully observed)**: tác tử thấy toàn bộ trạng thái môi trường, $o_t = s_t^e = s_t^a$ → mô hình hóa bằng **MDP**.\n**Một phần (partially observed)**: chỉ thấy một phần, ví dụ blackjack chỉ thấy bài đã lật, Atari chỉ thấy khung hình hiện tại → mô hình hóa bằng **POMDP**."
     },
     {
       "id": "c1-pomdp",
       "tag": "Công thức",
       "ref": "1.2.3",
       "front": "POMDP được mô tả bằng bộ bảy nào? Hai thành phần nào làm nó khác MDP?",
-      "back": "(S, A, T, R, Ω, O, γ): không gian trạng thái, không gian hành động, xác suất chuyển T(s'|s,a), hàm phần thưởng, **xác suất quan sát Ω(o|s,a)**, **không gian quan sát O**, hệ số chiết khấu.\nHai thành phần **Ω và O** mô tả việc tác tử chỉ nhìn thấy quan sát, không thấy trạng thái thật."
+      "back": "$(S, A, T, R, \\Omega, O, \\gamma)$: không gian trạng thái, không gian hành động, xác suất chuyển $T(s' \\mid s, a)$, hàm phần thưởng, **xác suất quan sát $\\Omega(o \\mid s, a)$**, **không gian quan sát $O$**, hệ số chiết khấu.\nHai thành phần **$\\Omega$ và $O$** mô tả việc tác tử chỉ nhìn thấy quan sát, không thấy trạng thái thật."
     },
     {
       "id": "c1-action-space",
@@ -107,7 +107,7 @@
       "tag": "Công thức",
       "ref": "1.4.1",
       "front": "Chính sách ngẫu nhiên và chính sách tất định khác nhau thế nào?",
-      "back": "**Ngẫu nhiên (stochastic)**: π(a|s) = p(a_t = a | s_t = s), cho ra một **phân phối xác suất** trên các hành động rồi lấy mẫu.\n**Tất định (deterministic)**: chọn thẳng hành động có khả năng nhất, a* = argmax_a π(a|s)."
+      "back": "**Ngẫu nhiên (stochastic)**: cho ra một **phân phối xác suất** trên các hành động rồi lấy mẫu:\n$$\\pi(a \\mid s) = p(a_t = a \\mid s_t = s)$$\n**Tất định (deterministic)**: chọn thẳng hành động có khả năng nhất:\n$$a^{*} = \\arg\\max_{a} \\pi(a \\mid s)$$"
     },
     {
       "id": "c1-why-stochastic",
@@ -120,36 +120,36 @@
       "id": "c1-value-function",
       "tag": "Công thức",
       "ref": "1.4.2",
-      "front": "Viết định nghĩa hàm giá trị trạng thái V_π(s) và nói ý nghĩa.",
-      "back": "V_π(s) = E_π[ G_t | s_t = s ] = E_π[ Σ_k γ^k · r_{t+k+1} | s_t = s ]\nLà **phần thưởng tương lai có chiết khấu kỳ vọng** khi bắt đầu từ trạng thái s và đi theo chính sách π. Càng lớn thì trạng thái càng có lợi."
+      "front": "Viết định nghĩa hàm giá trị trạng thái $V_\\pi(s)$ và nói ý nghĩa.",
+      "back": "$$\\begin{aligned} V_{\\pi}(s) &= \\mathbb{E}_{\\pi}\\left[G_t \\mid s_t = s\\right] \\\\ &= \\mathbb{E}_{\\pi}\\left[\\sum_{k=0}^{\\infty} \\gamma^{k} r_{t+k+1} \\,\\middle|\\, s_t = s\\right] \\end{aligned}$$\nLà **phần thưởng tương lai có chiết khấu kỳ vọng** khi bắt đầu từ trạng thái $s$ và đi theo chính sách $\\pi$. Càng lớn thì trạng thái càng có lợi."
     },
     {
       "id": "c1-discount",
       "tag": "Vì sao",
       "ref": "1.4.2",
-      "front": "Vì sao cần hệ số chiết khấu γ? γ nhỏ hay lớn thì tác tử cư xử thế nào?",
-      "back": "Vì ta muốn nhận phần thưởng **càng sớm càng tốt**: 100 đồng hôm nay đáng giá hơn 100 đồng sau 10 ngày.\nγ gần **0** → tác tử **thiển cận**, chỉ quan tâm phần thưởng trước mắt. γ gần **1** → tác tử **nhìn xa**, coi trọng phần thưởng tương lai."
+      "front": "Vì sao cần hệ số chiết khấu $\\gamma$? $\\gamma$ nhỏ hay lớn thì tác tử cư xử thế nào?",
+      "back": "Vì ta muốn nhận phần thưởng **càng sớm càng tốt**: 100 đồng hôm nay đáng giá hơn 100 đồng sau 10 ngày.\n$\\gamma$ gần **0** → tác tử **thiển cận**, chỉ quan tâm phần thưởng trước mắt. $\\gamma$ gần **1** → tác tử **nhìn xa**, coi trọng phần thưởng tương lai."
     },
     {
       "id": "c1-q-function",
       "tag": "So sánh",
       "ref": "1.4.2",
-      "front": "Hàm Q khác hàm giá trị V ở điểm nào? Vì sao hàm Q hữu ích?",
-      "back": "V_π(s) chỉ phụ thuộc **trạng thái**; Q_π(s, a) phụ thuộc **trạng thái và hành động**: phần thưởng tương lai kỳ vọng khi ở s, làm a, rồi theo π.\nCó hàm Q thì **suy ra ngay hành động tốt nhất**: chọn a có Q(s, a) lớn nhất."
+      "front": "Hàm $Q$ khác hàm giá trị $V$ ở điểm nào? Vì sao hàm $Q$ hữu ích?",
+      "back": "$V_\\pi(s)$ chỉ phụ thuộc **trạng thái**; $Q_\\pi(s, a)$ phụ thuộc **trạng thái và hành động**: phần thưởng tương lai kỳ vọng khi ở $s$, làm $a$, rồi theo $\\pi$:\n$$Q_{\\pi}(s, a) = \\mathbb{E}_{\\pi}\\left[G_t \\mid s_t = s, a_t = a\\right]$$\nCó hàm $Q$ thì **suy ra ngay hành động tốt nhất**: chọn $a$ có $Q(s, a)$ lớn nhất."
     },
     {
       "id": "c1-model",
       "tag": "Công thức",
       "ref": "1.4.3",
       "front": "\"Mô hình\" của môi trường gồm hai phần nào?",
-      "back": "1. **Xác suất chuyển trạng thái**: p(s_{t+1} = s' | s_t = s, a_t = a).\n2. **Hàm phần thưởng**: R(s, a) = E[ r_{t+1} | s_t = s, a_t = a ]."
+      "back": "1. **Xác suất chuyển trạng thái**: $p_{ss'}^{a} = p(s_{t+1} = s' \\mid s_t = s, a_t = a)$\n2. **Hàm phần thưởng**: $R(s, a) = \\mathbb{E}\\left[r_{t+1} \\mid s_t = s, a_t = a\\right]$"
     },
     {
       "id": "c1-maze",
       "tag": "Ví dụ",
       "ref": "1.4.3",
-      "front": "Trong ví dụ mê cung (mỗi bước −1), vì sao giá trị ở ô xuất phát là −16? Tác tử dựa trên giá trị chọn đường thế nào?",
-      "back": "Đường ngắn nhất tới đích mất **16 bước**, mỗi bước −1 → giá trị −16.\nỞ mỗi ô, tác tử nhìn các ô lân cận và **đi sang ô có giá trị lớn nhất** (ví dụ ô trên −14 tốt hơn ô dưới −16). Chính sách được **suy ra từ giá trị**."
+      "front": "Trong ví dụ mê cung (mỗi bước $-1$), vì sao giá trị ở ô xuất phát là $-16$? Tác tử dựa trên giá trị chọn đường thế nào?",
+      "back": "Đường ngắn nhất tới đích mất **16 bước**, mỗi bước $-1$ → giá trị $-16$.\nỞ mỗi ô, tác tử nhìn các ô lân cận và **đi sang ô có giá trị lớn nhất** (ví dụ ô trên $-14$ tốt hơn ô dưới $-16$). Chính sách được **suy ra từ giá trị**."
     },
     {
       "id": "c1-value-vs-policy",
@@ -170,7 +170,7 @@
       "tag": "So sánh",
       "ref": "1.4.4 · Bài tập 1-9",
       "front": "Học có mô hình (model-based) và không mô hình (model-free) khác nhau thế nào? Mẹo nhận biết khi nào dùng được model-based?",
-      "back": "**Có mô hình**: học/biết P(s'|s,a) và R(s,a), xây **thế giới ảo** để lập kế hoạch, ít cần tương tác thật.\n**Không mô hình**: không mô hình hóa môi trường, **học trực tiếp** từ tương tác thật qua hàm giá trị hoặc chính sách.\nMẹo: nếu **trước khi hành động** ta dự đoán được trạng thái và phần thưởng bước tiếp theo, thì mô hình hóa được môi trường."
+      "back": "**Có mô hình**: học/biết $P(s' \\mid s, a)$ và $R(s, a)$, xây **thế giới ảo** để lập kế hoạch, ít cần tương tác thật.\n**Không mô hình**: không mô hình hóa môi trường, **học trực tiếp** từ tương tác thật qua hàm giá trị hoặc chính sách.\nMẹo: nếu **trước khi hành động** ta dự đoán được trạng thái và phần thưởng bước tiếp theo, thì mô hình hóa được môi trường."
     },
     {
       "id": "c1-model-tradeoff",
@@ -197,7 +197,7 @@
       "id": "c1-bandit",
       "tag": "Ví dụ",
       "ref": "1.6",
-      "front": "Máy K tay cần (K-armed bandit): nhược điểm của chỉ khám phá và chỉ khai thác là gì?",
+      "front": "Máy $K$ tay cần ($K$-armed bandit): nhược điểm của chỉ khám phá và chỉ khai thác là gì?",
       "back": "**Chỉ khám phá**: kéo đều mọi tay cần → ước lượng phần thưởng mỗi tay tốt, nhưng **bỏ lỡ nhiều lần** kéo tay tốt nhất.\n**Chỉ khai thác**: luôn kéo tay đang tốt nhất → **ước lượng kém**, có thể mãi không tìm ra tay thật sự tốt nhất.\nCả hai đều khó đạt phần thưởng tích lũy lớn nhất → **thế lưỡng nan khám phá-khai thác**."
     },
     {
@@ -211,8 +211,8 @@
       "id": "c1-gymnasium-step",
       "tag": "Thực hành",
       "ref": "1.7.1",
-      "front": "Trong Gymnasium, env.reset() và env.step(a) trả về những gì? terminated khác truncated thế nào?",
-      "back": "reset() → (observation, info).\nstep(a) → (observation, reward, **terminated**, **truncated**, info).\n**terminated**: tập kết thúc vì đạt trạng thái kết thúc của bài toán (cây sào đổ, tới đích).\n**truncated**: bị cắt ngang vì điều kiện ngoài, ví dụ **hết giới hạn số bước**.\ndone của Gym cũ = terminated or truncated."
+      "front": "Trong Gymnasium, `env.reset()` và `env.step(a)` trả về những gì? `terminated` khác `truncated` thế nào?",
+      "back": "`reset()` → `(observation, info)`\n`step(a)` → `(observation, reward, terminated, truncated, info)`\n**`terminated`**: tập kết thúc vì đạt trạng thái kết thúc của bài toán (cây sào đổ, tới đích).\n**`truncated`**: bị cắt ngang vì điều kiện ngoài, ví dụ **hết giới hạn số bước**.\n`done` của Gym cũ = `terminated or truncated`."
     }
   ],
   "quiz": [
@@ -230,35 +230,60 @@
     },
     {
       "q": "Bạn luôn gọi món quen thuộc ở quán quen vì biết chắc là ngon. Trong học tăng cường, hành vi này gọi là gì?",
-      "options": ["Khám phá (exploration)", "Khai thác (exploitation)", "Lập kế hoạch (planning)", "Phần thưởng trễ"],
+      "options": [
+        "Khám phá (exploration)",
+        "Khai thác (exploitation)",
+        "Lập kế hoạch (planning)",
+        "Phần thưởng trễ"
+      ],
       "answer": 1,
       "explain": "Khai thác là thực hiện hành động đã biết là mang lại phần thưởng tốt. Thử món mới hay quán mới mới là khám phá.",
       "ref": "1.6"
     },
     {
-      "q": "Điều khiển góc đánh lái của ô tô tự lái (bất kỳ góc nào từ −30° đến 30°) là ví dụ của:",
-      "options": ["Không gian hành động rời rạc", "Không gian hành động liên tục", "Không gian quan sát rời rạc", "Chính sách tất định"],
+      "q": "Điều khiển góc đánh lái của ô tô tự lái (bất kỳ góc nào từ $-30^\\circ$ đến $30^\\circ$) là ví dụ của:",
+      "options": [
+        "Không gian hành động rời rạc",
+        "Không gian hành động liên tục",
+        "Không gian quan sát rời rạc",
+        "Chính sách tất định"
+      ],
       "answer": 1,
       "explain": "Hành động là một số thực trong một khoảng, không đếm được, nên là không gian hành động liên tục, giống ví dụ robot quay bất kỳ góc nào trong 360°.",
       "ref": "1.3"
     },
     {
       "q": "Q-learning và Sarsa thuộc nhóm phương pháp nào?",
-      "options": ["Dựa trên chính sách (policy-based)", "Dựa trên giá trị (value-based)", "Diễn viên-nhà phê bình (actor-critic)", "Có mô hình (model-based)"],
+      "options": [
+        "Dựa trên chính sách (policy-based)",
+        "Dựa trên giá trị (value-based)",
+        "Diễn viên-nhà phê bình (actor-critic)",
+        "Có mô hình (model-based)"
+      ],
       "answer": 1,
-      "explain": "Hai thuật toán này học bảng/hàm giá trị Q rồi chọn hành động có giá trị lớn nhất; chính sách được suy ra ngầm từ hàm giá trị.",
+      "explain": "Hai thuật toán này học bảng/hàm giá trị $Q$ rồi chọn hành động có giá trị lớn nhất; chính sách được suy ra ngầm từ hàm giá trị.",
       "ref": "1.4.4"
     },
     {
-      "q": "Tác tử biết trước P(s'|s,a) và R(s,a), nên thử nghiệm các phương án trong một \"thế giới ảo\" trước khi hành động thật. Đây là:",
-      "options": ["Học tăng cường không mô hình", "Học tăng cường có mô hình", "Học có giám sát", "Chính sách ngẫu nhiên"],
+      "q": "Tác tử biết trước $P(s' \\mid s, a)$ và $R(s, a)$, nên thử nghiệm các phương án trong một \"thế giới ảo\" trước khi hành động thật. Đây là:",
+      "options": [
+        "Học tăng cường không mô hình",
+        "Học tăng cường có mô hình",
+        "Học có giám sát",
+        "Chính sách ngẫu nhiên"
+      ],
       "answer": 1,
       "explain": "Biết hàm chuyển trạng thái và hàm phần thưởng nghĩa là mô hình hóa được môi trường, nên tác tử có thể học và lập kế hoạch trong thế giới ảo. Đó là học tăng cường có mô hình.",
       "ref": "1.4.4"
     },
     {
       "q": "Trong Pong, các bước đi lên/xuống không được thưởng gì; chỉ khi kết thúc lượt mới biết thắng hay thua. Hiện tượng này minh họa điều gì?",
-      "options": ["Dữ liệu i.i.d.", "Phần thưởng trễ (delayed reward)", "Không gian hành động liên tục", "Môi trường quan sát được hoàn toàn"],
+      "options": [
+        "Dữ liệu i.i.d.",
+        "Phần thưởng trễ (delayed reward)",
+        "Không gian hành động liên tục",
+        "Môi trường quan sát được hoàn toàn"
+      ],
       "answer": 1,
       "explain": "Hậu quả của hành động hiện tại chỉ lộ ra rất lâu sau đó. Đây là phần thưởng trễ, một lý do khiến học tăng cường khó hơn học có giám sát.",
       "ref": "1.2.3"
@@ -276,7 +301,7 @@
       "ref": "1.1.1"
     },
     {
-      "q": "Theo định nghĩa V(s) = E[Σ γ^k · r_{t+k+1}], nếu đặt γ = 0 thì tác tử quan tâm tới gì?",
+      "q": "Theo định nghĩa $$V(s) = \\mathbb{E}\\left[\\sum_{k=0}^{\\infty} \\gamma^{k} r_{t+k+1}\\right]$$ nếu đặt $\\gamma = 0$ thì tác tử quan tâm tới gì?",
       "options": [
         "Chỉ phần thưởng ngay ở bước tiếp theo",
         "Tất cả phần thưởng tương lai với trọng số bằng nhau",
@@ -284,11 +309,11 @@
         "Không quan tâm phần thưởng nào"
       ],
       "answer": 0,
-      "explain": "Với γ = 0, mọi số hạng γ^k với k ≥ 1 đều bằng 0, chỉ còn r_{t+1}. Tác tử trở nên \"thiển cận\". γ càng gần 1 thì càng coi trọng tương lai.",
+      "explain": "Với $\\gamma = 0$, mọi số hạng $\\gamma^{k}$ với $k \\geq 1$ đều bằng 0, chỉ còn $r_{t+1}$. Tác tử trở nên \"thiển cận\". $\\gamma$ càng gần 1 thì càng coi trọng tương lai.",
       "ref": "1.4.2"
     },
     {
-      "q": "Trong ví dụ mê cung (mỗi bước nhận −1), ô xuất phát có giá trị −16. Điều đó có nghĩa là gì?",
+      "q": "Trong ví dụ mê cung (mỗi bước nhận $-1$), ô xuất phát có giá trị $-16$. Điều đó có nghĩa là gì?",
       "options": [
         "Mê cung có 16 ô",
         "Đường ngắn nhất từ ô xuất phát tới đích mất 16 bước",
@@ -296,7 +321,7 @@
         "Có 16 hành động khả dĩ"
       ],
       "answer": 1,
-      "explain": "Mỗi bước bị trừ 1, đi tối ưu mất 16 bước nên tổng phần thưởng là −16. Càng gần đích, giá trị càng lớn (−15, −14, …).",
+      "explain": "Mỗi bước bị trừ 1, đi tối ưu mất 16 bước nên tổng phần thưởng là $-16$. Càng gần đích, giá trị càng lớn ($-15$, $-14$, …).",
       "ref": "1.4.3"
     },
     {
@@ -313,21 +338,26 @@
     },
     {
       "q": "Cờ caro có luật hoàn toàn đã biết; một chương trình tính trước các nước đi bằng cách mô phỏng trong đầu, không cần chơi thử. Đây là:",
-      "options": ["Học (learning)", "Lập kế hoạch (planning)", "Khám phá (exploration)", "Học không mô hình"],
+      "options": [
+        "Học (learning)",
+        "Lập kế hoạch (planning)",
+        "Khám phá (exploration)",
+        "Học không mô hình"
+      ],
       "answer": 1,
       "explain": "Môi trường đã biết, tác tử chỉ cần tính toán để tìm lời giải tối ưu mà không cần tương tác. Đó là lập kế hoạch. Học là khi môi trường chưa biết và phải tương tác để cải thiện.",
       "ref": "1.5"
     },
     {
-      "q": "Trong Gymnasium, CartPole-v1 trả về truncated=True sau 500 bước dù cây sào chưa đổ. Khi tính mục tiêu TD, có nên coi trạng thái tiếp theo có giá trị bằng 0 không?",
+      "q": "Trong Gymnasium, `CartPole-v1` trả về `truncated=True` sau 500 bước dù cây sào chưa đổ. Khi tính mục tiêu TD, có nên coi trạng thái tiếp theo có giá trị bằng 0 không?",
       "options": [
         "Có, vì tập đã kết thúc",
-        "Không, chỉ khi terminated=True mới coi giá trị tiếp theo bằng 0",
-        "Có, vì truncated và terminated giống hệt nhau",
+        "Không, chỉ khi `terminated=True` mới coi giá trị tiếp theo bằng 0",
+        "Có, vì `truncated` và `terminated` giống hệt nhau",
         "Không quan trọng, kết quả như nhau"
       ],
       "answer": 1,
-      "explain": "truncated chỉ có nghĩa là bị cắt vì hết giới hạn bước; trạng thái đó vẫn có tương lai. Chỉ terminated (kết thúc thật) mới cắt bootstrap. Đây là lý do các notebook trong bản dịch lưu terminated vào bộ nhớ.",
+      "explain": "`truncated` chỉ có nghĩa là bị cắt vì hết giới hạn bước; trạng thái đó vẫn có tương lai. Chỉ `terminated` (kết thúc thật) mới cắt bootstrap. Đây là lý do các notebook trong bản dịch lưu `terminated` vào bộ nhớ.",
       "ref": "1.7.1"
     }
   ]
