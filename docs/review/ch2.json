@@ -401,5 +401,619 @@
       "explain": "Dùng nhiều phần thưởng thật hơn và ít dựa vào ước lượng hơn nên độ chệch giảm; nhưng tổng nhiều biến ngẫu nhiên hơn nên phương sai tăng.",
       "ref": "Phỏng vấn 2-6"
     }
+  ],
+  "proofs": [
+    {
+      "id": "p2-bellman-mrp",
+      "ref": "2.2.2",
+      "title": "Phương trình Bellman cho quá trình phần thưởng Markov",
+      "start": "Định nghĩa $V(s)=\\mathbb{E}[G_t \\mid s_t=s]$ với lợi tức $G_t=r_{t+1}+\\gamma r_{t+2}+\\gamma^2 r_{t+3}+\\cdots$ và phần thưởng $R(s)=\\mathbb{E}[r_{t+1}\\mid s_t=s]$.",
+      "goal": "$$V(s)=R(s)+\\gamma \\sum_{s'\\in S} p(s'\\mid s)\\,V(s')$$",
+      "steps": [
+        {
+          "tex": "V(s)=\\mathbb{E}[G_t \\mid s_t=s]"
+        },
+        {
+          "tex": "=\\mathbb{E}[r_{t+1}+\\gamma r_{t+2}+\\gamma^{2} r_{t+3}+\\cdots \\mid s_t=s]",
+          "why": {
+            "options": [
+              "Thay định nghĩa của lợi tức $G_t$",
+              "Tính chất Markov",
+              "Tuyến tính của kỳ vọng",
+              "Kỳ vọng toàn phần"
+            ],
+            "answer": 0,
+            "explain": "Chỉ viết $G_t$ thành tổng phần thưởng chiết khấu theo định nghĩa, chưa dùng tính chất nào."
+          }
+        },
+        {
+          "tex": "=\\mathbb{E}[r_{t+1}\\mid s_t=s]+\\gamma\\,\\mathbb{E}[r_{t+2}+\\gamma r_{t+3}+\\cdots \\mid s_t=s]",
+          "why": {
+            "options": [
+              "Tuyến tính của kỳ vọng: $\\mathbb{E}[X+cY]=\\mathbb{E}[X]+c\\,\\mathbb{E}[Y]$",
+              "Các phần thưởng độc lập với nhau",
+              "Tính chất Markov",
+              "Kỳ vọng toàn phần"
+            ],
+            "answer": 0,
+            "explain": "Tách số hạng đầu, rút $\\gamma$ ra khỏi phần còn lại. Tuyến tính của kỳ vọng **luôn** đúng, không cần các phần thưởng độc lập (thực tế chúng không độc lập)."
+          }
+        },
+        {
+          "tex": "=R(s)+\\gamma\\,\\mathbb{E}[G_{t+1}\\mid s_t=s]",
+          "why": {
+            "options": [
+              "Định nghĩa $R(s)$ và $G_{t+1}=r_{t+2}+\\gamma r_{t+3}+\\cdots$",
+              "Tính chất Markov",
+              "Kỳ vọng toàn phần",
+              "Cho $\\gamma \\to 1$"
+            ],
+            "answer": 0,
+            "explain": "Kỳ vọng thứ nhất chính là $R(s)$; tổng trong kỳ vọng thứ hai là lợi tức tính từ bước $t+1$, tức $G_{t+1}$."
+          }
+        },
+        {
+          "tex": "=R(s)+\\gamma\\,\\mathbb{E}[V(s_{t+1})\\mid s_t=s]",
+          "why": {
+            "options": [
+              "Kỳ vọng toàn phần theo $s_{t+1}$, kết hợp tính chất Markov",
+              "Vì $G_{t+1}=V(s_{t+1})$ trên mọi quỹ đạo",
+              "Tuyến tính của kỳ vọng",
+              "Định nghĩa $R(s)$"
+            ],
+            "answer": 0,
+            "explain": "$\\mathbb{E}[G_{t+1}\\mid s_t]=\\mathbb{E}\\big[\\mathbb{E}[G_{t+1}\\mid s_{t+1},s_t]\\mid s_t\\big]=\\mathbb{E}\\big[\\mathbb{E}[G_{t+1}\\mid s_{t+1}]\\mid s_t\\big]=\\mathbb{E}[V(s_{t+1})\\mid s_t]$, dấu bằng ở giữa nhờ tính chất Markov. $G_{t+1}$ là biến ngẫu nhiên nên **không** bằng $V(s_{t+1})$ trên từng quỹ đạo, chỉ bằng khi lấy kỳ vọng. Chứng minh chi tiết ở mục \"Kỳ vọng toàn phần\"."
+          }
+        },
+        {
+          "tex": "=R(s)+\\gamma \\sum_{s'\\in S} p(s'\\mid s)\\,V(s')",
+          "why": {
+            "options": [
+              "Viết kỳ vọng theo phân phối chuyển trạng thái $p(s'\\mid s)$",
+              "Tuyến tính của kỳ vọng",
+              "Lấy mẫu Monte Carlo",
+              "Phương trình tối ưu Bellman"
+            ],
+            "answer": 0,
+            "explain": "Với hàm $f$ bất kỳ, $\\mathbb{E}[f(s_{t+1})\\mid s_t=s]=\\sum_{s'} p(s'\\mid s)\\,f(s')$; ở đây $f=V$."
+          }
+        }
+      ],
+      "hints": [
+        "Viết $G_t$ thành tổng phần thưởng rồi tách riêng $r_{t+1}$ ra khỏi kỳ vọng.",
+        "Phần còn lại sau khi rút $\\gamma$ chính là $G_{t+1}$. Làm sao đổi $\\mathbb{E}[G_{t+1}\\mid s_t=s]$ thành một biểu thức chỉ chứa $V$?",
+        "Lấy kỳ vọng theo trạng thái kế tiếp $s_{t+1}$ (kỳ vọng toàn phần) và dùng tính chất Markov: $\\mathbb{E}[G_{t+1}\\mid s_t]=\\mathbb{E}[V(s_{t+1})\\mid s_t]$, rồi khai triển theo $p(s'\\mid s)$."
+      ],
+      "note": "Ý nghĩa: giá trị hiện tại = phần thưởng tức thời + giá trị chiết khấu trung bình của trạng thái kế tiếp. Mọi phương trình Bellman về sau đều có đúng khung này."
+    },
+    {
+      "id": "p2-total-expectation",
+      "ref": "2.2.2",
+      "title": "Kỳ vọng toàn phần: $\\mathbb{E}[V(s_{t+1})\\mid s_t]=\\mathbb{E}[G_{t+1}\\mid s_t]$",
+      "start": "Ký hiệu gọn $s=s_t$, $s'=s_{t+1}$, $g'=G_{t+1}$. Theo định nghĩa, $V(s')=\\mathbb{E}[g'\\mid s']=\\sum_{g'} g'\\,p(g'\\mid s')$.",
+      "goal": "$$\\mathbb{E}\\big[\\mathbb{E}[g'\\mid s']\\mid s\\big]=\\mathbb{E}[g'\\mid s]$$",
+      "steps": [
+        {
+          "tex": "\\mathbb{E}\\big[\\mathbb{E}[g'\\mid s']\\mid s\\big]=\\mathbb{E}\\Big[\\sum_{g'} g'\\,p(g'\\mid s')\\,\\Big|\\, s\\Big]"
+        },
+        {
+          "tex": "=\\sum_{s'}\\sum_{g'} g'\\,p(g'\\mid s',s)\\,p(s'\\mid s)",
+          "why": {
+            "options": [
+              "Kỳ vọng ngoài lấy theo $p(s'\\mid s)$, và $p(g'\\mid s')=p(g'\\mid s',s)$ nhờ tính chất Markov",
+              "Quy tắc Bayes",
+              "Đổi thứ tự hai tổng",
+              "$s$ và $s'$ độc lập"
+            ],
+            "answer": 0,
+            "explain": "Kỳ vọng ngoài lấy theo $s'$ khi đã biết $s$, nên nhân với $p(s'\\mid s)$ và cộng theo $s'$. Thêm điều kiện $s$ vào $p(g'\\mid s')$ không đổi giá trị vì khi đã biết $s'$ thì $g'$ không còn phụ thuộc $s$."
+          }
+        },
+        {
+          "tex": "=\\sum_{s'}\\sum_{g'} \\frac{g'\\,p(g'\\mid s',s)\\,p(s'\\mid s)\\,p(s)}{p(s)}",
+          "why": {
+            "options": [
+              "Nhân rồi chia cho cùng một số $p(s)>0$",
+              "Quy tắc Bayes",
+              "Chuẩn hóa xác suất",
+              "Tính chất Markov"
+            ],
+            "answer": 0,
+            "explain": "Mẹo đại số: nhân và chia cùng một số khác 0 không đổi giá trị, để chuẩn bị gộp các thừa số thành xác suất đồng thời."
+          }
+        },
+        {
+          "tex": "=\\sum_{s'}\\sum_{g'} \\frac{g'\\,p(g'\\mid s',s)\\,p(s',s)}{p(s)}",
+          "why": {
+            "options": [
+              "Quy tắc nhân: $p(s'\\mid s)\\,p(s)=p(s',s)$",
+              "$s$ và $s'$ độc lập",
+              "Tính chất Markov",
+              "Quy tắc Bayes"
+            ],
+            "answer": 0,
+            "explain": "Xác suất có điều kiện nhân với xác suất của điều kiện ra xác suất đồng thời. Không cần $s$, $s'$ độc lập (và chúng cũng không độc lập)."
+          }
+        },
+        {
+          "tex": "=\\sum_{s'}\\sum_{g'} \\frac{g'\\,p(g',s',s)}{p(s)}",
+          "why": {
+            "options": [
+              "Quy tắc nhân lần nữa: $p(g'\\mid s',s)\\,p(s',s)=p(g',s',s)$",
+              "Lấy biên theo $s'$",
+              "Tính chất Markov",
+              "Quy tắc Bayes"
+            ],
+            "answer": 0,
+            "explain": "Cùng một quy tắc nhân như dòng trước, lần này với điều kiện là cặp $(s',s)$."
+          }
+        },
+        {
+          "tex": "=\\sum_{s'}\\sum_{g'} g'\\,p(g',s'\\mid s)",
+          "why": {
+            "options": [
+              "Định nghĩa xác suất có điều kiện: $p(g',s',s)/p(s)=p(g',s'\\mid s)$",
+              "Lấy biên theo $s$",
+              "Tính chất Markov",
+              "Đổi thứ tự hai tổng"
+            ],
+            "answer": 0,
+            "explain": "Chia xác suất đồng thời cho xác suất của điều kiện chính là định nghĩa xác suất có điều kiện."
+          }
+        },
+        {
+          "tex": "=\\sum_{g'}\\sum_{s'} g'\\,p(g',s'\\mid s)",
+          "why": {
+            "options": [
+              "Đổi thứ tự hai tổng",
+              "Lấy biên theo $s'$",
+              "Tính chất Markov",
+              "Tuyến tính của kỳ vọng"
+            ],
+            "answer": 0,
+            "explain": "Với tổng hữu hạn (hoặc hội tụ tuyệt đối) có thể đổi thứ tự lấy tổng; làm vậy để tổng theo $s'$ nằm trong cùng."
+          }
+        },
+        {
+          "tex": "=\\sum_{g'} g'\\,p(g'\\mid s)",
+          "why": {
+            "options": [
+              "Lấy biên (marginalize): $\\sum_{s'} p(g',s'\\mid s)=p(g'\\mid s)$",
+              "Đổi thứ tự hai tổng",
+              "Tính chất Markov",
+              "Quy tắc Bayes"
+            ],
+            "answer": 0,
+            "explain": "Cộng xác suất đồng thời theo mọi giá trị của $s'$ thì $s'$ biến mất. Vì $g'$ không phụ thuộc $s'$ nên rút $g'$ ra ngoài tổng trong được."
+          }
+        },
+        {
+          "tex": "=\\mathbb{E}[g'\\mid s]=\\mathbb{E}[G_{t+1}\\mid s_t]",
+          "why": {
+            "options": [
+              "Định nghĩa kỳ vọng có điều kiện",
+              "Tính chất Markov",
+              "Phương trình Bellman",
+              "Tuyến tính của kỳ vọng"
+            ],
+            "answer": 0,
+            "explain": "$\\sum_{g'} g'\\,p(g'\\mid s)$ đúng là định nghĩa của $\\mathbb{E}[g'\\mid s]$."
+          }
+        }
+      ],
+      "hints": [
+        "Viết kỳ vọng ngoài thành tổng theo $s'$ với trọng số $p(s'\\mid s)$. Thêm điều kiện $s$ vào $p(g'\\mid s')$: vì sao được phép?",
+        "Mục tiêu là gộp $p(g'\\mid s',s)\\,p(s'\\mid s)$ thành một xác suất đồng thời có điều kiện $p(g',s'\\mid s)$: nhân chia $p(s)$ rồi dùng quy tắc nhân hai lần.",
+        "Cuối cùng đổi thứ tự hai tổng và cộng theo $s'$ (lấy biên) để còn $p(g'\\mid s)$."
+      ],
+      "note": "Bốn dòng giữa (nhân chia $p(s)$) có thể gộp làm một: $p(g'\\mid s',s)\\,p(s'\\mid s)=p(g',s'\\mid s)$ là quy tắc nhân cho xác suất có điều kiện. Kết quả tổng quát gọi là luật kỳ vọng lặp (law of iterated expectations): $\\mathbb{E}\\big[\\mathbb{E}[X\\mid Y,Z]\\mid Z\\big]=\\mathbb{E}[X\\mid Z]$."
+    },
+    {
+      "id": "p2-analytic",
+      "ref": "2.2.2",
+      "title": "Nghiệm giải tích của quá trình phần thưởng Markov",
+      "start": "Viết phương trình Bellman cho mọi trạng thái dưới dạng ma trận: $\\boldsymbol{V}=\\boldsymbol{R}+\\gamma\\boldsymbol{P}\\boldsymbol{V}$, với $\\boldsymbol{P}_{ij}=p(s_j\\mid s_i)$ và $0\\le\\gamma<1$.",
+      "goal": "$$\\boldsymbol{V}=(\\boldsymbol{I}-\\gamma\\boldsymbol{P})^{-1}\\boldsymbol{R}$$",
+      "steps": [
+        {
+          "tex": "\\boldsymbol{V}=\\boldsymbol{R}+\\gamma\\boldsymbol{P}\\boldsymbol{V}"
+        },
+        {
+          "tex": "\\boldsymbol{I}\\boldsymbol{V}=\\boldsymbol{R}+\\gamma\\boldsymbol{P}\\boldsymbol{V}",
+          "why": {
+            "options": [
+              "Viết $\\boldsymbol{V}=\\boldsymbol{I}\\boldsymbol{V}$ (nhân với ma trận đơn vị)",
+              "Nghịch đảo hai vế",
+              "Chuyển vế",
+              "Tính chất Markov"
+            ],
+            "answer": 0,
+            "explain": "Viết $\\boldsymbol{V}$ thành $\\boldsymbol{I}\\boldsymbol{V}$ để lát nữa đặt nhân tử chung được: không thể viết $(1-\\gamma\\boldsymbol{P})$ vì $1$ là số còn $\\boldsymbol{P}$ là ma trận."
+          }
+        },
+        {
+          "tex": "(\\boldsymbol{I}-\\gamma\\boldsymbol{P})\\boldsymbol{V}=\\boldsymbol{R}",
+          "why": {
+            "options": [
+              "Chuyển $\\gamma\\boldsymbol{P}\\boldsymbol{V}$ sang trái rồi đặt $\\boldsymbol{V}$ làm nhân tử chung **bên phải**",
+              "Nhân hai vế với $\\boldsymbol{P}^{-1}$",
+              "Giao hoán: $\\boldsymbol{P}\\boldsymbol{V}=\\boldsymbol{V}\\boldsymbol{P}$",
+              "Lặp phương trình Bellman đến hội tụ"
+            ],
+            "answer": 0,
+            "explain": "$\\boldsymbol{I}\\boldsymbol{V}-\\gamma\\boldsymbol{P}\\boldsymbol{V}=(\\boldsymbol{I}-\\gamma\\boldsymbol{P})\\boldsymbol{V}$. Nhân tử chung phải đứng bên phải vì phép nhân ma trận không giao hoán."
+          }
+        },
+        {
+          "tex": "\\boldsymbol{V}=(\\boldsymbol{I}-\\gamma\\boldsymbol{P})^{-1}\\boldsymbol{R}",
+          "why": {
+            "options": [
+              "Nhân **bên trái** hai vế với $(\\boldsymbol{I}-\\gamma\\boldsymbol{P})^{-1}$, ma trận này tồn tại vì $\\gamma<1$",
+              "Nhân bên phải hai vế với $(\\boldsymbol{I}-\\gamma\\boldsymbol{P})^{-1}$",
+              "Chia hai vế cho $\\boldsymbol{I}-\\gamma\\boldsymbol{P}$",
+              "Vì $\\boldsymbol{P}$ luôn khả nghịch"
+            ],
+            "answer": 0,
+            "explain": "Mỗi hàng của $\\boldsymbol{P}$ có tổng bằng 1 nên mọi trị riêng của $\\boldsymbol{P}$ có $|\\lambda|\\le 1$; trị riêng của $\\gamma\\boldsymbol{P}$ có $|\\lambda|\\le\\gamma<1$, nên $\\boldsymbol{I}-\\gamma\\boldsymbol{P}$ không có trị riêng 0, tức là khả nghịch. Nhân bên trái để khớp với vế $(\\boldsymbol{I}-\\gamma\\boldsymbol{P})\\boldsymbol{V}$. Không có phép \"chia ma trận\", còn $\\boldsymbol{P}$ thì không nhất thiết khả nghịch."
+          }
+        }
+      ],
+      "hints": [
+        "Cần gom $\\boldsymbol{V}$ về một vế. Nhưng đặt nhân tử chung cho $\\boldsymbol{V}-\\gamma\\boldsymbol{P}\\boldsymbol{V}$ thế nào khi $1$ là số còn $\\boldsymbol{P}$ là ma trận?",
+        "Viết $\\boldsymbol{V}=\\boldsymbol{I}\\boldsymbol{V}$, và nhớ phép nhân ma trận không giao hoán.",
+        "Để nghịch đảo được cần $\\boldsymbol{I}-\\gamma\\boldsymbol{P}$ khả nghịch: nghĩ về trị riêng của ma trận có tổng mỗi hàng bằng 1 và điều kiện $\\gamma<1$."
+      ],
+      "note": "Nghịch đảo ma trận $N\\times N$ tốn $O(N^3)$, nên cách này chỉ dùng được cho MRP nhỏ; MRP lớn dùng quy hoạch động, Monte Carlo hoặc sai phân thời gian."
+    },
+    {
+      "id": "p2-bellman-v",
+      "ref": "2.3.4",
+      "title": "Phương trình kỳ vọng Bellman cho $V_\\pi$",
+      "start": "Định nghĩa $V_\\pi(s)=\\mathbb{E}_\\pi[G_t\\mid s_t=s]$, $Q_\\pi(s,a)=\\mathbb{E}_\\pi[G_t\\mid s_t=s,a_t=a]$, $R(s,a)=\\mathbb{E}[r_{t+1}\\mid s_t=s,a_t=a]$; hành động được chọn theo $a_t\\sim\\pi(\\cdot\\mid s_t)$.",
+      "goal": "$$V_\\pi(s)=\\sum_{a\\in A}\\pi(a\\mid s)\\Big(R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\,V_\\pi(s')\\Big)$$",
+      "steps": [
+        {
+          "tex": "V_\\pi(s)=\\mathbb{E}_\\pi[G_t\\mid s_t=s]"
+        },
+        {
+          "tex": "=\\sum_{a\\in A}\\pi(a\\mid s)\\,\\mathbb{E}_\\pi[G_t\\mid s_t=s,a_t=a]",
+          "why": {
+            "options": [
+              "Kỳ vọng toàn phần theo hành động $a_t\\sim\\pi(\\cdot\\mid s)$",
+              "Chọn hành động tham lam",
+              "Tuyến tính của kỳ vọng",
+              "Tính chất Markov"
+            ],
+            "answer": 0,
+            "explain": "Chia trường hợp theo hành động được chọn ở $s$; mỗi trường hợp có trọng số $\\pi(a\\mid s)$. Kỳ vọng bên trong chính là $Q_\\pi(s,a)$, nên dòng này là công thức (2.8)."
+          }
+        },
+        {
+          "tex": "=\\sum_{a\\in A}\\pi(a\\mid s)\\,\\mathbb{E}_\\pi[r_{t+1}+\\gamma G_{t+1}\\mid s_t=s,a_t=a]",
+          "why": {
+            "options": [
+              "Đệ quy của lợi tức: $G_t=r_{t+1}+\\gamma G_{t+1}$",
+              "Định nghĩa $Q_\\pi$",
+              "Tính chất Markov",
+              "Tuyến tính của kỳ vọng"
+            ],
+            "answer": 0,
+            "explain": "$G_t=r_{t+1}+\\gamma(r_{t+2}+\\gamma r_{t+3}+\\cdots)=r_{t+1}+\\gamma G_{t+1}$."
+          }
+        },
+        {
+          "tex": "=\\sum_{a\\in A}\\pi(a\\mid s)\\Big(R(s,a)+\\gamma\\,\\mathbb{E}_\\pi[G_{t+1}\\mid s_t=s,a_t=a]\\Big)",
+          "why": {
+            "options": [
+              "Tuyến tính của kỳ vọng và định nghĩa $R(s,a)$",
+              "Kỳ vọng toàn phần theo $s'$",
+              "Tính chất Markov",
+              "Đổi thứ tự hai tổng"
+            ],
+            "answer": 0,
+            "explain": "Tách kỳ vọng của tổng thành tổng các kỳ vọng; $\\mathbb{E}[r_{t+1}\\mid s_t=s,a_t=a]=R(s,a)$."
+          }
+        },
+        {
+          "tex": "=\\sum_{a\\in A}\\pi(a\\mid s)\\Big(R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\,\\mathbb{E}_\\pi[G_{t+1}\\mid s_{t+1}=s']\\Big)",
+          "why": {
+            "options": [
+              "Kỳ vọng toàn phần theo $s'\\sim p(\\cdot\\mid s,a)$, kết hợp tính chất Markov",
+              "Tuyến tính của kỳ vọng",
+              "Định nghĩa $V_\\pi$",
+              "Lấy $\\max$ theo $a$"
+            ],
+            "answer": 0,
+            "explain": "Chia trường hợp theo trạng thái kế tiếp $s'$. Khi đã biết $s_{t+1}=s'$, lợi tức tương lai không còn phụ thuộc $s_t,a_t$ (Markov), nên $\\mathbb{E}_\\pi[G_{t+1}\\mid s,a,s']=\\mathbb{E}_\\pi[G_{t+1}\\mid s_{t+1}=s']$."
+          }
+        },
+        {
+          "tex": "=\\sum_{a\\in A}\\pi(a\\mid s)\\Big(R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\,V_\\pi(s')\\Big)",
+          "why": {
+            "options": [
+              "Định nghĩa $V_\\pi(s')$ (giá trị không phụ thuộc vào thời điểm $t$)",
+              "Phương trình tối ưu Bellman",
+              "Tính chất Markov",
+              "Định nghĩa $Q_\\pi$"
+            ],
+            "answer": 0,
+            "explain": "$\\mathbb{E}_\\pi[G_{t+1}\\mid s_{t+1}=s']$ là kỳ vọng lợi tức khi bắt đầu từ $s'$ và đi theo $\\pi$, tức $V_\\pi(s')$."
+          }
+        }
+      ],
+      "hints": [
+        "Đầu tiên chia trường hợp theo hành động: trọng số là $\\pi(a\\mid s)$.",
+        "Trong mỗi trường hợp, tách $G_t=r_{t+1}+\\gamma G_{t+1}$; kỳ vọng của $r_{t+1}$ là $R(s,a)$.",
+        "Phần $\\mathbb{E}[G_{t+1}\\mid s,a]$ xử lý như ở MRP: chia trường hợp theo $s'$ với trọng số $p(s'\\mid s,a)$ rồi dùng tính chất Markov."
+      ],
+      "note": "Phần trong ngoặc lớn chính là $Q_\\pi(s,a)$ (công thức 2.9), nên phương trình này là (2.8) $V_\\pi=\\sum_a\\pi Q_\\pi$ ghép với (2.9). Hai lớp trung bình: theo hành động (do chính sách) rồi theo trạng thái kế tiếp (do môi trường)."
+    },
+    {
+      "id": "p2-bellman-q",
+      "ref": "2.3.4",
+      "title": "Phương trình kỳ vọng Bellman cho $Q_\\pi$",
+      "start": "Định nghĩa $Q_\\pi(s,a)=\\mathbb{E}_\\pi[G_t\\mid s_t=s,a_t=a]$, và quan hệ $V_\\pi(s')=\\sum_{a'}\\pi(a'\\mid s')\\,Q_\\pi(s',a')$ (2.16).",
+      "goal": "$$Q_\\pi(s,a)=R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\sum_{a'\\in A}\\pi(a'\\mid s')\\,Q_\\pi(s',a')$$",
+      "steps": [
+        {
+          "tex": "Q_\\pi(s,a)=\\mathbb{E}_\\pi[G_t\\mid s_t=s,a_t=a]"
+        },
+        {
+          "tex": "=R(s,a)+\\gamma\\,\\mathbb{E}_\\pi[G_{t+1}\\mid s_t=s,a_t=a]",
+          "why": {
+            "options": [
+              "$G_t=r_{t+1}+\\gamma G_{t+1}$, tuyến tính của kỳ vọng và định nghĩa $R(s,a)$",
+              "Kỳ vọng toàn phần theo hành động",
+              "Tính chất Markov",
+              "Định nghĩa $V_\\pi$"
+            ],
+            "answer": 0,
+            "explain": "Giống bước đầu của phương trình Bellman cho MRP, chỉ khác là điều kiện có thêm $a_t=a$."
+          }
+        },
+        {
+          "tex": "=R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\,V_\\pi(s')",
+          "why": {
+            "options": [
+              "Kỳ vọng toàn phần theo $s'$, tính chất Markov và định nghĩa $V_\\pi$",
+              "Chọn $a'$ tham lam ở $s'$",
+              "Tuyến tính của kỳ vọng",
+              "Đổi thứ tự hai tổng"
+            ],
+            "answer": 0,
+            "explain": "Chia trường hợp theo $s'$ với trọng số $p(s'\\mid s,a)$; biết $s'$ rồi thì lợi tức tương lai có kỳ vọng $V_\\pi(s')$. Đây là công thức (2.9)."
+          }
+        },
+        {
+          "tex": "=R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\sum_{a'\\in A}\\pi(a'\\mid s')\\,Q_\\pi(s',a')",
+          "why": {
+            "options": [
+              "Thay $V_\\pi(s')=\\sum_{a'}\\pi(a'\\mid s')\\,Q_\\pi(s',a')$",
+              "Thay $V_\\pi(s')=\\max_{a'}Q_\\pi(s',a')$",
+              "Kỳ vọng toàn phần theo $s$",
+              "Tính chất Markov"
+            ],
+            "answer": 0,
+            "explain": "Ở trạng thái kế tiếp tác tử vẫn chọn hành động theo $\\pi$, nên lấy trung bình có trọng số $\\pi(a'\\mid s')$. Dùng $\\max_{a'}$ sẽ ra phương trình **tối ưu** Bellman, không phải phương trình kỳ vọng."
+          }
+        }
+      ],
+      "hints": [
+        "Tách $G_t=r_{t+1}+\\gamma G_{t+1}$ như mọi lần.",
+        "Kỳ vọng của $G_{t+1}$ khi biết $(s,a)$: chia trường hợp theo $s'$ để ra $V_\\pi(s')$.",
+        "Muốn phương trình chỉ chứa $Q_\\pi$: viết $V_\\pi(s')$ qua $Q_\\pi(s',\\cdot)$ bằng chính sách $\\pi$."
+      ],
+      "note": "So sánh với $V_\\pi$: thứ tự hai lớp trung bình bị đảo. Với $Q_\\pi$, hành động $a$ đã cho sẵn nên môi trường đi trước ($\\sum_{s'}$), chính sách đi sau ($\\sum_{a'}$)."
+    },
+    {
+      "id": "p2-optimal-v",
+      "ref": "2.3.11",
+      "title": "Phương trình tối ưu Bellman cho $V^*$",
+      "start": "$V^*(s)=\\max_a Q^*(s,a)$ (2.20), với $Q^*(s,a)=\\mathbb{E}[G_t\\mid s_t=s,a_t=a]$ khi từ bước $t+1$ trở đi tác tử đi theo chính sách tối ưu.",
+      "goal": "$$V^*(s)=\\max_{a}\\Big(R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\,V^*(s')\\Big)$$",
+      "steps": [
+        {
+          "tex": "V^*(s)=\\max_a Q^*(s,a)"
+        },
+        {
+          "tex": "=\\max_a \\mathbb{E}[r_{t+1}+\\gamma G_{t+1}\\mid s_t=s,a_t=a]",
+          "why": {
+            "options": [
+              "Định nghĩa $Q^*$ và $G_t=r_{t+1}+\\gamma G_{t+1}$",
+              "Tính chất Markov",
+              "Đưa $\\max$ vào trong kỳ vọng",
+              "Tuyến tính của kỳ vọng"
+            ],
+            "answer": 0,
+            "explain": "Chỉ thay định nghĩa của $Q^*$ và khai triển một bước lợi tức."
+          }
+        },
+        {
+          "tex": "=\\max_a \\mathbb{E}[r_{t+1}+\\gamma V^*(s_{t+1})\\mid s_t=s,a_t=a]",
+          "why": {
+            "options": [
+              "Kỳ vọng toàn phần theo $s_{t+1}$ + Markov; từ $s_{t+1}$ đi theo chính sách tối ưu nên kỳ vọng lợi tức là $V^*(s_{t+1})$",
+              "$G_{t+1}=V^*(s_{t+1})$ trên mọi quỹ đạo",
+              "Tuyến tính của kỳ vọng",
+              "Định nghĩa $R(s,a)$"
+            ],
+            "answer": 0,
+            "explain": "Giống bước dùng kỳ vọng toàn phần ở MRP. Điểm khác: sau bước này tác tử hành động tối ưu, nên giá trị kỳ vọng tại trạng thái kế tiếp là $V^*$."
+          }
+        },
+        {
+          "tex": "=\\max_a \\Big(R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\,V^*(s')\\Big)",
+          "why": {
+            "options": [
+              "Tuyến tính của kỳ vọng **bên trong** $\\max$, rồi khai triển theo $p(s'\\mid s,a)$",
+              "Tách $\\max$ cho từng số hạng: $\\max_a(x_a+y_a)=\\max_a x_a+\\max_a y_a$",
+              "Định nghĩa $V^*$",
+              "Tính chất Markov"
+            ],
+            "answer": 0,
+            "explain": "Kỳ vọng nằm trong $\\max$ nên chỉ biến đổi bên trong. Không được tách $\\max$ ra từng số hạng: nói chung $\\max_a(x_a+y_a)\\le\\max_a x_a+\\max_a y_a$, dấu bằng chỉ xảy ra khi cùng một $a$ làm cả hai số hạng lớn nhất."
+          }
+        }
+      ],
+      "hints": [
+        "Bắt đầu từ $V^*=\\max_a Q^*$ và khai triển $Q^*$ bằng định nghĩa.",
+        "Phần $G_{t+1}$ xử lý như MRP, nhưng nhớ rằng từ $s_{t+1}$ tác tử đi theo chính sách tối ưu.",
+        "Mọi biến đổi tiếp theo đều làm **bên trong** $\\max_a$; đừng tách $\\max$ ra."
+      ],
+      "note": "Trong sách (cuối mục 2.3.11) có một dòng tách $\\max_a$ thành $\\max_a\\mathbb{E}[r_{t+1}]+\\max_a\\mathbb{E}[\\gamma V^*(s_{t+1})]$; bước đó không đúng nói chung. Chứng minh ở đây đi thẳng từ dòng 3 sang kết quả nên không cần bước tách."
+    },
+    {
+      "id": "p2-optimal-q",
+      "ref": "2.3.11",
+      "title": "Phương trình tối ưu Bellman cho $Q^*$",
+      "start": "$Q^*(s,a)=\\mathbb{E}[G_t\\mid s_t=s,a_t=a]$ khi từ bước $t+1$ đi theo chính sách tối ưu, và $V^*(s)=\\max_a Q^*(s,a)$ (2.20).",
+      "goal": "$$Q^*(s,a)=R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\max_{a'}Q^*(s',a')$$",
+      "steps": [
+        {
+          "tex": "Q^*(s,a)=\\mathbb{E}[G_t\\mid s_t=s,a_t=a]"
+        },
+        {
+          "tex": "=\\mathbb{E}[r_{t+1}+\\gamma G_{t+1}\\mid s_t=s,a_t=a]",
+          "why": {
+            "options": [
+              "Đệ quy của lợi tức: $G_t=r_{t+1}+\\gamma G_{t+1}$",
+              "Định nghĩa $V^*$",
+              "Tính chất Markov",
+              "Lấy $\\max$ theo $a$"
+            ],
+            "answer": 0,
+            "explain": "Khai triển một bước lợi tức."
+          }
+        },
+        {
+          "tex": "=R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\,V^*(s')",
+          "why": {
+            "options": [
+              "Tuyến tính của kỳ vọng, kỳ vọng toàn phần theo $s'$ + Markov, và từ $s'$ đi tối ưu nên được $V^*(s')$",
+              "$\\max$ của tổng bằng tổng các $\\max$",
+              "Định nghĩa $Q^*$",
+              "Đổi thứ tự hai tổng"
+            ],
+            "answer": 0,
+            "explain": "Đây là công thức (2.21). Không có $\\max$ theo $a$ vì hành động đầu tiên $a$ đã cho sẵn."
+          }
+        },
+        {
+          "tex": "=R(s,a)+\\gamma\\sum_{s'\\in S}p(s'\\mid s,a)\\max_{a'}Q^*(s',a')",
+          "why": {
+            "options": [
+              "Thay (2.20) tại trạng thái $s'$: $V^*(s')=\\max_{a'}Q^*(s',a')$",
+              "Thay $V^*(s')=\\sum_{a'}\\pi(a'\\mid s')\\,Q^*(s',a')$",
+              "Đưa $\\max$ ra ngoài tổng $\\sum_{s'}$",
+              "Tính chất Markov"
+            ],
+            "answer": 0,
+            "explain": "Hành động ở trạng thái sau là biến mới $a'$ (trong sách có chỗ viết $\\max_a$ là nhầm ký hiệu). $\\max_{a'}$ nằm **trong** tổng theo $s'$ vì mỗi $s'$ được chọn hành động tốt nhất riêng. Đây chính là mục tiêu cập nhật của Q-learning ở chương 3."
+          }
+        }
+      ],
+      "hints": [
+        "Khai triển $G_t$ một bước như mọi lần.",
+        "Kỳ vọng của phần tương lai, khi từ $s'$ hành động tối ưu, là $V^*(s')$.",
+        "Để phương trình chỉ chứa $Q^*$: viết $V^*(s')$ qua $Q^*(s',\\cdot)$. Hành động ở $s'$ đặt tên gì?"
+      ],
+      "note": "Đặt cạnh phương trình kỳ vọng cho $Q_\\pi$: chỉ khác ở chỗ $\\sum_{a'}\\pi(a'\\mid s')(\\cdot)$ được thay bằng $\\max_{a'}(\\cdot)$. Trung bình theo chính sách $\\to$ chọn hành động tốt nhất."
+    },
+    {
+      "id": "p2-policy-improvement",
+      "ref": "2.3.10",
+      "title": "Cải thiện chính sách không làm giá trị kém đi",
+      "start": "Cho chính sách $\\pi$ với $V_\\pi$, $Q_\\pi$ đã biết. Chính sách tham lam mới: $\\pi'(s)=\\arg\\max_a Q_\\pi(s,a)$. Dùng (2.8) $V_\\pi(s)=\\sum_a\\pi(a\\mid s)Q_\\pi(s,a)$ và (2.9) $Q_\\pi(s,a)=\\mathbb{E}[r_{t+1}+\\gamma V_\\pi(s_{t+1})\\mid s_t=s,a_t=a]$.",
+      "goal": "$$V_\\pi(s)\\le V_{\\pi'}(s)\\quad\\text{với mọi } s$$",
+      "steps": [
+        {
+          "tex": "V_\\pi(s)=\\sum_{a}\\pi(a\\mid s)\\,Q_\\pi(s,a)"
+        },
+        {
+          "tex": "\\le \\max_a Q_\\pi(s,a)=Q_\\pi\\big(s,\\pi'(s)\\big)",
+          "why": {
+            "options": [
+              "Trung bình có trọng số không vượt quá giá trị lớn nhất; $\\pi'$ chọn đúng hành động $\\arg\\max$",
+              "Bất đẳng thức Jensen",
+              "Tuyến tính của kỳ vọng",
+              "Phương trình tối ưu Bellman"
+            ],
+            "answer": 0,
+            "explain": "$\\sum_a\\pi(a\\mid s)x_a\\le\\max_a x_a$ vì các trọng số không âm và cộng lại bằng 1."
+          }
+        },
+        {
+          "tex": "=\\mathbb{E}\\big[r_{t+1}+\\gamma V_\\pi(s_{t+1})\\mid s_t=s,a_t=\\pi'(s)\\big]",
+          "why": {
+            "options": [
+              "Công thức (2.9) với $a=\\pi'(s)$",
+              "Định nghĩa $V_{\\pi'}$",
+              "Kỳ vọng toàn phần theo hành động",
+              "Tính chất Markov"
+            ],
+            "answer": 0,
+            "explain": "Chỉ viết lại $Q_\\pi$ một bước: làm $\\pi'(s)$ ở bước này, sau đó đi theo $\\pi$."
+          }
+        },
+        {
+          "tex": "\\le \\mathbb{E}_{\\pi'}\\big[r_{t+1}+\\gamma\\,Q_\\pi\\big(s_{t+1},\\pi'(s_{t+1})\\big)\\mid s_t=s\\big]",
+          "why": {
+            "options": [
+              "Áp dụng lại dòng 2 tại $s_{t+1}$: $V_\\pi(s_{t+1})\\le Q_\\pi(s_{t+1},\\pi'(s_{t+1}))$",
+              "Định nghĩa $V_{\\pi'}$",
+              "Tuyến tính của kỳ vọng",
+              "Đổi thứ tự hai tổng"
+            ],
+            "answer": 0,
+            "explain": "Bất đẳng thức đúng tại **mọi** trạng thái, nên áp được cho $s_{t+1}$; kỳ vọng giữ chiều bất đẳng thức."
+          }
+        },
+        {
+          "tex": "=\\mathbb{E}_{\\pi'}\\big[r_{t+1}+\\gamma r_{t+2}+\\gamma^{2} V_\\pi(s_{t+2})\\mid s_t=s\\big]",
+          "why": {
+            "options": [
+              "Khai triển $Q_\\pi(s_{t+1},\\pi'(s_{t+1}))$ bằng (2.9) như ở dòng 3",
+              "Định nghĩa $V_{\\pi'}$",
+              "Tính chất Markov",
+              "Lấy $\\max$ theo $a$"
+            ],
+            "answer": 0,
+            "explain": "Giờ hai bước đầu đều làm theo $\\pi'$, phần còn lại vẫn là giá trị của $\\pi$."
+          }
+        },
+        {
+          "tex": "\\le\\cdots\\le \\mathbb{E}_{\\pi'}\\big[r_{t+1}+\\gamma r_{t+2}+\\gamma^{2} r_{t+3}+\\cdots\\mid s_t=s\\big]",
+          "why": {
+            "options": [
+              "Lặp lại vô hạn lần; phần dư $\\gamma^{k}V_\\pi(\\cdot)\\to 0$ vì $\\gamma<1$",
+              "Định nghĩa $V_\\pi$",
+              "Tuyến tính của kỳ vọng",
+              "Phương trình tối ưu Bellman"
+            ],
+            "answer": 0,
+            "explain": "Mỗi lần lặp đổi thêm một bước sang $\\pi'$ mà không làm vế phải giảm. Giá trị bị chặn nên phần dư nhân $\\gamma^k$ tiến về 0."
+          }
+        },
+        {
+          "tex": "=V_{\\pi'}(s)",
+          "why": {
+            "options": [
+              "Định nghĩa $V_{\\pi'}$: kỳ vọng lợi tức khi luôn đi theo $\\pi'$",
+              "Định nghĩa $Q_\\pi$",
+              "Phương trình tối ưu Bellman",
+              "Tính chất Markov"
+            ],
+            "answer": 0,
+            "explain": "Mọi bước đều theo $\\pi'$, nên đó đúng là kỳ vọng lợi tức của $\\pi'$."
+          }
+        }
+      ],
+      "hints": [
+        "So sánh $V_\\pi(s)$ (trung bình $Q_\\pi$ theo $\\pi$) với $\\max_a Q_\\pi(s,a)$.",
+        "Viết $Q_\\pi(s,\\pi'(s))$ thành kỳ vọng một bước, trong đó còn $V_\\pi(s_{t+1})$, rồi áp lại bất đẳng thức đầu tiên tại $s_{t+1}$.",
+        "Lặp lại đến vô hạn; dùng $\\gamma<1$ để bỏ phần dư."
+      ],
+      "note": "Nếu dấu bằng xảy ra ở mọi trạng thái thì $V_\\pi(s)=\\max_a Q_\\pi(s,a)$, chính là phương trình tối ưu Bellman, nên $\\pi$ đã tối ưu. Vì vậy lặp chính sách hoặc cải thiện thật sự, hoặc dừng ở chính sách tối ưu."
+    }
   ]
 }

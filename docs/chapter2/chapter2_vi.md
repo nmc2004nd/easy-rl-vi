@@ -771,6 +771,8 @@ $$
     \end{aligned}
 $$
 
+> **Ghi chú của người dịch:** dòng thứ 5 tách $\max_a$ thành $\max_a \mathbb{E}[r_{t+1}] + \max_a \mathbb{E}[\gamma V^*(s_{t+1}) \mid s_t=s, a_t=a]$ là không đúng nói chung, vì $\max_a (x_a + y_a) \le \max_a x_a + \max_a y_a$ và dấu bằng chỉ xảy ra khi cùng một $a$ làm cả hai số hạng lớn nhất. Kết quả cuối vẫn đúng: từ dòng thứ 4, chỉ cần dùng tuyến tính của kỳ vọng **bên trong** $\max_a$ là ra thẳng dòng cuối. Tương tự, ở công thức thay (2.20) vào (2.21) phía trên, $\max_{a} Q^{*}(s', a')$ nên đọc là $\max_{a'} Q^{*}(s', a')$.
+
 Ta có được sự chuyển đổi của hàm giá trị trạng thái.
 
 ### 2.3.12 Lặp giá trị

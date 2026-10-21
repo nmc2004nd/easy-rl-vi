@@ -182,11 +182,47 @@
   .hidden { display: none !important; }
   .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 10px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
   .toast.show { opacity: .95; }
+
+  /* Chứng minh */
+  .pintro { margin-bottom: 14px; }
+  .plist { display: grid; gap: 12px; }
+  .pitem { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); padding: 16px 18px; }
+  .pitem .meta { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px 8px; font-size: .8rem; color: var(--muted); margin-bottom: 6px; }
+  .pitem h3 { margin: 0; font-size: 1.02rem; line-height: 1.45; }
+  .pitem .row { margin-top: 8px; gap: 8px; }
+  .btn.pmode { padding: 7px 12px; font-size: .88rem; }
+  .btn.pmode.done { border-color: var(--good); color: var(--good); }
+  .ptop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+  .pseg { display: inline-flex; flex-wrap: wrap; gap: 3px; background: var(--surface-2); border-radius: 10px; padding: 3px; margin-bottom: 12px; }
+  .pseg button { border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; font-size: .88rem; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+  .pseg button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  .pgiven { background: var(--surface-2); border-radius: 12px; padding: 8px 12px; margin: 8px 0; font-size: .95rem; }
+  .pgiven .lbl2, .psol, .ppool-l, .pgrade .lbl2 { font-size: .78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .psol, .ppool-l { margin-top: 14px; }
+  .pstep { border-left: 3px solid var(--border); padding: 0 10px; margin: 6px 0; border-radius: 0 8px 8px 0; }
+  .pstep .katex-display { margin: .35em 0; text-align: left; }
+  .pstep .katex-display > .katex { text-align: left; }
+  .ptex.cont { padding-left: 1.6em; }
+  .pstep.fixed { border-left-color: var(--muted); }
+  .pstep.cur { border-left-color: var(--accent); background: var(--accent-soft); }
+  .pstep[role="button"] { cursor: pointer; border: 1px solid var(--border); border-left-width: 3px; border-radius: 10px; background: var(--surface); }
+  .pstep[role="button"]:hover { border-color: var(--accent); }
+  .pstep.ok { border-color: var(--good) !important; background: var(--good-soft); }
+  .pstep.bad { border-color: var(--again) !important; background: var(--again-soft); }
+  .ppool { display: grid; gap: 6px; margin-top: 6px; padding: 8px; border: 1px dashed var(--border); border-radius: 12px; }
+  .ppool .pstep { margin: 0; }
+  .reason { font-size: .85rem; color: var(--muted); margin: -2px 0 6px; }
+  .phint { background: var(--hard-soft); border-radius: 12px; padding: 8px 12px; margin: 8px 0; }
+  .phint .lbl2 { color: var(--hard); }
+  .pgrade { margin-top: 16px; }
+  .pnote { font-size: .9rem; margin: 12px 0 6px; }
+  .pq { font-weight: 600; margin: 12px 0 8px; }
   @media (max-width: 480px) {
     .tab { font-size: .82rem; padding: 8px 6px; }
     .card { padding: 18px 16px 14px; min-height: 240px; }
     .card .front { font-size: 1.05rem; }
     .panel { padding: 18px 16px; }
+    .pstep .katex, .pgiven .katex-display .katex, .pitem .katex-display .katex { font-size: .95em; }
   }
 </style>
 </head>
@@ -204,6 +240,7 @@
   <div class="tabs" role="tablist">
     <button class="tab" role="tab" aria-selected="true" data-tab="cards">Flashcard</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="quiz">Quiz</button>
+    <button class="tab hidden" role="tab" aria-selected="false" data-tab="proofs">Chứng minh</button>
     <button class="tab" role="tab" aria-selected="false" data-tab="progress">Tiến độ</button>
   </div>
 
@@ -218,6 +255,11 @@
   <!-- Quiz -->
   <section id="tab-quiz" class="hidden">
     <div id="quiz-area"></div>
+  </section>
+
+  <!-- Chứng minh (chỉ hiện khi chương có "proofs") -->
+  <section id="tab-proofs" class="hidden">
+    <div id="proof-area"></div>
   </section>
 
   <!-- Tiến độ -->
@@ -553,6 +595,257 @@
     renderQuiz();
   }
 
+  // ---------- Chứng minh ----------
+  // Ba chế độ cho mỗi chứng minh: "Vì sao?" (chọn lý do cho từng bước), "Sắp xếp" (xếp lại các dòng),
+  // "Tự suy ra" (gợi ý từng nấc rồi xem lời giải). Xong chế độ nào cũng tự chấm; lịch ôn dùng chung schedule() với flashcard.
+  // Dữ liệu: data.proofs = [{ id, ref, title, start, goal, steps: [{ tex, why: { options, answer, explain } }], hints, note }]
+  var MODES = [['why', 'Vì sao?'], ['order', 'Sắp xếp'], ['recall', 'Tự suy ra']];
+  var proofUI = null; // { id, mode, queue, why | order | recall }
+
+  function proofs() { return (data && data.proofs) || []; }
+  function proofById(id) { return proofs().filter(function (p) { return p.id === id; })[0]; }
+  function proofState(id) { return (chState.proofs || {})[id] || null; }
+  function canOrder(p) { return p.steps.length >= 3; }
+  function dueProofs() {
+    var now = Date.now();
+    return proofs().filter(function (p) { var s = proofState(p.id); return s && s.seen && s.due <= now; }).map(function (p) { return p.id; });
+  }
+  // dòng nối tiếp (bắt đầu bằng = hoặc ≤) thụt vào để các dấu bằng thẳng cột như khi viết tay
+  function texBlock(tex) { return '<div class="ptex' + (/^\s*(=|\\le\b)/.test(tex) ? ' cont' : '') + '">' + fmt('$$' + tex + '$$') + '</div>'; }
+  function reasonTag(st) { return st.why ? '<div class="reason">↳ ' + fmt(st.why.options[st.why.answer]) + '</div>' : ''; }
+
+  function openProof(id, mode, queue) {
+    var p = proofById(id);
+    if (!p) return;
+    if (mode === 'order' && !canOrder(p)) mode = 'why';
+    proofUI = { id: id, mode: mode, queue: queue || null };
+    resetProofMode();
+    renderProofs();
+    document.getElementById('tab-proofs').scrollIntoView({ block: 'start' });
+  }
+  function resetProofMode() {
+    var p = proofById(proofUI.id);
+    if (proofUI.mode === 'why') proofUI.why = { i: 1, picked: null, score: 0, optOrder: null };
+    if (proofUI.mode === 'order') {
+      var idx = p.steps.map(function (_, k) { return k; }).slice(1), pool = shuffle(idx);
+      if (pool.join() === idx.join()) pool.reverse(); // không để sẵn đúng thứ tự
+      proofUI.order = { placed: [], pool: pool, marks: null, tries: 0 };
+    }
+    if (proofUI.mode === 'recall') proofUI.recall = { hints: 0, solved: false };
+  }
+
+  function renderProofs() {
+    var area = document.getElementById('proof-area');
+    area.innerHTML = proofUI ? proofModeHtml() : proofListHtml();
+    typeset(area);
+  }
+
+  function proofListHtml() {
+    var due = dueProofs();
+    var html = '<div class="panel pintro"><h2>Chứng minh</h2>' +
+      '<p class="muted" style="margin:0">Ôn cách suy ra công thức, không chỉ kết quả. Chứng minh mới nên đi lần lượt ① chọn lý do cho từng bước → ② xếp lại các dòng → ③ tự suy ra với gợi ý. Khi ôn lại, dùng ③.</p>' +
+      '<div class="row">' + (due.length
+        ? '<button class="btn primary" data-pact="review">Ôn ' + due.length + ' chứng minh đến hạn</button>'
+        : '<span class="muted">Hôm nay không có chứng minh nào đến hạn.</span>') + '</div></div><div class="plist">';
+    proofs().forEach(function (p) {
+      var s = proofState(p.id), lv = level(s), done = (chState.proofDone || {})[p.id] || {};
+      var lvText = { new: 'Mới', learn: 'Đang học', known: 'Đã thuộc' }[lv];
+      html += '<div class="pitem"><div class="meta"><span class="tagchip">Mục ' + esc(p.ref) + '</span><span><span class="lvl ' + lv + '">' + lvText + '</span>' +
+        (s && s.seen ? ' · ôn ' + esc(fmtDate(s.due)) : '') + '</span></div>' +
+        '<h3>' + fmt(p.title) + '</h3>' + fmt(p.goal) + '<div class="row">' +
+        MODES.map(function (m, k) {
+          if (m[0] === 'order' && !canOrder(p)) return '';
+          return '<button class="btn pmode' + (done[m[0]] ? ' done' : '') + '" data-pact="open" data-id="' + esc(p.id) + '" data-mode="' + m[0] + '">' +
+            '①②③'[k] + ' ' + m[1] + (done[m[0]] ? ' ✓' : '') + '</button>';
+        }).join('') + '</div></div>';
+    });
+    return html + '</div>';
+  }
+
+  function proofModeHtml() {
+    var p = proofById(proofUI.id);
+    var body = proofUI.mode === 'why' ? whyHtml(p) : proofUI.mode === 'order' ? orderHtml(p) : recallHtml(p);
+    return '<div class="ptop"><button class="btn" data-pact="back">← Danh sách</button>' +
+      (proofUI.queue ? '<span class="muted" style="font-size:.88rem">Ôn đến hạn · còn ' + proofUI.queue.length + ' sau bài này</span>' : '') + '</div>' +
+      '<div class="panel"><div class="pseg" role="group" aria-label="Chế độ">' +
+      MODES.map(function (m) {
+        if (m[0] === 'order' && !canOrder(p)) return '';
+        return '<button data-pact="mode" data-mode="' + m[0] + '" aria-pressed="' + (proofUI.mode === m[0]) + '">' + m[1] + '</button>';
+      }).join('') + '</div>' +
+      '<h2>' + fmt(p.title) + '</h2>' +
+      '<div class="pgiven"><div class="lbl2">Xuất phát</div>' + fmt(p.start) + '</div>' +
+      '<div class="pgiven"><div class="lbl2">Cần chứng minh</div>' + fmt(p.goal) + '</div>' + body + '</div>';
+  }
+
+  // ① Vì sao?
+  function whyHtml(p) {
+    var w = proofUI.why, html = '', total = p.steps.length - 1;
+    html += '<div class="pstep fixed">' + texBlock(p.steps[0].tex) + '</div>';
+    for (var k = 1; k < w.i; k++) html += '<div class="pstep">' + texBlock(p.steps[k].tex) + reasonTag(p.steps[k]) + '</div>';
+    if (w.i >= p.steps.length) {
+      return html + '<div class="explain"><div class="verdict ' + (w.score === total ? 'ok' : 'no') + '">Xong: chọn đúng ' + w.score + '/' + total + ' lý do.</div>' +
+        (p.note ? fmt(p.note) : '') + '</div>' + proofGradeHtml(p);
+    }
+    var st = p.steps[w.i];
+    if (!w.optOrder) w.optOrder = shuffle(st.why.options.map(function (_, k) { return k; }));
+    html += '<div class="pstep cur">' + texBlock(st.tex) + '</div>' +
+      '<div class="pq">Bước ' + w.i + '/' + total + ': vì sao dòng được tô đúng?</div><div class="opts">' +
+      w.optOrder.map(function (k, pos) {
+        var cls = w.picked == null ? '' : k === st.why.answer ? ' correct' : k === w.picked ? ' wrong' : '';
+        return '<button class="opt' + cls + '" data-pact="pick" data-k="' + k + '"' + (w.picked != null ? ' disabled' : '') + '><span class="letter">' +
+          'ABCD'[pos] + '</span><span>' + fmt(st.why.options[k]) + '</span></button>';
+      }).join('') + '</div>';
+    if (w.picked != null) {
+      var ok = w.picked === st.why.answer;
+      html += '<div class="explain"><div class="verdict ' + (ok ? 'ok">✓ Chính xác' : 'no">✗ Chưa đúng') + '</div>' + fmt(st.why.explain) + '</div>' +
+        '<div class="row"><button class="btn primary" data-pact="next">' + (w.i + 1 < p.steps.length ? 'Bước tiếp' : 'Xem kết quả') + '</button></div>' +
+        '<div class="kbd">Phím tắt: <kbd>Enter</kbd> tiếp tục</div>';
+    } else {
+      html += '<div class="kbd">Phím tắt: <kbd>A</kbd>–<kbd>D</kbd> hoặc <kbd>1</kbd>–<kbd>4</kbd> để chọn</div>';
+    }
+    return html;
+  }
+  function pickWhy(k) {
+    var w = proofUI.why, st = proofById(proofUI.id).steps[w.i];
+    if (w.picked != null || !st) return;
+    w.picked = k;
+    if (k === st.why.answer) w.score += 1;
+    renderProofs();
+  }
+  function nextWhy() {
+    var w = proofUI.why;
+    if (w.picked == null) return;
+    w.i += 1; w.picked = null; w.optOrder = null;
+    renderProofs();
+  }
+
+  // ② Sắp xếp
+  function orderHtml(p) {
+    var o = proofUI.order, solved = o.marks && !o.pool.length && o.marks.every(Boolean);
+    var html = '<p class="muted pnote">' + (solved ? 'Thứ tự đúng:' : 'Chạm vào một dòng ở ô bên dưới để nối nó vào chứng minh; chạm vào dòng đã xếp để trả lại.') + '</p>' +
+      '<div class="pstep fixed">' + texBlock(p.steps[0].tex) + '</div>';
+    o.placed.forEach(function (k, pos) {
+      var mark = o.marks ? (o.marks[pos] ? ' ok' : ' bad') : '';
+      html += solved
+        ? '<div class="pstep ok">' + texBlock(p.steps[k].tex) + reasonTag(p.steps[k]) + '</div>'
+        : '<div class="pstep' + mark + '" role="button" tabindex="0" data-pact="unplace" data-pos="' + pos + '" aria-label="Trả dòng ' + (pos + 2) + ' về ô bên dưới">' + texBlock(p.steps[k].tex) + '</div>';
+    });
+    if (solved) {
+      return html + '<div class="explain"><div class="verdict ok">✓ Đúng thứ tự' + (o.tries > 1 ? ' sau ' + o.tries + ' lần kiểm tra' : ' ngay lần đầu') + '.</div>' +
+        (p.note ? fmt(p.note) : '') + '</div>' + proofGradeHtml(p);
+    }
+    if (o.pool.length) {
+      html += '<div class="ppool-l">Các dòng còn lại (' + o.pool.length + ')</div><div class="ppool">' +
+        o.pool.map(function (k) { return '<div class="pstep" role="button" tabindex="0" data-pact="place" data-k="' + k + '">' + texBlock(p.steps[k].tex) + '</div>'; }).join('') + '</div>';
+    } else if (!o.marks) {
+      html += '<div class="row"><button class="btn primary" data-pact="check">Kiểm tra</button></div>';
+    } else {
+      var n = o.marks.filter(Boolean).length;
+      html += '<div class="explain"><div class="verdict no">' + n + '/' + o.marks.length + ' dòng đúng vị trí.</div>' +
+        'Dòng xanh đúng chỗ, dòng đỏ sai chỗ. "Sửa lại" giữ các dòng đúng liên tiếp từ đầu và trả phần còn lại về ô bên dưới.</div>' +
+        '<div class="row"><button class="btn primary" data-pact="fix">Sửa lại</button></div>';
+    }
+    return html;
+  }
+  function orderAction(a, el) {
+    var o = proofUI.order;
+    if (a === 'place') {
+      var k = parseInt(el.getAttribute('data-k'), 10), i = o.pool.indexOf(k);
+      if (i < 0) return;
+      o.pool.splice(i, 1); o.placed.push(k); o.marks = null;
+    } else if (a === 'unplace') {
+      var pos = parseInt(el.getAttribute('data-pos'), 10);
+      o.pool.push(o.placed.splice(pos, 1)[0]); o.marks = null;
+    } else if (a === 'check') {
+      o.tries += 1;
+      o.marks = o.placed.map(function (k, pos) { return k === pos + 1; });
+    } else if (a === 'fix') {
+      var keep = 0;
+      while (keep < o.marks.length && o.marks[keep]) keep++;
+      o.pool = shuffle(o.pool.concat(o.placed.splice(keep))); o.marks = null;
+    }
+    renderProofs();
+  }
+
+  // ③ Tự suy ra
+  function recallHtml(p) {
+    var r = proofUI.recall;
+    var html = '<p class="muted pnote">Tự viết chứng minh ra giấy trước. Bí thì mở gợi ý từng nấc; xong thì xem lời giải để đối chiếu từng bước.</p>';
+    for (var k = 0; k < r.hints; k++) html += '<div class="phint"><div class="lbl2">Gợi ý ' + (k + 1) + '</div>' + fmt(p.hints[k]) + '</div>';
+    if (!r.solved) {
+      return html + '<div class="row">' + (r.hints < p.hints.length ? '<button class="btn" data-pact="hint">Gợi ý ' + (r.hints + 1) + '/' + p.hints.length + '</button>' : '') +
+        '<button class="btn primary" data-pact="solve">Xem lời giải đầy đủ</button></div>';
+    }
+    html += '<div class="psol">Lời giải</div>' + p.steps.map(function (st, k) {
+      return '<div class="pstep' + (k ? '' : ' fixed') + '">' + texBlock(st.tex) + reasonTag(st) + '</div>';
+    }).join('');
+    if (p.note) html += '<div class="explain">' + fmt(p.note) + '</div>';
+    return html + proofGradeHtml(p, r.hints);
+  }
+
+  function proofGradeHtml(p, hintsUsed) {
+    var st = proofState(p.id), labels = { again: 'Quên', hard: 'Khó', good: 'Nhớ' };
+    var q = proofUI.mode === 'recall'
+      ? 'Bạn tự suy ra được đến đâu?' + (hintsUsed ? ' (đã dùng ' + hintsUsed + ' gợi ý)' : '')
+      : 'Bạn hiểu chứng minh này đến đâu?';
+    return '<div class="pgrade"><div class="lbl2">' + q + '</div><div class="grades">' + ['again', 'hard', 'good'].map(function (g) {
+      var preview = g === 'again' ? 'ôn lại hôm nay' : fmtDays(schedule(st, g).interval);
+      return '<button class="grade ' + g + '" data-pact="grade" data-g="' + g + '">' + labels[g] + '<small>' + preview + '</small></button>';
+    }).join('') + '</div><div class="kbd">Phím tắt: <kbd>1</kbd> Quên · <kbd>2</kbd> Khó · <kbd>3</kbd> Nhớ</div></div>';
+  }
+  function gradeProof(g) {
+    var id = proofUI.id;
+    chState.proofs = chState.proofs || {};
+    chState.proofs[id] = schedule(proofState(id), g);
+    chState.proofDone = chState.proofDone || {};
+    (chState.proofDone[id] = chState.proofDone[id] || {})[proofUI.mode] = 1;
+    saveStore();
+    toast(g === 'again' ? 'Sẽ ôn lại chứng minh này hôm nay' : 'Ôn lại sau ' + fmtDays(chState.proofs[id].interval));
+    var q = proofUI.queue;
+    if (q && q.length) openProof(q.shift(), 'recall', q);
+    else { proofUI = null; renderProofs(); }
+  }
+
+  function proofAction(a, el) {
+    if (a === 'open') return openProof(el.getAttribute('data-id'), el.getAttribute('data-mode'));
+    if (a === 'review') { var q = dueProofs(); return openProof(q.shift(), 'recall', q); }
+    if (!proofUI) return;
+    if (a === 'back') { proofUI = null; renderProofs(); }
+    else if (a === 'mode') { proofUI.mode = el.getAttribute('data-mode'); resetProofMode(); renderProofs(); }
+    else if (a === 'pick') pickWhy(parseInt(el.getAttribute('data-k'), 10));
+    else if (a === 'next') nextWhy();
+    else if (a === 'place' || a === 'unplace' || a === 'check' || a === 'fix') orderAction(a, el);
+    else if (a === 'hint') { proofUI.recall.hints += 1; renderProofs(); }
+    else if (a === 'solve') { proofUI.recall.solved = true; renderProofs(); }
+    else if (a === 'grade') gradeProof(el.getAttribute('data-g'));
+  }
+  (function bindProofArea() {
+    var area = document.getElementById('proof-area');
+    area.addEventListener('click', function (e) {
+      var el = e.target.closest && e.target.closest('[data-pact]');
+      if (el && area.contains(el) && !el.disabled) proofAction(el.getAttribute('data-pact'), el);
+    });
+    // các dòng xếp được là <div role="button">: cho bấm bằng Enter / Space
+    area.addEventListener('keydown', function (e) {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[role="button"][data-pact]')) {
+        e.preventDefault(); e.stopPropagation(); proofAction(e.target.getAttribute('data-pact'), e.target);
+      }
+    });
+  })();
+  function proofKey(e) {
+    if (document.querySelector('#proof-area .pgrade')) {
+      var g = { '1': 'again', '2': 'hard', '3': 'good' }[e.key];
+      if (g) { e.preventDefault(); gradeProof(g); }
+      return;
+    }
+    if (proofUI.mode !== 'why') return;
+    var w = proofUI.why;
+    if (w.picked == null) {
+      var k = { a: 0, b: 1, c: 2, d: 3, '1': 0, '2': 1, '3': 2, '4': 3 }[e.key.toLowerCase()];
+      if (k != null && w.optOrder && k < w.optOrder.length) { e.preventDefault(); pickWhy(w.optOrder[k]); }
+    } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextWhy(); }
+  }
+
   // ---------- Tiến độ ----------
   function renderProgress() {
     var now = Date.now(), counts = { new: 0, learn: 0, known: 0 }, due = 0;
@@ -572,8 +865,10 @@
         '<div class="stat"><div class="n">' + counts.learn + '</div><div class="l">Đang học</div></div>' +
         '<div class="stat"><div class="n">' + counts.new + '</div><div class="l">Chưa học</div></div>' +
         '<div class="stat"><div class="n">' + (q.best != null ? q.best + '/' + data.quiz.length : '–') + '</div><div class="l">Điểm quiz cao nhất</div></div>' +
+        (proofs().length ? '<div class="stat"><div class="n">' + proofs().filter(function (p) { return level(proofState(p.id)) === 'known'; }).length + '/' + proofs().length +
+          '</div><div class="l">Chứng minh đã thuộc</div></div>' : '') +
       '</div>' +
-      '<p class="muted" style="margin:8px 0 0">Cần ôn hôm nay: <b>' + due + '</b> thẻ.</p>' +
+      '<p class="muted" style="margin:8px 0 0">Cần ôn hôm nay: <b>' + due + '</b> thẻ' + (proofs().length ? ', <b>' + dueProofs().length + '</b> chứng minh' : '') + '.</p>' +
       '<div class="row">' +
         '<button class="btn" id="btn-export">Xuất tiến độ</button>' +
         '<button class="btn" id="btn-import">Nhập tiến độ</button>' +
@@ -581,7 +876,12 @@
         '<input type="file" id="file-import" accept="application/json,.json" class="hidden">' +
       '</div>' +
       '<p class="note">Tiến độ chỉ lưu trong trình duyệt này. Muốn chuyển sang máy khác, bấm "Xuất tiến độ" để tải file, rồi "Nhập tiến độ" ở máy kia. Xóa dữ liệu trình duyệt sẽ mất tiến độ.</p>' +
-      '<table><thead><tr><th>Thẻ</th><th>Mức</th><th>Ôn tiếp</th></tr></thead><tbody>' + rows + '</tbody></table>';
+      '<table><thead><tr><th>Thẻ</th><th>Mức</th><th>Ôn tiếp</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+      (proofs().length ? '<table><thead><tr><th>Chứng minh</th><th>Mức</th><th>Ôn tiếp</th></tr></thead><tbody>' + proofs().map(function (p) {
+        var s = proofState(p.id), lv = level(s);
+        return '<tr><td>' + fmt(p.title) + '</td><td><span class="lvl ' + lv + '">' + { new: 'Mới', learn: 'Đang học', known: 'Đã thuộc' }[lv] +
+          '</span></td><td class="muted">' + (s && s.seen ? esc(fmtDate(s.due)) : '–') + '</td></tr>';
+      }).join('') + '</tbody></table>' : '');
     typeset(document.getElementById('progress-area'));
 
     document.getElementById('btn-export').onclick = function () {
@@ -602,15 +902,15 @@
         try {
           var s = JSON.parse(r.result);
           if (!s || typeof s !== 'object' || !s.chapters) throw new Error('bad');
-          store = s; ensureChapter(); saveStore(); session = null; quiz = null;
+          store = s; ensureChapter(); saveStore(); session = null; quiz = null; proofUI = null;
           buildSession(false); renderAll(); toast('Đã nhập tiến độ');
         } catch (e) { toast('File không hợp lệ'); }
       };
       r.readAsText(f);
     };
     document.getElementById('btn-reset').onclick = function () {
-      if (!confirm('Xóa toàn bộ tiến độ flashcard và quiz của chương ' + CH + '?')) return;
-      delete store.chapters[CH]; ensureChapter(); saveStore(); session = null; quiz = null;
+      if (!confirm('Xóa toàn bộ tiến độ flashcard, quiz' + (proofs().length ? ', chứng minh' : '') + ' của chương ' + CH + '?')) return;
+      delete store.chapters[CH]; ensureChapter(); saveStore(); session = null; quiz = null; proofUI = null;
       buildSession(false); renderAll(); toast('Đã xóa tiến độ');
     };
   }
@@ -618,7 +918,7 @@
   // ---------- tab & phím tắt ----------
   var current = 'cards';
   var extras = []; // tab mở rộng của chương (thí nghiệm, sơ đồ), nạp từ file JS riêng
-  function tabNames() { return ['cards', 'quiz'].concat(extras.map(function (x) { return x.id; }), ['progress']); }
+  function tabNames() { return ['cards', 'quiz'].concat(proofs().length ? ['proofs'] : [], extras.map(function (x) { return x.id; }), ['progress']); }
   function showTab(name) {
     if (tabNames().indexOf(name) < 0) name = 'cards';
     current = name;
@@ -626,6 +926,7 @@
     tabNames().forEach(function (n) { document.getElementById('tab-' + n).classList.toggle('hidden', n !== name); });
     if (name === 'cards') renderCard();
     if (name === 'quiz') renderQuiz();
+    if (name === 'proofs') renderProofs();
     if (name === 'progress') renderProgress();
     extras.forEach(function (x) {
       if (x.id === name && !x.rendered) { x.rendered = true; x.render(document.getElementById('tab-' + x.id), { typeset: typeset, esc: esc }); }
@@ -679,6 +980,8 @@
         var k = { a: 0, b: 1, c: 2, d: 3, '1': 0, '2': 1, '3': 2, '4': 3 }[e.key.toLowerCase()];
         if (k != null && quiz.optOrder && k < quiz.optOrder.length) { e.preventDefault(); answer(quiz.optOrder[k]); }
       } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextQuestion(); }
+    } else if (current === 'proofs' && proofUI) {
+      proofKey(e);
     }
   });
 
@@ -693,6 +996,7 @@
       if (d.exerciseLink) document.getElementById('lnk-ex').href = d.exerciseLink;
       ensureChapter();
       buildSession(false);
+      if (proofs().length) document.querySelector('.tab[data-tab="proofs"]').classList.remove('hidden');
       return loadExtras(d.extras).then(function () {
         var saved = null;
         try { saved = sessionStorage.getItem('easyrl-vi:review:tab:' + CH); } catch (e) {}
