@@ -1,0 +1,1 @@
+Học tăng cường thị giác (Visual Reinforcement Learning, VRL) là một hướng rất có tiềm năng trong học tăng cường. Khác với các phương pháp học tăng cường truyền thống dựa trên trạng thái (state-based) trước đây, nó học chính sách điều khiển trực tiếp từ hình ảnh. Bạn nào quan tâm có thể đọc các bài báo liên quan: [Awesome Visual RL](https://github.com/qiwang067/awesome-visual-rl).

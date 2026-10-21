@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Sách Nấm EasyRL (Tiếng Việt)</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Description">
+  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify/lib/themes/vue.css">
+  <!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.css"> -->
+  <!-- <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js"></script> -->
+  <!-- <link rel="stylesheet" href="//unpkg.com/docsify@4.7.0/lib/themes/vue.css"> -->
+  <style>
+    .katex-display > .katex {
+      max-width: 100%;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <script>
+    window.$docsify = {
+      name: 'Sách Nấm EasyRL (bản dịch tiếng Việt)',
+      repo:'https://github.com/datawhalechina/easy-rl',
+      loadSidebar: '_sidebar_vi.md',
+      homepage: 'README_vi.md',
+      subMaxLevel: 3,
+      pagination:{
+        previousText:'Bài trước',
+        nextText:'Bài sau',
+      },
+      // markdown: {
+      //   latexRender: katex.renderToString.bind(katex)
+      // },
+      search:{
+        placeholder:'Tìm kiếm',
+        noData:'Không tìm thấy kết quả',
+        paths:'auto',
+        depth:6
+      },
+      plugins: [
+        function(hook, vm) {
+          hook.beforeEach(function(content) {
+            // Được gọi mỗi khi bắt đầu phân tích nội dung Markdown
+            // Thay tất cả ../img thành img
+            // https://github.com/docsifyjs/docsify/issues/936
+            return content.replace(/..\/img/g, "img");
+          })
+
+          // hook.doneEach(function () {
+          //   window.MathJax.Hub.Queue(["Typeset", MathJax.Hub, document.getElementById('app')]);
+          // }) 
+        }
+      ],
+    }
+  </script>
+  <!-- Công thức -->
+  <!-- <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      extensions: ["tex2jax.js"],
+      jax: ["input/TeX", "output/HTML-CSS"],
+      tex2jax: {
+        inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+        displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+        processEscapes: true,
+        skipTags: ["script", "noscript", "style", "textarea", "pre", "code", "a"]
+      },
+      "HTML-CSS": { fonts: ["TeX"] }
+    });
+  </script> -->
+  
+  <!-- <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script> -->
+
+  <!-- or <script src="//cdn.jsdelivr.net/gh/upupming/docsify-katex/dist/docsify-katex.js"></script> -->
+
+  <!-- CDN files for docsify-katex -->
+  <!-- <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script> -->
+
+  <script src="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.js"></script>
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/marked@3"></script>
+
+  <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
+  
+  <!-- Put them above docsify.min.js -->
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/docsify.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+
+  <!-- Đã gỡ Gitalk: khóa OAuth thuộc về repo gốc của Datawhale, không dùng cho bản dịch này -->
+
+<!-- <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script> -->
+  <!-- <script src="//unpkg.com/docsify@4.7.0/lib/docsify.min.js"></script> -->
+</body>
+</html>
