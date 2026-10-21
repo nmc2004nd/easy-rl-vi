@@ -646,7 +646,7 @@ print('Phần thưởng trung bình của tập = {}'.format(np.mean(episode_rew
 Phần thưởng trung bình của tập = -106.63
 ```
 
-Phần thưởng trung bình của tập ứng với chính sách của lớp SimpleAgent vào khoảng $-$110 (khi chạy bằng Gymnasium, các con số ở trên có thể hơi khác do cách sinh số ngẫu nhiên thay đổi), còn với nhiệm vụ xe leo núi, chỉ cần phần thưởng trung bình của 100 tập liên tiếp lớn hơn $-$110 là có thể coi nhiệm vụ đã được giải quyết. Code cài đặt đầy đủ xem tại [code xe leo núi](https://github.com/datawhalechina/easy-rl/blob/master/docs/chapter1/RL_example.py) (bản tiếng Việt: [RL_example_vi.py](./RL_example_vi.py)).
+Phần thưởng trung bình của tập ứng với chính sách của lớp SimpleAgent vào khoảng $-$110 (khi chạy bằng Gymnasium, các con số ở trên có thể hơi khác do cách sinh số ngẫu nhiên thay đổi), còn với nhiệm vụ xe leo núi, chỉ cần phần thưởng trung bình của 100 tập liên tiếp lớn hơn $-$110 là có thể coi nhiệm vụ đã được giải quyết. Code cài đặt đầy đủ xem tại [code xe leo núi](https://github.com/datawhalechina/easy-rl/blob/master/docs/chapter1/RL_example.py) (bản tiếng Việt: [RL_example_vi.py](https://github.com/nmc2004nd/easy-rl-vi/blob/main/docs/chapter1/RL_example_vi.py)).
 
 Khi kiểm tra hiệu năng của tác tử trên một nhiệm vụ nào đó trong Gym, theo thói quen, giới học thuật thường quan tâm nhất đến phần thưởng trung bình của 100 tập. Với một số nhiệm vụ, còn có quy định một giá trị phần thưởng tham chiếu; khi phần thưởng của 100 tập liên tiếp lớn hơn giá trị quy định thì coi nhiệm vụ đã được giải quyết. Còn với nhiệm vụ không quy định giá trị thì không có khái niệm nhiệm vụ đã được giải quyết hay chưa.
 
