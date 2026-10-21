@@ -630,7 +630,7 @@
     extras.forEach(function (x) {
       if (x.id === name && !x.rendered) { x.rendered = true; x.render(document.getElementById('tab-' + x.id), { typeset: typeset, esc: esc }); }
     });
-    try { sessionStorage.setItem('easyrl-vi:review:tab', name); } catch (e) {}
+    try { sessionStorage.setItem('easyrl-vi:review:tab:' + CH, name); } catch (e) {}
   }
   function renderAll() { showTab(current); }
 
@@ -695,7 +695,7 @@
       buildSession(false);
       return loadExtras(d.extras).then(function () {
         var saved = null;
-        try { saved = sessionStorage.getItem('easyrl-vi:review:tab'); } catch (e) {}
+        try { saved = sessionStorage.getItem('easyrl-vi:review:tab:' + CH); } catch (e) {}
         showTab(saved || 'cards');
       });
     })
