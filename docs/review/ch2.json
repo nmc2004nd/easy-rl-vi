@@ -1,0 +1,405 @@
+{
+  "chapter": 2,
+  "title": "Chương 2 · Quá trình quyết định Markov",
+  "chapterLink": "../#/chapter2/chapter2_vi",
+  "exerciseLink": "../#/chapter2/chapter2_questions&keywords_vi",
+  "extras": "ch2-extras.js",
+  "cards": [
+    {
+      "id": "c2-markov-property",
+      "tag": "Khái niệm",
+      "ref": "2.1.1",
+      "front": "Tính chất Markov (Markov property) là gì? Viết dưới dạng công thức.",
+      "back": "Trạng thái tương lai **chỉ phụ thuộc vào trạng thái hiện tại**, không phụ thuộc vào quá khứ trước đó:\n$$p(s_{t+1} \\mid s_t) = p(s_{t+1} \\mid h_t), \\quad h_t = \\{s_1, s_2, \\ldots, s_t\\}$$\nNói cách khác: biết hiện tại thì tương lai và quá khứ **độc lập có điều kiện**."
+    },
+    {
+      "id": "c2-markov-chain",
+      "tag": "Khái niệm",
+      "ref": "2.1.2",
+      "front": "Chuỗi Markov (Markov chain) là gì? Quá trình Markov được mô tả bằng bộ nào?",
+      "back": "Quá trình Markov **thời gian rời rạc** với **số trạng thái hữu hạn**, là quá trình Markov đơn giản nhất.\nQuá trình Markov là bộ hai $\\langle S, P \\rangle$: tập trạng thái $S$ và hàm (ma trận) chuyển trạng thái $P$."
+    },
+    {
+      "id": "c2-transition-matrix",
+      "tag": "Công thức",
+      "ref": "2.1.2",
+      "front": "Ma trận chuyển trạng thái $\\boldsymbol{P}$: phần tử hàng $i$, cột $j$ là gì? Tổng mỗi hàng bằng bao nhiêu?",
+      "back": "Phần tử $(i, j)$ là $p(s_{t+1} = s_j \\mid s_t = s_i)$: xác suất **đi từ $s_i$ sang $s_j$**.\nMỗi hàng là một phân phối xác suất trên mọi trạng thái kế tiếp, nên **tổng mỗi hàng bằng 1**."
+    },
+    {
+      "id": "c2-mrp",
+      "tag": "Khái niệm",
+      "ref": "2.2",
+      "front": "Quá trình phần thưởng Markov (MRP) khác chuỗi Markov ở điểm nào?",
+      "back": "MRP = chuỗi Markov **+ hàm phần thưởng $R$** (và hệ số chiết khấu $\\gamma$).\n$R(s)$ là **kỳ vọng phần thưởng** khi ở trạng thái $s$; với số trạng thái hữu hạn có thể viết thành vectơ, ví dụ $\\boldsymbol{R} = [5, 0, 0, 0, 0, 0, 10]$.\nHình ảnh: **chiếc thuyền giấy trôi theo dòng nước**, không tự điều khiển được."
+    },
+    {
+      "id": "c2-horizon",
+      "tag": "Khái niệm",
+      "ref": "2.2.1",
+      "front": "Tầm (horizon) là gì?",
+      "back": "Độ dài của một tập (episode): **số bước thời gian tối đa** của mỗi tập, là một số hữu hạn bước."
+    },
+    {
+      "id": "c2-return",
+      "tag": "Công thức",
+      "ref": "2.2.1",
+      "front": "Viết công thức lợi tức (return) $G_t$.",
+      "back": "$$G_t = r_{t+1} + \\gamma r_{t+2} + \\gamma^2 r_{t+3} + \\ldots + \\gamma^{T-t-1} r_T$$\nPhần thưởng **càng về sau càng bị chiết khấu nhiều** ($T$ là thời điểm cuối cùng)."
+    },
+    {
+      "id": "c2-return-calc",
+      "tag": "Tính tay",
+      "ref": "2.2.1",
+      "front": "MRP có $\\boldsymbol{R} = [5, 0, 0, 0, 0, 0, 10]$, $\\gamma = 0{,}5$. Tính lợi tức của quỹ đạo $s_4, s_5, s_6, s_7$.",
+      "back": "$$G = 0 + 0{,}5 \\cdot 0 + 0{,}25 \\cdot 0 + 0{,}125 \\cdot 10 = 1{,}25$$\nPhần thưởng 10 của $s_7$ đến sau **3 bước** nên nhân với $\\gamma^3 = 0{,}125$."
+    },
+    {
+      "id": "c2-value-mrp",
+      "tag": "Công thức",
+      "ref": "2.2.1",
+      "front": "Hàm giá trị trạng thái của MRP được định nghĩa thế nào?",
+      "back": "$$V(s) = \\mathbb{E}\\left[G_t \\mid s_t = s\\right]$$\nLà **kỳ vọng của lợi tức** khi bắt đầu từ trạng thái $s$: giá trị hiện tại của các phần thưởng có thể nhận được trong tương lai."
+    },
+    {
+      "id": "c2-why-discount",
+      "tag": "Vì sao",
+      "ref": "2.2.1 · Bài tập 2-1",
+      "front": "Vì sao MRP cần hệ số chiết khấu $\\gamma$?",
+      "back": "1. Có quá trình Markov **có vòng, không kết thúc**: tránh lợi tức vô hạn.\n2. Mô hình môi trường **không hoàn hảo**, tương lai càng xa càng **bất định**.\n3. Phần thưởng có giá trị thực tế thì **nhận sớm tốt hơn** (tiền bây giờ giá trị hơn tiền sau này).\n4. Là **siêu tham số** điều chỉnh được: $\\gamma = 0$ chỉ quan tâm phần thưởng hiện tại, $\\gamma = 1$ coi tương lai như hiện tại."
+    },
+    {
+      "id": "c2-bellman-mrp",
+      "tag": "Công thức",
+      "ref": "2.2.2",
+      "front": "Viết phương trình Bellman của MRP và nói ý nghĩa từng phần.",
+      "back": "$$V(s) = \\underbrace{R(s)}_{\\text{tức thời}} + \\underbrace{\\gamma \\sum_{s' \\in S} p(s' \\mid s) V(s')}_{\\text{tương lai đã chiết khấu}}$$\nGiá trị hiện tại = **phần thưởng tức thời** + **tổng chiết khấu giá trị của các trạng thái kế tiếp**. Đây là **quan hệ lặp** giữa hiện tại và tương lai."
+    },
+    {
+      "id": "c2-analytic",
+      "tag": "Vì sao",
+      "ref": "2.2.2 · Bài tập 2-2",
+      "front": "Nghiệm giải tích của phương trình Bellman là gì? Vì sao khó dùng khi có nhiều trạng thái?",
+      "back": "$$\\boldsymbol{V} = \\boldsymbol{R} + \\gamma \\boldsymbol{P} \\boldsymbol{V} \\;\\Rightarrow\\; \\boldsymbol{V} = (\\boldsymbol{I} - \\gamma \\boldsymbol{P})^{-1} \\boldsymbol{R}$$\nNghịch đảo ma trận tốn $O(N^3)$. Với $10^6$ trạng thái, $\\boldsymbol{P}$ là ma trận $10^6 \\times 10^6$, nên chỉ dùng được cho **MRP rất nhỏ**."
+    },
+    {
+      "id": "c2-three-methods",
+      "tag": "So sánh",
+      "ref": "2.2.3 · Bài tập 2-3",
+      "front": "Ba phương pháp lặp để tính giá trị của MRP lớn? Mỗi cách làm gì?",
+      "back": "1. **Monte Carlo (MC)**: lấy mẫu nhiều quỹ đạo, **lấy trung bình lợi tức**.\n2. **Quy hoạch động (DP)**: **lặp phương trình Bellman** đến khi giá trị hội tụ (bootstrapping).\n3. **Sai phân thời gian (TD)**: **kết hợp** MC và DP."
+    },
+    {
+      "id": "c2-mc-boat",
+      "tag": "Ví dụ",
+      "ref": "2.2.3",
+      "front": "Mô tả phương pháp Monte Carlo tính $V(s_4)$ bằng ví dụ \"thuyền giấy\".",
+      "back": "Thả thuyền giấy ở $s_4$, để nó **trôi theo xác suất chuyển** và sinh ra một quỹ đạo; tính lợi tức chiết khấu $g$ của quỹ đạo đó.\nLặp lại 100 hay 1000 lần rồi **lấy trung bình** các $g$: được ước lượng của $V(s_4)$."
+    },
+    {
+      "id": "c2-bootstrap",
+      "tag": "Khái niệm",
+      "ref": "2.2.3",
+      "front": "Bootstrapping (tự cập nhật) là gì?",
+      "back": "Cập nhật một **giá trị ước lượng dựa trên các giá trị ước lượng khác**, ví dụ quy hoạch động dùng $V'$ của các trạng thái kế tiếp để cập nhật $V$ của trạng thái hiện tại.\nDừng khi lần cập nhật mới **gần như không khác** lần trước (nhỏ hơn một ngưỡng)."
+    },
+    {
+      "id": "c2-mdp",
+      "tag": "Khái niệm",
+      "ref": "2.3",
+      "front": "MDP khác MRP ở điểm nào? MDP được mô tả bằng bộ năm nào?",
+      "back": "MDP có thêm **hành động (quyết định)**. Chuyển trạng thái thành $p(s_{t+1} \\mid s_t, a_t)$, phần thưởng thành $R(s, a) = \\mathbb{E}[r_t \\mid s_t = s, a_t = a]$.\nBộ năm $\\langle S, A, P, R, \\gamma \\rangle$. Hình ảnh: **người lái đò** điều khiển thuyền, không để thuyền trôi tự do."
+    },
+    {
+      "id": "c2-mdp-to-mrp",
+      "tag": "Công thức",
+      "ref": "2.3.1 · Bài tập 2-4",
+      "front": "Cho MDP và một chính sách $\\pi$ cố định. Làm sao biến nó thành MRP?",
+      "back": "Lấy tổng theo hành động để **loại bỏ $a$**:\n$$P_\\pi(s' \\mid s) = \\sum_{a \\in A} \\pi(a \\mid s)\\, p(s' \\mid s, a)$$\n$$r_\\pi(s) = \\sum_{a \\in A} \\pi(a \\mid s)\\, R(s, a)$$"
+    },
+    {
+      "id": "c2-structure",
+      "tag": "So sánh",
+      "ref": "2.3.2 · Bài tập 2-5",
+      "front": "Chuyển trạng thái trong MDP khác MP/MRP thế nào về cấu trúc?",
+      "back": "MP/MRP: từ $s$ đi **thẳng** sang $s'$ theo xác suất chuyển.\nMDP: có **thêm một tầng hành động** ở giữa. Tác tử chọn $a$ trước (tới \"nút đen\"), rồi môi trường mới chuyển sang $s'$ theo $p(s' \\mid s, a)$."
+    },
+    {
+      "id": "c2-v-and-q",
+      "tag": "Công thức",
+      "ref": "2.3.3",
+      "front": "Định nghĩa $V_\\pi(s)$ và $Q_\\pi(s, a)$. Liên hệ giữa chúng?",
+      "back": "$$V_\\pi(s) = \\mathbb{E}_\\pi[G_t \\mid s_t = s], \\qquad Q_\\pi(s, a) = \\mathbb{E}_\\pi[G_t \\mid s_t = s, a_t = a]$$\n$$V_\\pi(s) = \\sum_{a \\in A} \\pi(a \\mid s)\\, Q_\\pi(s, a)$$\n$$Q_\\pi(s, a) = R(s, a) + \\gamma \\sum_{s' \\in S} p(s' \\mid s, a)\\, V_\\pi(s')$$"
+    },
+    {
+      "id": "c2-bellman-expectation",
+      "tag": "Công thức",
+      "ref": "2.3.4",
+      "front": "Viết phương trình kỳ vọng Bellman (Bellman expectation equation) cho $V_\\pi$.",
+      "back": "$$V_\\pi(s) = \\sum_{a \\in A} \\pi(a \\mid s) \\left( R(s, a) + \\gamma \\sum_{s' \\in S} p(s' \\mid s, a)\\, V_\\pi(s') \\right)$$\nDạng gọn: $V_\\pi(s) = \\mathbb{E}_\\pi\\left[r_{t+1} + \\gamma V_\\pi(s_{t+1}) \\mid s_t = s\\right]$."
+    },
+    {
+      "id": "c2-backup",
+      "tag": "Khái niệm",
+      "ref": "2.3.5",
+      "front": "Trong sơ đồ backup, vòng tròn rỗng và vòng tròn đặc biểu thị gì? Có mấy tầng lấy tổng?",
+      "back": "Vòng tròn **rỗng** = **trạng thái**; vòng tròn **đặc** = **cặp trạng thái-hành động**.\nHai tầng: tổng theo $p(s' \\mid s, a)$ đưa giá trị lá $V(s')$ lên nút đen (ra $Q$), rồi tổng theo $\\pi(a \\mid s)$ đưa lên gốc (ra $V(s)$)."
+    },
+    {
+      "id": "c2-prediction-control",
+      "tag": "So sánh",
+      "ref": "2.3.7",
+      "front": "Bài toán dự đoán (prediction) và điều khiển (control) khác nhau ở đầu vào, đầu ra?",
+      "back": "**Dự đoán** (đánh giá chính sách): vào MDP $\\langle S, A, P, R, \\gamma \\rangle$ **và chính sách $\\pi$** → ra $V_\\pi$.\n**Điều khiển** (tìm chính sách tối ưu): vào **chỉ MDP** → ra $V^*$ và $\\pi^*$.\nThường giải dự đoán trước, rồi dùng nó để giải điều khiển."
+    },
+    {
+      "id": "c2-dp-conditions",
+      "tag": "Vì sao",
+      "ref": "2.3.8",
+      "front": "Quy hoạch động cần bài toán có hai tính chất nào? Vì sao nó là \"lập kế hoạch\" chứ không phải \"học\"?",
+      "back": "1. **Cấu trúc con tối ưu**: lời giải tối ưu ghép từ lời giải các bài toán con.\n2. **Bài toán con chồng lấp**: bài toán con lặp lại, lưu lời giải để dùng lại.\nPhương trình Bellman thỏa cả hai. Nhưng DP **phải biết hết môi trường** (xác suất chuyển và phần thưởng), nên là **lập kế hoạch**."
+    },
+    {
+      "id": "c2-policy-eval",
+      "tag": "Công thức",
+      "ref": "2.3.9",
+      "front": "Đánh giá chính sách lặp: công thức cập nhật? Backup đồng bộ là gì?",
+      "back": "$$V^{t+1}(s) = \\sum_{a \\in A} \\pi(a \\mid s) \\left( R(s, a) + \\gamma \\sum_{s' \\in S} p(s' \\mid s, a)\\, V^{t}(s') \\right)$$\nLặp từ $V^1, V^2, \\ldots$ đến hội tụ $V_\\pi$. **Đồng bộ**: mỗi lần lặp cập nhật **tất cả** trạng thái; **bất đồng bộ**: chỉ cập nhật một phần."
+    },
+    {
+      "id": "c2-optimal",
+      "tag": "Công thức",
+      "ref": "2.3.10",
+      "front": "Định nghĩa $V^*$ và $\\pi^*$. Cái nào duy nhất?",
+      "back": "$$V^*(s) = \\max_\\pi V_\\pi(s), \\qquad \\pi^*(s) = \\arg\\max_\\pi V_\\pi(s)$$\n$V^*$ **duy nhất**; $\\pi^*$ **có thể không duy nhất** (nhiều chính sách cùng đạt $V^*$). Chính sách tối ưu thường **tất định và dừng**."
+    },
+    {
+      "id": "c2-extract",
+      "tag": "Công thức",
+      "ref": "2.3.10",
+      "front": "Có $Q^*$ rồi, rút ra chính sách tối ưu thế nào?",
+      "back": "Ở mỗi trạng thái chọn hành động làm $Q^*$ lớn nhất:\n$$\\pi^*(a \\mid s) = \\begin{cases} 1, & a = \\arg\\max_{a \\in A} Q^*(s, a) \\\\ 0, & \\text{trường hợp khác} \\end{cases}$$"
+    },
+    {
+      "id": "c2-exhaustive",
+      "tag": "Tính tay",
+      "ref": "2.3.10 · Bài tập 2-6",
+      "front": "Vét cạn chính sách: có bao nhiêu chính sách tất định? Vì sao không dùng?",
+      "back": "Mỗi trạng thái chọn 1 trong $|A|$ hành động, nên có $|A|^{|S|}$ chính sách.\nVí dụ $|S| = 16$, $|A| = 4$: $4^{16} \\approx 4{,}3 \\times 10^9$ chính sách, mỗi cái phải đánh giá. **Quá chậm**, nên dùng lặp chính sách hoặc lặp giá trị."
+    },
+    {
+      "id": "c2-policy-iteration",
+      "tag": "Khái niệm",
+      "ref": "2.3.11",
+      "front": "Lặp chính sách (policy iteration) gồm hai bước nào?",
+      "back": "1. **Đánh giá chính sách**: giữ $\\pi_i$ cố định, tính $V_{\\pi_i}$ (phương trình kỳ vọng Bellman).\n2. **Cải thiện chính sách**: tính $Q_{\\pi_i}(s, a) = R(s, a) + \\gamma \\sum_{s'} p(s' \\mid s, a) V_{\\pi_i}(s')$, rồi $\\pi_{i+1}(s) = \\arg\\max_a Q_{\\pi_i}(s, a)$ (tham lam).\nLặp hai bước như **đá bóng qua lại** đến khi chính sách không đổi."
+    },
+    {
+      "id": "c2-bellman-optimality",
+      "tag": "Công thức",
+      "ref": "2.3.11",
+      "front": "Viết phương trình tối ưu Bellman (Bellman optimality equation) cho $V^*$ và $Q^*$.",
+      "back": "$$V^*(s) = \\max_{a} \\left( R(s, a) + \\gamma \\sum_{s' \\in S} p(s' \\mid s, a)\\, V^*(s') \\right)$$\n$$Q^*(s, a) = R(s, a) + \\gamma \\sum_{s' \\in S} p(s' \\mid s, a) \\max_{a'} Q^*(s', a')$$\nKhác phương trình kỳ vọng: **lấy max** theo hành động thay vì **lấy trung bình theo $\\pi$**. Q-learning (chương 3) dựa trên phương trình này."
+    },
+    {
+      "id": "c2-principle",
+      "tag": "Khái niệm",
+      "ref": "2.3.12",
+      "front": "Định lý nguyên lý tối ưu (principle of optimality) nói gì?",
+      "back": "Chính sách $\\pi$ đạt giá trị tối ưu tại $s$, tức $V_\\pi(s) = V^*(s)$, **khi và chỉ khi** với mọi $s'$ đến được từ $s$, $V_\\pi(s') = V^*(s')$.\nNghĩa là: đi bước đầu tối ưu, rồi các bước sau cũng theo chính sách tối ưu, thì cả đường là tối ưu."
+    },
+    {
+      "id": "c2-value-iteration",
+      "tag": "Khái niệm",
+      "ref": "2.3.12",
+      "front": "Thuật toán lặp giá trị (value iteration) làm gì?",
+      "back": "Khởi tạo $V_0(s) = 0$, rồi lặp:\n$$V_{k+1}(s) = \\max_a \\left( R(s, a) + \\gamma \\sum_{s'} p(s' \\mid s, a)\\, V_k(s') \\right)$$\nĐến khi hội tụ về $V^*$, cuối cùng mới **rút chính sách** bằng $\\arg\\max$. Trong lúc lặp **không có hàm chính sách**."
+    },
+    {
+      "id": "c2-pi-vs-vi",
+      "tag": "So sánh",
+      "ref": "2.3.13",
+      "front": "Lặp chính sách và lặp giá trị khác nhau ở điểm nào?",
+      "back": "**Lặp chính sách**: xen kẽ đánh giá và cải thiện; **mỗi vòng ra một chính sách hoàn chỉnh, có ý nghĩa**.\n**Lặp giá trị**: lặp thẳng phương trình tối ưu Bellman, giá trị **lan truyền dần mỗi lần một bước**; chính sách ở các bước trung gian **không có ý nghĩa**, chỉ rút chính sách khi đã hội tụ.\nCả hai đều giải được bài toán điều khiển và cho cùng chính sách tối ưu."
+    },
+    {
+      "id": "c2-table",
+      "tag": "So sánh",
+      "ref": "2.3.14",
+      "front": "Bảng 2.1: mỗi thuật toán quy hoạch động dùng phương trình Bellman nào?",
+      "back": "**Dự đoán** → đánh giá chính sách lặp → **phương trình kỳ vọng Bellman**.\n**Điều khiển** → lặp chính sách → **phương trình kỳ vọng Bellman** (bước đánh giá) + tham lam.\n**Điều khiển** → lặp giá trị → **phương trình tối ưu Bellman**."
+    },
+    {
+      "id": "c2-non-markov",
+      "tag": "Vì sao",
+      "ref": "Phỏng vấn 2-3",
+      "front": "Nếu dữ liệu không có tính chất Markov thì xử lý thế nào?",
+      "back": "Chỉ dùng trạng thái hiện tại sẽ làm quyết định kém tổng quát. Có thể dùng **RNN** (hoặc **cơ chế chú ý**) để tổng hợp thông tin lịch sử thành một **biểu diễn trạng thái**, rồi giải MDP trên không gian biểu diễn đó."
+    },
+    {
+      "id": "c2-n-step",
+      "tag": "Vì sao",
+      "ref": "Phỏng vấn 2-6",
+      "front": "Cập nhật $n$ bước: khi $n$ tăng thì độ chệch (bias) và phương sai (variance) thay đổi thế nào?",
+      "back": "$$Q(S, A) \\leftarrow Q(S, A) + \\alpha \\left[ \\sum_{i=1}^{n} \\gamma^{i-1} r_{t+i} + \\gamma^{n} \\max_{a} Q(S', a) - Q(S, A) \\right]$$\n$n$ càng lớn: dùng nhiều phần thưởng thật hơn nên **độ chệch giảm**, nhưng cộng nhiều đại lượng ngẫu nhiên hơn nên **phương sai tăng**."
+    }
+  ],
+  "quiz": [
+    {
+      "q": "Thời tiết ngày mai được giả định chỉ phụ thuộc vào thời tiết hôm nay, không phụ thuộc các ngày trước. Giả định này là gì?",
+      "options": [
+        "Tính chất Markov",
+        "Giả định i.i.d.",
+        "Phần thưởng trễ",
+        "Quan sát được một phần"
+      ],
+      "answer": 0,
+      "explain": "Trạng thái tương lai chỉ phụ thuộc trạng thái hiện tại: $p(s_{t+1} \\mid s_t) = p(s_{t+1} \\mid h_t)$. Đó là tính chất Markov.",
+      "ref": "2.1.1"
+    },
+    {
+      "q": "Mỗi hàng của ma trận chuyển trạng thái $\\boldsymbol{P}$ có tổng bằng bao nhiêu?",
+      "options": [
+        "0",
+        "1",
+        "Số trạng thái $N$",
+        "Không xác định"
+      ],
+      "answer": 1,
+      "explain": "Hàng $i$ là phân phối xác suất đi từ $s_i$ tới mọi trạng thái kế tiếp, nên tổng bằng 1.",
+      "ref": "2.1.2"
+    },
+    {
+      "q": "MRP có $\\boldsymbol{R} = [5, 0, 0, 0, 0, 0, 10]$, $\\gamma = 0{,}5$. Lợi tức của quỹ đạo $s_4, s_3, s_2, s_1$ là bao nhiêu?",
+      "options": [
+        "$5$",
+        "$0{,}625$",
+        "$1{,}25$",
+        "$2{,}5$"
+      ],
+      "answer": 1,
+      "explain": "$G = 0 + 0{,}5 \\cdot 0 + 0{,}25 \\cdot 0 + 0{,}125 \\cdot 5 = 0{,}625$: phần thưởng 5 của $s_1$ đến sau 3 bước.",
+      "ref": "2.2.1"
+    },
+    {
+      "q": "Vì sao không dùng nghiệm giải tích $\\boldsymbol{V} = (\\boldsymbol{I} - \\gamma \\boldsymbol{P})^{-1} \\boldsymbol{R}$ cho MRP có 1 triệu trạng thái?",
+      "options": [
+        "Vì nghiệm giải tích sai",
+        "Vì nghịch đảo ma trận tốn $O(N^3)$, quá lớn với $N = 10^6$",
+        "Vì $\\gamma$ phải bằng 1",
+        "Vì MRP lớn không có tính chất Markov"
+      ],
+      "answer": 1,
+      "explain": "Công thức đúng, nhưng nghịch đảo ma trận $10^6 \\times 10^6$ quá tốn kém, nên với MRP lớn ta dùng phương pháp lặp (DP, MC, TD).",
+      "ref": "2.2.2"
+    },
+    {
+      "q": "Hình ảnh \"thuyền giấy trôi theo dòng nước\" và \"người lái đò điều khiển thuyền\" lần lượt ứng với:",
+      "options": [
+        "MDP và MRP",
+        "MRP và MDP",
+        "Chuỗi Markov và POMDP",
+        "Lặp giá trị và lặp chính sách"
+      ],
+      "answer": 1,
+      "explain": "Thuyền giấy không tự điều khiển, chỉ trôi theo xác suất chuyển: MRP. Người lái đò chọn hành động để quyết định hướng đi: MDP.",
+      "ref": "2.3.6"
+    },
+    {
+      "q": "Cho MDP và một chính sách ngẫu nhiên đều, yêu cầu tính giá trị của mọi ô. Đây là bài toán gì?",
+      "options": [
+        "Điều khiển (control)",
+        "Dự đoán / đánh giá chính sách (prediction)",
+        "Tìm kiếm chính sách vét cạn",
+        "Học không mô hình"
+      ],
+      "answer": 1,
+      "explain": "Chính sách đã cho trước, chỉ cần tính $V_\\pi$: đó là dự đoán. Điều khiển là khi không có chính sách và phải tìm $\\pi^*$.",
+      "ref": "2.3.7"
+    },
+    {
+      "q": "MDP có $|S| = 3$ trạng thái và $|A| = 2$ hành động. Có bao nhiêu chính sách tất định?",
+      "options": [
+        "$6$",
+        "$8$",
+        "$9$",
+        "$5$"
+      ],
+      "answer": 1,
+      "explain": "Mỗi trạng thái chọn 1 trong 2 hành động: $|A|^{|S|} = 2^3 = 8$.",
+      "ref": "2.3.10"
+    },
+    {
+      "q": "Ở một trạng thái, $Q^*(s, a_1) = 2$, $Q^*(s, a_2) = 5$, $Q^*(s, a_3) = 3$. $V^*(s)$ và $\\pi^*(s)$ là gì?",
+      "options": [
+        "$V^*(s) = 10/3$, $\\pi^*(s) = a_2$",
+        "$V^*(s) = 5$, $\\pi^*(s) = a_2$",
+        "$V^*(s) = 2$, $\\pi^*(s) = a_1$",
+        "$V^*(s) = 5$, $\\pi^*(s) = a_3$"
+      ],
+      "answer": 1,
+      "explain": "$V^*(s) = \\max_a Q^*(s, a) = 5$ và chính sách tối ưu chọn $\\arg\\max_a Q^*(s, a) = a_2$. Lấy trung bình là cách tính $V_\\pi$ của chính sách ngẫu nhiên đều, không phải $V^*$.",
+      "ref": "2.3.10"
+    },
+    {
+      "q": "Lặp giá trị dùng phương trình nào làm quy tắc cập nhật?",
+      "options": [
+        "Phương trình kỳ vọng Bellman",
+        "Phương trình tối ưu Bellman",
+        "Nghiệm giải tích $(\\boldsymbol{I} - \\gamma \\boldsymbol{P})^{-1} \\boldsymbol{R}$",
+        "Công thức Monte Carlo"
+      ],
+      "answer": 1,
+      "explain": "Lặp giá trị lấy $\\max_a$ ở mỗi bước: $V(s) \\leftarrow \\max_a (R(s, a) + \\gamma \\sum_{s'} p(s' \\mid s, a) V(s'))$. Đánh giá chính sách và bước đánh giá của lặp chính sách mới dùng phương trình kỳ vọng.",
+      "ref": "2.3.14"
+    },
+    {
+      "q": "Trong lặp giá trị, chính sách rút ra ở các bước trung gian (trước khi hội tụ) có ý nghĩa không?",
+      "options": [
+        "Có, mỗi bước là một chính sách hoàn chỉnh",
+        "Không, chỉ có ý nghĩa sau khi giá trị hội tụ",
+        "Có, và luôn là chính sách tối ưu",
+        "Lặp giá trị không bao giờ rút ra chính sách"
+      ],
+      "answer": 1,
+      "explain": "Giá trị lan truyền dần mỗi lần một bước, các giá trị trung gian chưa hoàn chỉnh. Ngược lại, mỗi vòng của lặp chính sách cho một chính sách hoàn chỉnh.",
+      "ref": "2.3.12"
+    },
+    {
+      "q": "Điều kiện bắt buộc để dùng quy hoạch động giải MDP là gì?",
+      "options": [
+        "Không gian hành động liên tục",
+        "Biết đầy đủ mô hình: xác suất chuyển và hàm phần thưởng",
+        "Có mạng nơ-ron",
+        "$\\gamma = 1$"
+      ],
+      "answer": 1,
+      "explain": "Quy hoạch động là lập kế hoạch (planning): phải biết hoàn toàn môi trường. Khi không biết mô hình thì cần các phương pháp học như MC, TD (chương 3).",
+      "ref": "2.3.8"
+    },
+    {
+      "q": "Đánh giá chính sách \"luôn đi sang trái\" với $\\boldsymbol{R} = [5, 0, 0, 0, 0, 0, 10]$ và $\\gamma = 0$. $\\boldsymbol{V}_\\pi$ bằng bao nhiêu?",
+      "options": [
+        "$[5, 0, 0, 0, 0, 0, 10]$",
+        "$[5, 5, 5, 5, 5, 5, 10]$",
+        "$[0, 0, 0, 0, 0, 0, 0]$",
+        "$[15, 0, 0, 0, 0, 0, 0]$"
+      ],
+      "answer": 0,
+      "explain": "Với $\\gamma = 0$ chỉ còn phần thưởng tức thời: $V_\\pi(s) = R(s)$, bất kể chính sách là gì.",
+      "ref": "2.3.6"
+    },
+    {
+      "q": "Trong cập nhật $n$ bước, khi tăng $n$ thì:",
+      "options": [
+        "Độ chệch tăng, phương sai giảm",
+        "Độ chệch giảm, phương sai tăng",
+        "Cả hai cùng giảm",
+        "Cả hai cùng tăng"
+      ],
+      "answer": 1,
+      "explain": "Dùng nhiều phần thưởng thật hơn và ít dựa vào ước lượng hơn nên độ chệch giảm; nhưng tổng nhiều biến ngẫu nhiên hơn nên phương sai tăng.",
+      "ref": "Phỏng vấn 2-6"
+    }
+  ]
+}

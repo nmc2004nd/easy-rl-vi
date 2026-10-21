@@ -4,6 +4,7 @@
 - [🧠 Chương 1 Ôn tập (flashcard + quiz)](review/index.html?ch=1 ':ignore :target=_self')
 - [Chương 2 Quá trình quyết định Markov (MDP)](chapter2/chapter2_vi)
 - [Chương 2 Bài tập](chapter2/chapter2_questions&keywords_vi)
+- [🧠 Chương 2 Ôn tập (flashcard + quiz)](review/index.html?ch=2 ':ignore :target=_self')
 - [Chương 3 Phương pháp dạng bảng](chapter3/chapter3_vi)
 - [Chương 3 Bài tập](chapter3/chapter3_questions&keywords_vi)
 - [Dự án 1 Dùng Q-learning giải bài toán tìm đường bên vách đá](chapter3/project1_vi)

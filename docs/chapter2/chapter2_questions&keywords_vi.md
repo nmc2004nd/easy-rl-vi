@@ -1,5 +1,7 @@
 # Chương 2 Quá trình quyết định Markov (MDP)
 
+> 🧠 **Ôn tập để nhớ lâu:** sau khi đọc xong, hãy [ôn chương 2 bằng flashcard, quiz, thí nghiệm và sơ đồ](review/index.html?ch=2 ':ignore :target=_self'). Thí nghiệm có lặp giá trị và lặp chính sách chạy từng bước trên thế giới lưới.
+
 ## Từ khóa
 
 **Tính chất Markov (Markov property, MP)**: nếu trạng thái tương lai của một quá trình không phụ thuộc vào các trạng thái quá khứ mà chỉ do trạng thái hiện tại quyết định, thì quá trình đó có tính chất Markov. Nói cách khác, trạng thái tiếp theo của một trạng thái chỉ phụ thuộc vào trạng thái hiện tại của nó, và không liên quan gì đến các trạng thái trước trạng thái hiện tại.
