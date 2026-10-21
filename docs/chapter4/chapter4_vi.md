@@ -303,6 +303,31 @@ rồi tính gradient $\nabla \log \pi(a_t|s_t,\theta)$ cho từng hành động.
 </div>
 <div align=center>Hình 4.14 Thuật toán REINFORCE</div>
 
+Bản dịch thuật toán ở hình 4.14:
+
+$$
+\begin{array}{l}
+\hline
+\textbf{Thuật toán REINFORCE} \\
+\hline
+\text{Đầu vào: chính sách tham số hóa khả vi } \pi(a \mid s, \theta) \\
+\text{Tham số thuật toán: bước cập nhật } \alpha > 0 \\
+\text{Khởi tạo tham số chính sách } \theta \in \mathbb{R}^{d'} \text{ (ví dụ khởi tạo bằng } 0\text{)} \\
+\text{Lặp với mỗi tập:} \\
+\quad \text{Theo } \pi(\cdot \mid \cdot, \theta) \text{, sinh } S_0, A_0, R_1, \cdots, S_{T-1}, A_{T-1}, R_T \\
+\quad \text{Lặp với mỗi bước của tập, } t = 0, 1, \cdots, T-1: \\
+\qquad G \leftarrow \sum_{k=t+1}^{T} \gamma^{k-t-1} R_k \qquad (G_t) \\
+\qquad \theta \leftarrow \theta + \alpha \gamma^{t} G \nabla \log \pi(A_t \mid S_t, \theta)
+\\ \hline
+\end{array}
+$$
+
+Phần dưới của hình: với dữ liệu $(s_1,a_1,G_1), (s_2,a_2,G_2), \cdots, (s_T,a_T,G_T)$, với mỗi hành động:
+
+$$
+\text{mất mát} = -G_t \cdot \underbrace{[0,1,0]}_{a_t \text{ thực tế}} \cdot \log \underbrace{[0.2,0.5,0.3]}_{\pi(a \mid s, \theta)}
+$$
+
 
 
 > Mã hóa one-hot (one-hot encoding) thường dùng để xử lý các đặc trưng mà giữa các lớp không có quan hệ lớn nhỏ. Ví dụ nhóm máu, có tổng cộng 4 giá trị (nhóm A, nhóm B, nhóm AB, nhóm O), mã hóa one-hot sẽ biến nhóm máu thành một vectơ thưa 4 chiều, nhóm máu A biểu diễn là (1,0,0,0), nhóm máu B là (0,1,0,0), nhóm máu AB là (0,0,1,0), nhóm máu O là (0,0,0,1).
