@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ôn tập · Sách Nấm EasyRL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --surface-2: #eef1f4;
+    --text: #1d2430;
+    --muted: #5d6878;
+    --border: #dde2e8;
+    --accent: #42b983;
+    --accent-soft: #e3f5ec;
+    --accent-text: #1f7a52;
+    --again: #d9534f;
+    --again-soft: #fbe9e8;
+    --hard: #c98a12;
+    --hard-soft: #fbf1dc;
+    --good: #2e8b57;
+    --good-soft: #e3f3ea;
+    --shadow: 0 1px 2px rgba(20, 30, 45, .06), 0 6px 20px rgba(20, 30, 45, .06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12161c;
+      --surface: #1a2028;
+      --surface-2: #232b35;
+      --text: #e6eaef;
+      --muted: #9aa5b3;
+      --border: #2e3844;
+      --accent: #4cc893;
+      --accent-soft: #1b3329;
+      --accent-text: #7fdcb2;
+      --again: #f07470;
+      --again-soft: #3a2223;
+      --hard: #e3ac45;
+      --hard-soft: #382d18;
+      --good: #5ccf8e;
+      --good-soft: #1b3326;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #12161c;
+    --surface: #1a2028;
+    --surface-2: #232b35;
+    --text: #e6eaef;
+    --muted: #9aa5b3;
+    --border: #2e3844;
+    --accent: #4cc893;
+    --accent-soft: #1b3329;
+    --accent-text: #7fdcb2;
+    --again: #f07470;
+    --again-soft: #3a2223;
+    --hard: #e3ac45;
+    --hard-soft: #382d18;
+    --good: #5ccf8e;
+    --good-soft: #1b3326;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 6px 20px rgba(0, 0, 0, .25);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px 16px; margin-bottom: 16px; }
+  header h1 { font-size: 1.35rem; margin: 0; font-weight: 700; letter-spacing: -.01em; }
+  header .links { display: flex; gap: 14px; font-size: .9rem; }
+  a { color: var(--accent-text); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .tabs { display: flex; gap: 4px; background: var(--surface-2); padding: 4px; border-radius: 12px; margin-bottom: 18px; }
+  .tab {
+    flex: 1; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; font-size: .95rem;
+    padding: 9px 8px; border-radius: 9px; cursor: pointer;
+  }
+  .tab[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
+  .tab:focus-visible, button:focus-visible, .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .pill { background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 3px 12px; font-size: .85rem; color: var(--muted); }
+  .pill b { color: var(--text); font-weight: 600; }
+
+  .card {
+    position: relative; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 22px 22px 18px; min-height: 260px; display: flex; flex-direction: column; cursor: pointer; user-select: none;
+  }
+  .card .meta { display: flex; justify-content: space-between; gap: 8px; font-size: .8rem; color: var(--muted); margin-bottom: 12px; }
+  .tagchip { background: var(--accent-soft); color: var(--accent-text); border-radius: 6px; padding: 1px 8px; font-weight: 600; }
+  .card .front { font-size: 1.15rem; font-weight: 600; line-height: 1.5; }
+  .card .back { margin-top: 16px; padding-top: 16px; border-top: 1px dashed var(--border); white-space: pre-line; }
+  .card .hint { margin-top: auto; padding-top: 16px; text-align: center; color: var(--muted); font-size: .85rem; }
+  .card.flipped { cursor: default; }
+
+  .grades { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .grade {
+    border: 1px solid transparent; border-radius: 12px; padding: 10px 6px; font: inherit; font-weight: 600; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; line-height: 1.3;
+  }
+  .grade small { font-weight: 500; opacity: .8; font-size: .78rem; }
+  .grade.again { background: var(--again-soft); color: var(--again); border-color: var(--again); }
+  .grade.hard { background: var(--hard-soft); color: var(--hard); border-color: var(--hard); }
+  .grade.good { background: var(--good-soft); color: var(--good); border-color: var(--good); }
+  .grade:hover { filter: brightness(.97); }
+
+  .btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 10px; padding: 9px 16px;
+    font: inherit; font-weight: 600; cursor: pointer;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn:hover { filter: brightness(.97); }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .muted { color: var(--muted); }
+  .kbd { font-size: .8rem; color: var(--muted); margin-top: 12px; text-align: center; }
+  kbd { border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; font-family: inherit; font-size: .78rem; background: var(--surface); }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); padding: 22px; }
+  .panel h2 { margin: 0 0 6px; font-size: 1.15rem; }
+
+  .progress { height: 6px; background: var(--surface-2); border-radius: 999px; overflow: hidden; margin-bottom: 14px; }
+  .progress > span { display: block; height: 100%; background: var(--accent); transition: width .25s; }
+
+  .qtext { font-size: 1.08rem; font-weight: 600; margin-bottom: 14px; }
+  .opts { display: grid; gap: 8px; }
+  .opt {
+    text-align: left; border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 12px;
+    padding: 11px 14px; font: inherit; cursor: pointer; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .opt .letter { font-weight: 700; color: var(--muted); min-width: 1.2em; }
+  .opt:hover:not([disabled]) { border-color: var(--accent); }
+  .opt[disabled] { cursor: default; }
+  .opt.correct { border-color: var(--good); background: var(--good-soft); }
+  .opt.wrong { border-color: var(--again); background: var(--again-soft); }
+  .explain { margin-top: 14px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); }
+  .explain .verdict { font-weight: 700; margin-bottom: 4px; }
+  .explain .verdict.ok { color: var(--good); }
+  .explain .verdict.no { color: var(--again); }
+
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 12px 0 4px; }
+  .stat { background: var(--surface-2); border-radius: 12px; padding: 12px; }
+  .stat .n { font-size: 1.5rem; font-weight: 700; }
+  .stat .l { font-size: .82rem; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: 12px; }
+  th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; }
+  .lvl { font-size: .75rem; border-radius: 6px; padding: 1px 7px; white-space: nowrap; }
+  .lvl.new { background: var(--surface-2); color: var(--muted); }
+  .lvl.learn { background: var(--hard-soft); color: var(--hard); }
+  .lvl.known { background: var(--good-soft); color: var(--good); }
+  .note { font-size: .85rem; color: var(--muted); margin-top: 12px; }
+  .hidden { display: none !important; }
+  .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 10px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: .95; }
+  @media (max-width: 480px) {
+    .card { padding: 18px 16px 14px; min-height: 240px; }
+    .card .front { font-size: 1.05rem; }
+    .panel { padding: 18px 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1 id="title">Ôn tập</h1>
+    <nav class="links">
+      <a id="lnk-chapter" href="../">Đọc chương</a>
+      <a id="lnk-ex" href="../">Bài tập</a>
+      <a href="../">Trang chủ</a>
+    </nav>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="cards">Flashcard</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="quiz">Quiz</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="progress">Tiến độ</button>
+  </div>
+
+  <div id="err" class="panel hidden"></div>
+
+  <!-- Flashcard -->
+  <section id="tab-cards">
+    <div class="stats" id="card-stats"></div>
+    <div id="card-area"></div>
+  </section>
+
+  <!-- Quiz -->
+  <section id="tab-quiz" class="hidden">
+    <div id="quiz-area"></div>
+  </section>
+
+  <!-- Tiến độ -->
+  <section id="tab-progress" class="hidden">
+    <div class="panel" id="progress-area"></div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  var DAY = 86400000;
+  var STORE_KEY = 'easyrl-vi:review:v1';
+  var params = new URLSearchParams(location.search);
+  var CH = String(parseInt(params.get('ch') || '1', 10) || 1);
+
+  var data = null;          // nội dung chương (thẻ + quiz)
+  var store = loadStore();  // tiến độ của người học
+  var chState = null;       // store.chapters[CH]
+
+  // ---------- lưu trữ (localStorage có thể không dùng được: luôn bọc try/catch) ----------
+  function loadStore() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        var s = JSON.parse(raw);
+        if (s && typeof s === 'object' && s.chapters) return s;
+      }
+    } catch (e) {}
+    return { version: 1, chapters: {} };
+  }
+  function saveStore() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(store)); } catch (e) {}
+  }
+  function ensureChapter() {
+    if (!store.chapters[CH]) store.chapters[CH] = { cards: {}, quiz: { best: null, last: null, attempts: 0 } };
+    chState = store.chapters[CH];
+    if (!chState.cards) chState.cards = {};
+    if (!chState.quiz) chState.quiz = { best: null, last: null, attempts: 0 };
+  }
+
+  // ---------- tiện ích ----------
+  function esc(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  // Định dạng tối giản: **đậm** và xuống dòng
+  function fmt(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>'); }
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+    return a;
+  }
+  function startOfToday() { var d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); }
+  function fmtDays(n) { return n <= 0 ? 'hôm nay' : n === 1 ? '1 ngày' : n + ' ngày'; }
+  function fmtDate(ts) {
+    var days = Math.round((ts - startOfToday()) / DAY);
+    if (days <= 0) return 'hôm nay';
+    if (days === 1) return 'ngày mai';
+    return 'sau ' + days + ' ngày';
+  }
+  var toastTimer = null;
+  function toast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1800);
+  }
+
+  // ---------- lịch ôn cách quãng (SM-2 rút gọn) ----------
+  // Mỗi thẻ: { reps, interval (ngày), ease, due (mốc thời gian), lapses, seen }
+  function cardState(id) { return chState.cards[id] || null; }
+  function isDue(st, now) { return !st || st.due <= now; }
+  function level(st) {
+    if (!st || !st.seen) return 'new';
+    if (st.interval >= 7) return 'known';
+    return 'learn';
+  }
+  // Tính lịch mới cho một mức đánh giá, không ghi vào store
+  function schedule(st, grade) {
+    var s = st ? Object.assign({}, st) : { reps: 0, interval: 0, ease: 2.5, due: 0, lapses: 0, seen: 0 };
+    if (grade === 'again') {
+      s.lapses += 1; s.reps = 0; s.interval = 0; s.ease = Math.max(1.3, s.ease - 0.2);
+    } else if (grade === 'hard') {
+      s.interval = s.reps === 0 ? 1 : Math.max(s.interval + 1, Math.round(s.interval * 1.2));
+      s.ease = Math.max(1.3, s.ease - 0.15); s.reps += 1;
+    } else {
+      s.interval = s.reps === 0 ? 2 : s.reps === 1 ? 5 : Math.round(s.interval * s.ease);
+      s.reps += 1;
+    }
+    s.seen += 1;
+    s.due = startOfToday() + s.interval * DAY;
+    return s;
+  }
+
+  // ---------- Flashcard ----------
+  var session = null; // { queue: [id], done: n, total: n, practice: bool, flipped: bool }
+
+  function buildSession(practice) {
+    var now = Date.now();
+    var ids = data.cards.map(function (c) { return c.id; });
+    var pick = practice ? ids : ids.filter(function (id) { return isDue(cardState(id), now); });
+    // thẻ đến hạn ôn trước, thẻ mới sau
+    var due = shuffle(pick.filter(function (id) { var s = cardState(id); return s && s.seen; }));
+    var fresh = shuffle(pick.filter(function (id) { var s = cardState(id); return !s || !s.seen; }));
+    var queue = practice ? shuffle(pick) : due.concat(fresh);
+    session = { queue: queue, done: 0, total: queue.length, practice: !!practice, flipped: false };
+  }
+
+  function cardById(id) {
+    for (var i = 0; i < data.cards.length; i++) if (data.cards[i].id === id) return data.cards[i];
+    return null;
+  }
+
+  function renderCardStats() {
+    var now = Date.now(), nNew = 0, nDue = 0, nKnown = 0;
+    data.cards.forEach(function (c) {
+      var s = cardState(c.id);
+      if (!s || !s.seen) nNew++;
+      else if (s.due <= now) nDue++;
+      if (level(s) === 'known') nKnown++;
+    });
+    document.getElementById('card-stats').innerHTML =
+      '<span class="pill">Cần ôn: <b>' + nDue + '</b></span>' +
+      '<span class="pill">Thẻ mới: <b>' + nNew + '</b></span>' +
+      '<span class="pill">Đã thuộc: <b>' + nKnown + '</b> / ' + data.cards.length + '</span>' +
+      (session && session.total ? '<span class="pill">Phiên này: <b>' + session.done + '</b> / ' + session.total + (session.practice ? ' (ôn tự do)' : '') + '</span>' : '');
+  }
+
+  function nextDueText() {
+    var min = Infinity;
+    data.cards.forEach(function (c) { var s = cardState(c.id); if (s && s.seen && s.due < min) min = s.due; });
+    return min === Infinity ? '' : fmtDate(min);
+  }
+
+  function renderCard() {
+    renderCardStats();
+    var area = document.getElementById('card-area');
+    if (!session || !session.queue.length) {
+      var nd = nextDueText();
+      area.innerHTML =
+        '<div class="panel"><h2>' + (session && session.total ? '🎉 Xong phiên ôn!' : '✅ Hôm nay không còn thẻ cần ôn') + '</h2>' +
+        '<p class="muted">' + (nd ? 'Lần ôn tiếp theo: <b>' + esc(nd) + '</b>. ' : '') +
+        'Ôn đúng hạn giúp nhớ lâu hơn là ôn dồn một lúc.</p>' +
+        '<div class="row"><button class="btn" id="btn-practice">Ôn tự do tất cả thẻ</button>' +
+        '<button class="btn" data-go="quiz">Làm quiz</button></div>' +
+        '<p class="note">"Ôn tự do" không thay đổi lịch ôn.</p></div>';
+      document.getElementById('btn-practice').onclick = function () { buildSession(true); renderCard(); };
+      return;
+    }
+    var c = cardById(session.queue[0]);
+    var st = cardState(c.id);
+    var flipped = session.flipped;
+    var html =
+      '<div class="card' + (flipped ? ' flipped' : '') + '" id="the-card" tabindex="0" aria-live="polite">' +
+        '<div class="meta"><span class="tagchip">' + esc(c.tag) + '</span><span>Mục ' + esc(c.ref) + '</span></div>' +
+        '<div class="front">' + fmt(c.front) + '</div>' +
+        (flipped ? '<div class="back">' + fmt(c.back) + '</div>'
+                 : '<div class="hint">Tự trả lời trong đầu (hoặc nói ra), rồi bấm để xem đáp án</div>') +
+      '</div>';
+    if (flipped) {
+      if (session.practice) {
+        html += '<div class="grades" style="grid-template-columns:1fr 1fr">' +
+          '<button class="grade again" data-grade="again">Chưa nhớ<small>xem lại sau</small></button>' +
+          '<button class="grade good" data-grade="good">Nhớ<small>thẻ tiếp</small></button></div>';
+      } else {
+        var labels = { again: 'Quên', hard: 'Khó', good: 'Nhớ' };
+        html += '<div class="grades">' + ['again', 'hard', 'good'].map(function (g) {
+          var preview = g === 'again' ? 'ôn lại ngay' : fmtDays(schedule(st, g).interval);
+          return '<button class="grade ' + g + '" data-grade="' + g + '">' + labels[g] + '<small>' + preview + '</small></button>';
+        }).join('') + '</div>';
+      }
+      html += '<div class="kbd">Phím tắt: <kbd>1</kbd> ' + (session.practice ? 'Chưa nhớ' : 'Quên') + (session.practice ? '' : ' · <kbd>2</kbd> Khó') + ' · <kbd>' + (session.practice ? '2' : '3') + '</kbd> Nhớ</div>';
+    } else {
+      html += '<div class="kbd">Phím tắt: <kbd>Space</kbd> lật thẻ</div>';
+    }
+    area.innerHTML = html;
+    var cardEl = document.getElementById('the-card');
+    if (!flipped) cardEl.onclick = flip;
+    area.querySelectorAll('.grade').forEach(function (b) { b.onclick = function () { grade(b.getAttribute('data-grade')); }; });
+  }
+
+  function flip() { if (session && session.queue.length && !session.flipped) { session.flipped = true; renderCard(); } }
+
+  function grade(g) {
+    if (!session || !session.flipped) return;
+    var id = session.queue.shift();
+    if (!session.practice) {
+      chState.cards[id] = schedule(cardState(id), g);
+      saveStore();
+    }
+    if (g === 'again') {
+      // đưa thẻ quay lại sau vài thẻ nữa trong cùng phiên
+      var pos = Math.min(session.queue.length, 3);
+      session.queue.splice(pos, 0, id);
+    } else {
+      session.done += 1;
+    }
+    session.flipped = false;
+    renderCard();
+  }
+
+  // ---------- Quiz ----------
+  var quiz = null; // { order: [idx], i, score, answered, wrong: [idx], optOrder: [] }
+
+  function startQuiz(onlyIdx) {
+    var idx = onlyIdx || data.quiz.map(function (_, i) { return i; });
+    quiz = { order: shuffle(idx), i: 0, score: 0, answered: false, wrong: [], picked: null, optOrder: null };
+    renderQuiz();
+  }
+
+  function renderQuiz() {
+    var area = document.getElementById('quiz-area');
+    if (!quiz) {
+      var q = chState.quiz;
+      area.innerHTML = '<div class="panel"><h2>Quiz ' + data.quiz.length + ' câu</h2>' +
+        '<p class="muted">Câu hỏi tình huống để kiểm tra bạn có <b>vận dụng</b> được khái niệm không. Mỗi câu đều có giải thích, kể cả khi trả lời đúng.</p>' +
+        (q.best != null ? '<p>Điểm cao nhất: <b>' + q.best + ' / ' + data.quiz.length + '</b> · Lần gần nhất: <b>' + q.last + '</b> · Số lần làm: ' + q.attempts + '</p>' : '') +
+        '<div class="row"><button class="btn primary" id="btn-start-quiz">Bắt đầu</button></div></div>';
+      document.getElementById('btn-start-quiz').onclick = function () { startQuiz(); };
+      return;
+    }
+    if (quiz.i >= quiz.order.length) {
+      var total = quiz.order.length, full = total === data.quiz.length;
+      if (full) {
+        chState.quiz.attempts += 1;
+        chState.quiz.last = quiz.score;
+        chState.quiz.best = chState.quiz.best == null ? quiz.score : Math.max(chState.quiz.best, quiz.score);
+        saveStore();
+      }
+      var wrongList = quiz.wrong.map(function (k) {
+        var qq = data.quiz[k];
+        return '<li><b>' + fmt(qq.q) + '</b><br><span class="muted">Đáp án: ' + fmt(qq.options[qq.answer]) + ' · Mục ' + esc(qq.ref) + '</span></li>';
+      }).join('');
+      var pct = Math.round(quiz.score / total * 100);
+      area.innerHTML = '<div class="panel"><h2>Kết quả: ' + quiz.score + ' / ' + total + ' (' + pct + '%)</h2>' +
+        '<p class="muted">' + (pct === 100 ? 'Xuất sắc! Hãy quay lại làm lại sau vài ngày để chắc là vẫn nhớ.' :
+          pct >= 70 ? 'Khá tốt. Xem lại các câu sai bên dưới và đọc lại mục tương ứng.' :
+          'Nên đọc lại các mục bên dưới, rồi ôn flashcard trước khi làm lại.') + '</p>' +
+        (wrongList ? '<h3 style="font-size:1rem;margin:14px 0 6px">Câu trả lời sai</h3><ol style="padding-left:20px;margin:0">' + wrongList + '</ol>' : '') +
+        '<div class="row">' + (quiz.wrong.length ? '<button class="btn primary" id="btn-retry-wrong">Làm lại câu sai</button>' : '') +
+        '<button class="btn" id="btn-retry-all">Làm lại tất cả</button></div>' +
+        (full ? '' : '<p class="note">Lượt làm lại câu sai không tính vào điểm cao nhất.</p>') + '</div>';
+      var w = quiz.wrong.slice();
+      var b1 = document.getElementById('btn-retry-wrong'); if (b1) b1.onclick = function () { startQuiz(w); };
+      document.getElementById('btn-retry-all').onclick = function () { startQuiz(); };
+      return;
+    }
+    var qi = quiz.order[quiz.i], q = data.quiz[qi];
+    if (!quiz.optOrder) quiz.optOrder = shuffle(q.options.map(function (_, k) { return k; }));
+    var html = '<div class="progress"><span style="width:' + (quiz.i / quiz.order.length * 100) + '%"></span></div>' +
+      '<div class="panel"><div class="meta muted" style="font-size:.82rem;margin-bottom:8px">Câu ' + (quiz.i + 1) + ' / ' + quiz.order.length + ' · Mục ' + esc(q.ref) + '</div>' +
+      '<div class="qtext">' + fmt(q.q) + '</div><div class="opts">' +
+      quiz.optOrder.map(function (k, pos) {
+        var cls = '';
+        if (quiz.answered) {
+          if (k === q.answer) cls = ' correct';
+          else if (k === quiz.picked) cls = ' wrong';
+        }
+        return '<button class="opt' + cls + '" data-k="' + k + '"' + (quiz.answered ? ' disabled' : '') + '><span class="letter">' + 'ABCD'[pos] + '</span><span>' + fmt(q.options[k]) + '</span></button>';
+      }).join('') + '</div>';
+    if (quiz.answered) {
+      var ok = quiz.picked === q.answer;
+      html += '<div class="explain"><div class="verdict ' + (ok ? 'ok">✓ Chính xác' : 'no">✗ Chưa đúng') + '</div>' + fmt(q.explain) + '</div>' +
+        '<div class="row"><button class="btn primary" id="btn-next">' + (quiz.i + 1 < quiz.order.length ? 'Câu tiếp' : 'Xem kết quả') + '</button></div>' +
+        '<div class="kbd">Phím tắt: <kbd>Enter</kbd> tiếp tục</div>';
+    } else {
+      html += '<div class="kbd">Phím tắt: <kbd>A</kbd>–<kbd>D</kbd> hoặc <kbd>1</kbd>–<kbd>4</kbd> để chọn</div>';
+    }
+    html += '</div>';
+    area.innerHTML = html;
+    area.querySelectorAll('.opt').forEach(function (b) { b.onclick = function () { answer(parseInt(b.getAttribute('data-k'), 10)); }; });
+    var nb = document.getElementById('btn-next'); if (nb) nb.onclick = nextQuestion;
+  }
+
+  function answer(k) {
+    if (!quiz || quiz.answered || quiz.i >= quiz.order.length) return;
+    var qi = quiz.order[quiz.i];
+    quiz.answered = true; quiz.picked = k;
+    if (k === data.quiz[qi].answer) quiz.score += 1; else quiz.wrong.push(qi);
+    renderQuiz();
+  }
+  function nextQuestion() {
+    if (!quiz || !quiz.answered) return;
+    quiz.i += 1; quiz.answered = false; quiz.picked = null; quiz.optOrder = null;
+    renderQuiz();
+  }
+
+  // ---------- Tiến độ ----------
+  function renderProgress() {
+    var now = Date.now(), counts = { new: 0, learn: 0, known: 0 }, due = 0;
+    var rows = data.cards.map(function (c) {
+      var s = cardState(c.id), lv = level(s);
+      counts[lv]++;
+      if (s && s.seen && s.due <= now) due++;
+      var lvText = { new: 'Mới', learn: 'Đang học', known: 'Đã thuộc' }[lv];
+      return '<tr><td>' + fmt(c.front) + '</td><td><span class="lvl ' + lv + '">' + lvText + '</span></td><td class="muted">' +
+        (s && s.seen ? esc(fmtDate(s.due)) : '–') + '</td></tr>';
+    }).join('');
+    var q = chState.quiz;
+    document.getElementById('progress-area').innerHTML =
+      '<h2>Tiến độ chương ' + esc(CH) + '</h2>' +
+      '<div class="stat-grid">' +
+        '<div class="stat"><div class="n">' + counts.known + '</div><div class="l">Đã thuộc (khoảng ôn ≥ 7 ngày)</div></div>' +
+        '<div class="stat"><div class="n">' + counts.learn + '</div><div class="l">Đang học</div></div>' +
+        '<div class="stat"><div class="n">' + counts.new + '</div><div class="l">Chưa học</div></div>' +
+        '<div class="stat"><div class="n">' + (q.best != null ? q.best + '/' + data.quiz.length : '–') + '</div><div class="l">Điểm quiz cao nhất</div></div>' +
+      '</div>' +
+      '<p class="muted" style="margin:8px 0 0">Cần ôn hôm nay: <b>' + due + '</b> thẻ.</p>' +
+      '<div class="row">' +
+        '<button class="btn" id="btn-export">Xuất tiến độ</button>' +
+        '<button class="btn" id="btn-import">Nhập tiến độ</button>' +
+        '<button class="btn" id="btn-reset">Xóa tiến độ chương này</button>' +
+        '<input type="file" id="file-import" accept="application/json,.json" class="hidden">' +
+      '</div>' +
+      '<p class="note">Tiến độ chỉ lưu trong trình duyệt này. Muốn chuyển sang máy khác, bấm "Xuất tiến độ" để tải file, rồi "Nhập tiến độ" ở máy kia. Xóa dữ liệu trình duyệt sẽ mất tiến độ.</p>' +
+      '<table><thead><tr><th>Thẻ</th><th>Mức</th><th>Ôn tiếp</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+    document.getElementById('btn-export').onclick = function () {
+      var blob = new Blob([JSON.stringify(store, null, 2)], { type: 'application/json' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'easyrl-vi-tien-do-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    };
+    var fileInput = document.getElementById('file-import');
+    document.getElementById('btn-import').onclick = function () { fileInput.click(); };
+    fileInput.onchange = function () {
+      var f = fileInput.files && fileInput.files[0];
+      if (!f) return;
+      var r = new FileReader();
+      r.onload = function () {
+        try {
+          var s = JSON.parse(r.result);
+          if (!s || typeof s !== 'object' || !s.chapters) throw new Error('bad');
+          store = s; ensureChapter(); saveStore(); session = null; quiz = null;
+          buildSession(false); renderAll(); toast('Đã nhập tiến độ');
+        } catch (e) { toast('File không hợp lệ'); }
+      };
+      r.readAsText(f);
+    };
+    document.getElementById('btn-reset').onclick = function () {
+      if (!confirm('Xóa toàn bộ tiến độ flashcard và quiz của chương ' + CH + '?')) return;
+      delete store.chapters[CH]; ensureChapter(); saveStore(); session = null; quiz = null;
+      buildSession(false); renderAll(); toast('Đã xóa tiến độ');
+    };
+  }
+
+  // ---------- tab & phím tắt ----------
+  var current = 'cards';
+  function showTab(name) {
+    current = name;
+    document.querySelectorAll('.tab').forEach(function (t) { t.setAttribute('aria-selected', t.getAttribute('data-tab') === name ? 'true' : 'false'); });
+    ['cards', 'quiz', 'progress'].forEach(function (n) { document.getElementById('tab-' + n).classList.toggle('hidden', n !== name); });
+    if (name === 'cards') renderCard();
+    if (name === 'quiz') renderQuiz();
+    if (name === 'progress') renderProgress();
+    try { sessionStorage.setItem('easyrl-vi:review:tab', name); } catch (e) {}
+  }
+  function renderAll() { showTab(current); }
+
+  document.querySelectorAll('.tab').forEach(function (t) { t.onclick = function () { showTab(t.getAttribute('data-tab')); }; });
+  document.addEventListener('click', function (e) {
+    var go = e.target.closest && e.target.closest('[data-go]');
+    if (go) showTab(go.getAttribute('data-go'));
+  });
+  document.addEventListener('keydown', function (e) {
+    if (!data || e.ctrlKey || e.metaKey || e.altKey) return;
+    var tag = (e.target.tagName || '').toLowerCase();
+    if (tag === 'input' || tag === 'textarea') return;
+    if (current === 'cards' && session && session.queue.length) {
+      if (!session.flipped && (e.key === ' ' || e.key === 'Enter')) { e.preventDefault(); flip(); }
+      else if (session.flipped) {
+        var map = session.practice ? { '1': 'again', '2': 'good' } : { '1': 'again', '2': 'hard', '3': 'good' };
+        if (map[e.key]) { e.preventDefault(); grade(map[e.key]); }
+      }
+    } else if (current === 'quiz' && quiz && quiz.i < quiz.order.length) {
+      if (!quiz.answered) {
+        var k = { a: 0, b: 1, c: 2, d: 3, '1': 0, '2': 1, '3': 2, '4': 3 }[e.key.toLowerCase()];
+        if (k != null && quiz.optOrder && k < quiz.optOrder.length) { e.preventDefault(); answer(quiz.optOrder[k]); }
+      } else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); nextQuestion(); }
+    }
+  });
+
+  // ---------- tải dữ liệu chương ----------
+  fetch('ch' + CH + '.json', { cache: 'no-cache' })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (d) {
+      data = d;
+      document.title = 'Ôn tập ' + d.title.split('·')[0].trim() + ' · Sách Nấm EasyRL';
+      document.getElementById('title').textContent = 'Ôn tập · ' + d.title;
+      if (d.chapterLink) document.getElementById('lnk-chapter').href = d.chapterLink;
+      if (d.exerciseLink) document.getElementById('lnk-ex').href = d.exerciseLink;
+      ensureChapter();
+      buildSession(false);
+      var saved = null;
+      try { saved = sessionStorage.getItem('easyrl-vi:review:tab'); } catch (e) {}
+      showTab(saved === 'quiz' || saved === 'progress' ? saved : 'cards');
+    })
+    .catch(function () {
+      var el = document.getElementById('err');
+      el.classList.remove('hidden');
+      el.innerHTML = '<h2>Chưa có bộ ôn tập cho chương ' + esc(CH) + '</h2><p class="muted">Hiện mới có chương 1. ' +
+        'Nếu bạn mở file trực tiếp trên máy (file://), hãy chạy <code>python3 -m http.server</code> trong thư mục <code>docs</code> rồi mở qua http://localhost.</p>' +
+        '<p><a href="?ch=1">Mở ôn tập chương 1</a></p>';
+      document.querySelectorAll('section, .tabs').forEach(function (s) { s.classList.add('hidden'); });
+    });
+})();
+</script>
+</body>
+</html>

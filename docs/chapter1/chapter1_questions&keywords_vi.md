@@ -1,5 +1,7 @@
 # Chương 1 Cơ bản về Học tăng cường
 
+> 🧠 **Ôn tập để nhớ lâu:** sau khi đọc xong, hãy [ôn chương 1 bằng flashcard và quiz](review/index.html?ch=1 ':ignore :target=_self'). Flashcard tự lên lịch ôn cách quãng; quiz có giải thích cho từng đáp án.
+
 ## Từ khóa
 
 - **Học tăng cường (reinforcement learning, RL)**: thuật toán trong đó tác tử (agent), khi tương tác với một môi trường phức tạp và bất định, cố gắng tối đa hóa phần thưởng nhận được.

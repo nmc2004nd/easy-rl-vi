@@ -1,0 +1,334 @@
+{
+  "chapter": 1,
+  "title": "Chương 1 · Cơ bản về học tăng cường",
+  "chapterLink": "../#/chapter1/chapter1_vi",
+  "exerciseLink": "../#/chapter1/chapter1_questions&keywords_vi",
+  "cards": [
+    {
+      "id": "c1-rl-one-line",
+      "tag": "Khái niệm",
+      "ref": "1.1",
+      "front": "Nói trong một câu: học tăng cường (reinforcement learning) là gì?",
+      "back": "Một **tác tử (agent)** tương tác với một **môi trường** phức tạp, bất định và học cách hành động sao cho **tối đa hóa phần thưởng tích lũy kỳ vọng (expected cumulative reward)**."
+    },
+    {
+      "id": "c1-loop",
+      "tag": "Khái niệm",
+      "ref": "1.2.1",
+      "front": "Mô tả vòng lặp tương tác cơ bản giữa tác tử và môi trường.",
+      "back": "1. Tác tử nhận **trạng thái / quan sát** hiện tại.\n2. Tác tử chọn một **hành động**.\n3. Môi trường thực thi hành động, trả về **trạng thái tiếp theo** và **phần thưởng**.\nLặp lại; tác tử học chính sách từ chuỗi tương tác này."
+    },
+    {
+      "id": "c1-vs-supervised",
+      "tag": "So sánh",
+      "ref": "1.1.1 · Bài tập 1-2",
+      "front": "Ba lý do khiến huấn luyện học tăng cường khó hơn học có giám sát?",
+      "back": "1. Dữ liệu **tuần tự, tương quan theo thời gian**, không thỏa mãn i.i.d.\n2. **Phần thưởng trễ**: hành động bây giờ, rất lâu sau mới biết tốt hay xấu.\n3. **Không có nhãn đúng**: chỉ có phản hồi của môi trường, phải học bằng thử-và-sai."
+    },
+    {
+      "id": "c1-features",
+      "tag": "Khái niệm",
+      "ref": "Bài tập 1-3",
+      "front": "Bốn đặc trưng cơ bản của học tăng cường?",
+      "back": "1. Khám phá bằng **thử-và-sai**.\n2. Nhận **phần thưởng trễ**.\n3. **Thời gian** quan trọng: dữ liệu tương quan theo thời gian, không i.i.d.\n4. **Hành động ảnh hưởng** tới dữ liệu (phản hồi) mà tác tử nhận được sau đó."
+    },
+    {
+      "id": "c1-why-now",
+      "tag": "Khái niệm",
+      "ref": "Bài tập 1-4",
+      "front": "Vì sao học tăng cường phát triển nhanh trong những năm gần đây?",
+      "back": "1. **Năng lực tính toán** tăng: thử-và-sai nhanh hơn, thu nhiều kinh nghiệm hơn.\n2. **Học tăng cường sâu** cho phép huấn luyện **đầu-cuối (end-to-end)**: tối ưu cùng lúc trích xuất đặc trưng, ước lượng giá trị và ra quyết định."
+    },
+    {
+      "id": "c1-deep-rl",
+      "tag": "Khái niệm",
+      "ref": "1.1.3",
+      "front": "Học tăng cường sâu khác học tăng cường truyền thống ở điểm nào?",
+      "back": "Truyền thống: phải **thiết kế đặc trưng thủ công** rồi mới học.\nHọc tăng cường sâu: **đầu-cuối**, đưa thẳng trạng thái (ví dụ ảnh) vào **mạng nơ-ron** để xấp xỉ hàm giá trị hoặc chính sách, không cần tự thiết kế đặc trưng."
+    },
+    {
+      "id": "c1-reward",
+      "tag": "Khái niệm",
+      "ref": "1.2.2",
+      "front": "Phần thưởng (reward) là gì, và tác tử muốn tối đa hóa chính xác cái gì?",
+      "back": "Phần thưởng là **tín hiệu phản hồi vô hướng (scalar)** từ môi trường cho biết hành động ở một bước tốt đến đâu.\nTác tử không tối đa hóa phần thưởng của một bước, mà tối đa hóa **phần thưởng tích lũy kỳ vọng** về lâu dài."
+    },
+    {
+      "id": "c1-delayed",
+      "tag": "Khái niệm",
+      "ref": "1.2.3",
+      "front": "\"Phần thưởng trễ\" là gì? Cho ví dụ.",
+      "back": "Hành động hiện tại có thể **rất lâu sau** mới cho thấy hậu quả.\nVí dụ **Pong**: các bước đi lên/xuống không có phần thưởng ngay; chỉ khi kết thúc lượt mới biết có đỡ được bóng không. Vì vậy tác tử phải cân nhắc **ngắn hạn và dài hạn**."
+    },
+    {
+      "id": "c1-history",
+      "tag": "Công thức",
+      "ref": "1.2.3",
+      "front": "Lịch sử (history) H_t là gì, và trạng thái liên hệ với nó thế nào?",
+      "back": "H_t = o₁, a₁, r₁, …, o_t, a_t, r_t: chuỗi **quan sát, hành động, phần thưởng**.\nTrạng thái là một **hàm của lịch sử**: S_t = f(H_t)."
+    },
+    {
+      "id": "c1-state-obs",
+      "tag": "So sánh",
+      "ref": "1.2.3 · Bài tập 1-5",
+      "front": "Trạng thái (state) và quan sát (observation) khác nhau thế nào?",
+      "back": "**Trạng thái**: mô tả **đầy đủ** thế giới, không che giấu thông tin.\n**Quan sát**: mô tả **một phần** trạng thái, có thể thiếu thông tin.\nVí dụ: ảnh RGB là một quan sát; góc và vận tốc các khớp có thể là trạng thái của robot."
+    },
+    {
+      "id": "c1-observability",
+      "tag": "So sánh",
+      "ref": "1.2.3",
+      "front": "Môi trường quan sát được hoàn toàn và quan sát được một phần khác nhau thế nào? Mỗi loại thường được mô hình hóa bằng gì?",
+      "back": "**Hoàn toàn (fully observed)**: tác tử thấy toàn bộ trạng thái môi trường, o_t = s_t → mô hình hóa bằng **MDP**.\n**Một phần (partially observed)**: chỉ thấy một phần, ví dụ blackjack chỉ thấy bài đã lật, Atari chỉ thấy khung hình hiện tại → mô hình hóa bằng **POMDP**."
+    },
+    {
+      "id": "c1-pomdp",
+      "tag": "Công thức",
+      "ref": "1.2.3",
+      "front": "POMDP được mô tả bằng bộ bảy nào? Hai thành phần nào làm nó khác MDP?",
+      "back": "(S, A, T, R, Ω, O, γ): không gian trạng thái, không gian hành động, xác suất chuyển T(s'|s,a), hàm phần thưởng, **xác suất quan sát Ω(o|s,a)**, **không gian quan sát O**, hệ số chiết khấu.\nHai thành phần **Ω và O** mô tả việc tác tử chỉ nhìn thấy quan sát, không thấy trạng thái thật."
+    },
+    {
+      "id": "c1-action-space",
+      "tag": "So sánh",
+      "ref": "1.3",
+      "front": "Không gian hành động rời rạc và liên tục khác nhau thế nào? Cho ví dụ.",
+      "back": "**Rời rạc**: số hành động **hữu hạn**, ví dụ Atari, cờ vây, robot chỉ đi 4 hướng Đông/Tây/Nam/Bắc.\n**Liên tục**: hành động là **vectơ số thực**, ví dụ robot quay được bất kỳ góc nào trong 360°, góc lái ô tô."
+    },
+    {
+      "id": "c1-components",
+      "tag": "Khái niệm",
+      "ref": "1.4 · Bài tập 1-6",
+      "front": "Ba thành phần có thể có của một tác tử học tăng cường?",
+      "back": "1. **Chính sách (policy)**: chọn hành động tiếp theo.\n2. **Hàm giá trị (value function)**: đánh giá trạng thái tốt hay xấu (phần thưởng tương lai kỳ vọng).\n3. **Mô hình (model)**: hiểu biết của tác tử về cách môi trường vận hành (chuyển trạng thái và phần thưởng)."
+    },
+    {
+      "id": "c1-policy-types",
+      "tag": "Công thức",
+      "ref": "1.4.1",
+      "front": "Chính sách ngẫu nhiên và chính sách tất định khác nhau thế nào?",
+      "back": "**Ngẫu nhiên (stochastic)**: π(a|s) = p(a_t = a | s_t = s), cho ra một **phân phối xác suất** trên các hành động rồi lấy mẫu.\n**Tất định (deterministic)**: chọn thẳng hành động có khả năng nhất, a* = argmax_a π(a|s)."
+    },
+    {
+      "id": "c1-why-stochastic",
+      "tag": "Vì sao",
+      "ref": "1.4.1",
+      "front": "Vì sao học tăng cường thường dùng chính sách ngẫu nhiên?",
+      "back": "1. Có sẵn độ ngẫu nhiên giúp **khám phá** môi trường tốt hơn.\n2. Hành động **đa dạng**, khó bị đối thủ đoán trước, quan trọng trong trò chơi **đối kháng nhiều tác tử**. Chính sách tất định luôn làm cùng một việc ở cùng một trạng thái nên dễ bị bắt bài."
+    },
+    {
+      "id": "c1-value-function",
+      "tag": "Công thức",
+      "ref": "1.4.2",
+      "front": "Viết định nghĩa hàm giá trị trạng thái V_π(s) và nói ý nghĩa.",
+      "back": "V_π(s) = E_π[ G_t | s_t = s ] = E_π[ Σ_k γ^k · r_{t+k+1} | s_t = s ]\nLà **phần thưởng tương lai có chiết khấu kỳ vọng** khi bắt đầu từ trạng thái s và đi theo chính sách π. Càng lớn thì trạng thái càng có lợi."
+    },
+    {
+      "id": "c1-discount",
+      "tag": "Vì sao",
+      "ref": "1.4.2",
+      "front": "Vì sao cần hệ số chiết khấu γ? γ nhỏ hay lớn thì tác tử cư xử thế nào?",
+      "back": "Vì ta muốn nhận phần thưởng **càng sớm càng tốt**: 100 đồng hôm nay đáng giá hơn 100 đồng sau 10 ngày.\nγ gần **0** → tác tử **thiển cận**, chỉ quan tâm phần thưởng trước mắt. γ gần **1** → tác tử **nhìn xa**, coi trọng phần thưởng tương lai."
+    },
+    {
+      "id": "c1-q-function",
+      "tag": "So sánh",
+      "ref": "1.4.2",
+      "front": "Hàm Q khác hàm giá trị V ở điểm nào? Vì sao hàm Q hữu ích?",
+      "back": "V_π(s) chỉ phụ thuộc **trạng thái**; Q_π(s, a) phụ thuộc **trạng thái và hành động**: phần thưởng tương lai kỳ vọng khi ở s, làm a, rồi theo π.\nCó hàm Q thì **suy ra ngay hành động tốt nhất**: chọn a có Q(s, a) lớn nhất."
+    },
+    {
+      "id": "c1-model",
+      "tag": "Công thức",
+      "ref": "1.4.3",
+      "front": "\"Mô hình\" của môi trường gồm hai phần nào?",
+      "back": "1. **Xác suất chuyển trạng thái**: p(s_{t+1} = s' | s_t = s, a_t = a).\n2. **Hàm phần thưởng**: R(s, a) = E[ r_{t+1} | s_t = s, a_t = a ]."
+    },
+    {
+      "id": "c1-maze",
+      "tag": "Ví dụ",
+      "ref": "1.4.3",
+      "front": "Trong ví dụ mê cung (mỗi bước −1), vì sao giá trị ở ô xuất phát là −16? Tác tử dựa trên giá trị chọn đường thế nào?",
+      "back": "Đường ngắn nhất tới đích mất **16 bước**, mỗi bước −1 → giá trị −16.\nỞ mỗi ô, tác tử nhìn các ô lân cận và **đi sang ô có giá trị lớn nhất** (ví dụ ô trên −14 tốt hơn ô dưới −16). Chính sách được **suy ra từ giá trị**."
+    },
+    {
+      "id": "c1-value-vs-policy",
+      "tag": "So sánh",
+      "ref": "1.4.4 · Bài tập 1-7",
+      "front": "Tác tử dựa trên giá trị và tác tử dựa trên chính sách khác nhau thế nào? Mỗi loại có thuật toán tiêu biểu nào?",
+      "back": "**Dựa trên giá trị (value-based)**: học **tường minh hàm giá trị**, chính sách được suy ra ngầm. Ví dụ Q-learning, Sarsa. Hợp với hành động **rời rạc**.\n**Dựa trên chính sách (policy-based)**: học **trực tiếp chính sách**, đầu ra là xác suất hành động. Ví dụ gradient chính sách (policy gradient). Hợp cả với hành động **liên tục**."
+    },
+    {
+      "id": "c1-actor-critic",
+      "tag": "Khái niệm",
+      "ref": "1.4.4",
+      "front": "Tác tử diễn viên-nhà phê bình (actor-critic) là gì?",
+      "back": "Kết hợp hai loại trên: **diễn viên (actor)** là chính sách chọn hành động, **nhà phê bình (critic)** là hàm giá trị đánh giá hành động đó. Nhờ critic, quá trình học thường **nhanh và ổn định hơn** gradient chính sách thuần."
+    },
+    {
+      "id": "c1-model-based-vs-free",
+      "tag": "So sánh",
+      "ref": "1.4.4 · Bài tập 1-9",
+      "front": "Học có mô hình (model-based) và không mô hình (model-free) khác nhau thế nào? Mẹo nhận biết khi nào dùng được model-based?",
+      "back": "**Có mô hình**: học/biết P(s'|s,a) và R(s,a), xây **thế giới ảo** để lập kế hoạch, ít cần tương tác thật.\n**Không mô hình**: không mô hình hóa môi trường, **học trực tiếp** từ tương tác thật qua hàm giá trị hoặc chính sách.\nMẹo: nếu **trước khi hành động** ta dự đoán được trạng thái và phần thưởng bước tiếp theo, thì mô hình hóa được môi trường."
+    },
+    {
+      "id": "c1-model-tradeoff",
+      "tag": "Vì sao",
+      "ref": "1.4.4",
+      "front": "Ưu, nhược điểm của model-based so với model-free? Vì sao hiện nay đa số dùng model-free?",
+      "back": "Model-based: **ít dữ liệu** hơn, có \"**khả năng tưởng tượng**\" (thử trước trong thế giới ảo), nhưng **tổng quát hóa kém** nếu mô hình lệch so với môi trường thật.\nModel-free: cần **rất nhiều mẫu** (Space Invaders cần khoảng 200 triệu khung hình), nhưng **đơn giản, trực quan**, nhiều mã nguồn mở, và đủ tốt với các môi trường như Atari."
+    },
+    {
+      "id": "c1-learning-planning",
+      "tag": "So sánh",
+      "ref": "1.5",
+      "front": "Học (learning) và lập kế hoạch (planning) khác nhau thế nào?",
+      "back": "**Học**: môi trường **chưa biết**, tác tử cải thiện chính sách bằng cách **tương tác** liên tục.\n**Lập kế hoạch**: môi trường/quy tắc **đã biết**, tác tử **tính toán** lời giải tối ưu mà không cần tương tác.\nCách phổ biến: học mô hình trước, rồi dùng mô hình để lập kế hoạch."
+    },
+    {
+      "id": "c1-explore-exploit",
+      "tag": "Khái niệm",
+      "ref": "1.6",
+      "front": "Khám phá (exploration) và khai thác (exploitation) là gì? Cho một ví dụ đời thường.",
+      "back": "**Khám phá**: thử hành động **mới** để có thể tìm ra cái tốt hơn, chấp nhận rủi ro.\n**Khai thác**: làm điều **đã biết là tốt** nhất.\nVí dụ: đi **quán quen** (khai thác) hay **thử quán mới** (khám phá). Phải **cân bằng** hai bên để tối đa phần thưởng tích lũy."
+    },
+    {
+      "id": "c1-bandit",
+      "tag": "Ví dụ",
+      "ref": "1.6",
+      "front": "Máy K tay cần (K-armed bandit): nhược điểm của chỉ khám phá và chỉ khai thác là gì?",
+      "back": "**Chỉ khám phá**: kéo đều mọi tay cần → ước lượng phần thưởng mỗi tay tốt, nhưng **bỏ lỡ nhiều lần** kéo tay tốt nhất.\n**Chỉ khai thác**: luôn kéo tay đang tốt nhất → **ước lượng kém**, có thể mãi không tìm ra tay thật sự tốt nhất.\nCả hai đều khó đạt phần thưởng tích lũy lớn nhất → **thế lưỡng nan khám phá-khai thác**."
+    },
+    {
+      "id": "c1-loss",
+      "tag": "So sánh",
+      "ref": "Phỏng vấn 1-4",
+      "front": "Mục tiêu của hàm mất mát trong học tăng cường khác học sâu thông thường thế nào?",
+      "back": "Học sâu: làm **sai lệch giữa dự đoán và nhãn thật nhỏ nhất**.\nHọc tăng cường: làm **kỳ vọng tổng phần thưởng lớn nhất**."
+    },
+    {
+      "id": "c1-gymnasium-step",
+      "tag": "Thực hành",
+      "ref": "1.7.1",
+      "front": "Trong Gymnasium, env.reset() và env.step(a) trả về những gì? terminated khác truncated thế nào?",
+      "back": "reset() → (observation, info).\nstep(a) → (observation, reward, **terminated**, **truncated**, info).\n**terminated**: tập kết thúc vì đạt trạng thái kết thúc của bài toán (cây sào đổ, tới đích).\n**truncated**: bị cắt ngang vì điều kiện ngoài, ví dụ **hết giới hạn số bước**.\ndone của Gym cũ = terminated or truncated."
+    }
+  ],
+  "quiz": [
+    {
+      "q": "Một robot hút bụi chỉ biết thông tin từ cảm biến xung quanh nó, không biết bản đồ toàn bộ căn nhà. Môi trường này thuộc loại nào?",
+      "options": [
+        "Quan sát được một phần, thường mô hình hóa bằng POMDP",
+        "Quan sát được hoàn toàn, mô hình hóa bằng MDP",
+        "Không gian hành động liên tục nên không dùng được học tăng cường",
+        "Bài toán học có giám sát vì có cảm biến"
+      ],
+      "answer": 0,
+      "explain": "Tác tử chỉ thấy một phần trạng thái thật (cảm biến cục bộ), giống blackjack chỉ thấy bài đã lật. Đó là môi trường quan sát được một phần, mô hình hóa bằng POMDP.",
+      "ref": "1.2.3"
+    },
+    {
+      "q": "Bạn luôn gọi món quen thuộc ở quán quen vì biết chắc là ngon. Trong học tăng cường, hành vi này gọi là gì?",
+      "options": ["Khám phá (exploration)", "Khai thác (exploitation)", "Lập kế hoạch (planning)", "Phần thưởng trễ"],
+      "answer": 1,
+      "explain": "Khai thác là thực hiện hành động đã biết là mang lại phần thưởng tốt. Thử món mới hay quán mới mới là khám phá.",
+      "ref": "1.6"
+    },
+    {
+      "q": "Điều khiển góc đánh lái của ô tô tự lái (bất kỳ góc nào từ −30° đến 30°) là ví dụ của:",
+      "options": ["Không gian hành động rời rạc", "Không gian hành động liên tục", "Không gian quan sát rời rạc", "Chính sách tất định"],
+      "answer": 1,
+      "explain": "Hành động là một số thực trong một khoảng, không đếm được, nên là không gian hành động liên tục, giống ví dụ robot quay bất kỳ góc nào trong 360°.",
+      "ref": "1.3"
+    },
+    {
+      "q": "Q-learning và Sarsa thuộc nhóm phương pháp nào?",
+      "options": ["Dựa trên chính sách (policy-based)", "Dựa trên giá trị (value-based)", "Diễn viên-nhà phê bình (actor-critic)", "Có mô hình (model-based)"],
+      "answer": 1,
+      "explain": "Hai thuật toán này học bảng/hàm giá trị Q rồi chọn hành động có giá trị lớn nhất; chính sách được suy ra ngầm từ hàm giá trị.",
+      "ref": "1.4.4"
+    },
+    {
+      "q": "Tác tử biết trước P(s'|s,a) và R(s,a), nên thử nghiệm các phương án trong một \"thế giới ảo\" trước khi hành động thật. Đây là:",
+      "options": ["Học tăng cường không mô hình", "Học tăng cường có mô hình", "Học có giám sát", "Chính sách ngẫu nhiên"],
+      "answer": 1,
+      "explain": "Biết hàm chuyển trạng thái và hàm phần thưởng nghĩa là mô hình hóa được môi trường, nên tác tử có thể học và lập kế hoạch trong thế giới ảo. Đó là học tăng cường có mô hình.",
+      "ref": "1.4.4"
+    },
+    {
+      "q": "Trong Pong, các bước đi lên/xuống không được thưởng gì; chỉ khi kết thúc lượt mới biết thắng hay thua. Hiện tượng này minh họa điều gì?",
+      "options": ["Dữ liệu i.i.d.", "Phần thưởng trễ (delayed reward)", "Không gian hành động liên tục", "Môi trường quan sát được hoàn toàn"],
+      "answer": 1,
+      "explain": "Hậu quả của hành động hiện tại chỉ lộ ra rất lâu sau đó. Đây là phần thưởng trễ, một lý do khiến học tăng cường khó hơn học có giám sát.",
+      "ref": "1.2.3"
+    },
+    {
+      "q": "Điều nào sau đây KHÔNG phải lý do khiến học tăng cường khó hơn học có giám sát?",
+      "options": [
+        "Dữ liệu tuần tự, tương quan theo thời gian",
+        "Phần thưởng thường bị trễ",
+        "Học tăng cường cần nhiều nhãn đúng hơn học có giám sát",
+        "Phải học bằng thử-và-sai từ phản hồi của môi trường"
+      ],
+      "answer": 2,
+      "explain": "Học tăng cường không có nhãn đúng; chính vì thiếu nhãn nên mới phải thử-và-sai. Ba ý còn lại đều là lý do thật.",
+      "ref": "1.1.1"
+    },
+    {
+      "q": "Theo định nghĩa V(s) = E[Σ γ^k · r_{t+k+1}], nếu đặt γ = 0 thì tác tử quan tâm tới gì?",
+      "options": [
+        "Chỉ phần thưởng ngay ở bước tiếp theo",
+        "Tất cả phần thưởng tương lai với trọng số bằng nhau",
+        "Chỉ phần thưởng ở cuối tập",
+        "Không quan tâm phần thưởng nào"
+      ],
+      "answer": 0,
+      "explain": "Với γ = 0, mọi số hạng γ^k với k ≥ 1 đều bằng 0, chỉ còn r_{t+1}. Tác tử trở nên \"thiển cận\". γ càng gần 1 thì càng coi trọng tương lai.",
+      "ref": "1.4.2"
+    },
+    {
+      "q": "Trong ví dụ mê cung (mỗi bước nhận −1), ô xuất phát có giá trị −16. Điều đó có nghĩa là gì?",
+      "options": [
+        "Mê cung có 16 ô",
+        "Đường ngắn nhất từ ô xuất phát tới đích mất 16 bước",
+        "Tác tử đã thử 16 lần",
+        "Có 16 hành động khả dĩ"
+      ],
+      "answer": 1,
+      "explain": "Mỗi bước bị trừ 1, đi tối ưu mất 16 bước nên tổng phần thưởng là −16. Càng gần đích, giá trị càng lớn (−15, −14, …).",
+      "ref": "1.4.3"
+    },
+    {
+      "q": "Chơi oẳn tù tì nhiều ván với một đối thủ biết rút kinh nghiệm. Loại chính sách nào an toàn hơn?",
+      "options": [
+        "Chính sách tất định, luôn ra cùng một thứ",
+        "Chính sách ngẫu nhiên",
+        "Không cần chính sách, chỉ cần hàm giá trị",
+        "Hai loại như nhau"
+      ],
+      "answer": 1,
+      "explain": "Chính sách tất định luôn làm cùng một việc ở cùng một trạng thái, nên đối thủ dễ đoán và khắc chế. Chính sách ngẫu nhiên có hành động đa dạng, quan trọng trong trò chơi đối kháng.",
+      "ref": "1.4.1"
+    },
+    {
+      "q": "Cờ caro có luật hoàn toàn đã biết; một chương trình tính trước các nước đi bằng cách mô phỏng trong đầu, không cần chơi thử. Đây là:",
+      "options": ["Học (learning)", "Lập kế hoạch (planning)", "Khám phá (exploration)", "Học không mô hình"],
+      "answer": 1,
+      "explain": "Môi trường đã biết, tác tử chỉ cần tính toán để tìm lời giải tối ưu mà không cần tương tác. Đó là lập kế hoạch. Học là khi môi trường chưa biết và phải tương tác để cải thiện.",
+      "ref": "1.5"
+    },
+    {
+      "q": "Trong Gymnasium, CartPole-v1 trả về truncated=True sau 500 bước dù cây sào chưa đổ. Khi tính mục tiêu TD, có nên coi trạng thái tiếp theo có giá trị bằng 0 không?",
+      "options": [
+        "Có, vì tập đã kết thúc",
+        "Không, chỉ khi terminated=True mới coi giá trị tiếp theo bằng 0",
+        "Có, vì truncated và terminated giống hệt nhau",
+        "Không quan trọng, kết quả như nhau"
+      ],
+      "answer": 1,
+      "explain": "truncated chỉ có nghĩa là bị cắt vì hết giới hạn bước; trạng thái đó vẫn có tương lai. Chỉ terminated (kết thúc thật) mới cắt bootstrap. Đây là lý do các notebook trong bản dịch lưu terminated vào bộ nhớ.",
+      "ref": "1.7.1"
+    }
+  ]
+}
