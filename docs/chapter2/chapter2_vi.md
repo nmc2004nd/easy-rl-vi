@@ -445,7 +445,11 @@ Mỗi vòng tròn rỗng biểu thị một trạng thái, mỗi vòng tròn đ�
 <img width="550" src="../img/ch2/2.10.png"/>
 </div>
 
-<div align=center>Hình 2.10 Sơ đồ backup của $V_{\pi}$</div>
+<div align=center>
+
+Hình 2.10 Sơ đồ backup của $V_{\pi}$
+
+</div>
 
 Như biểu thức (2.12), ở đây có hai tầng lấy tổng. Tầng tổng thứ nhất là lấy tổng trên các nút lá, backup lên một tầng, ta có thể backup giá trị tương lai (giá trị của $s'$) lên các nút màu đen.
 Tầng tổng thứ hai là lấy tổng theo hành động, sau khi có giá trị của các nút đen, backup lên thêm một tầng, ta sẽ được giá trị của nút gốc, tức giá trị của trạng thái hiện tại.
@@ -495,7 +499,11 @@ Khi đã đến một trạng thái nào đó, ta lại lấy tổng trên các 
 <img width="550" src="../img/ch2/2.12.png"/>
 </div>
 
-<div align=center>Hình 2.12 Sơ đồ backup của $Q^{\pi}$</div>
+<div align=center>
+
+Hình 2.12 Sơ đồ backup của $Q_{\pi}$
+
+</div>
 
 
 Trong hình 2.13c,

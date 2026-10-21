@@ -330,7 +330,11 @@ Ta có thể điều chỉnh số bước (step), trở thành **sai phân thờ
 <img width="550" src="../img/ch3/TD_5.png"/>
 </div>
 
-<div align=center>Hình 3.18 Sai phân thời gian $n$ bước</div>
+<div align=center>
+
+Hình 3.18 Sai phân thời gian $n$ bước
+
+</div>
 
 Như vậy ta có thể điều chỉnh phần thưởng thực tế và phần bootstrapping mà thuật toán cần thông qua số bước.
 
@@ -509,7 +513,11 @@ Phương pháp Monte Carlo dựa trên khám phá $\varepsilon$-tham lam đượ
 <img width="550" src="../img/ch3/model_free_control_7.png"/>
 </div>
 
-<div align=center>Hình 3.26 Phương pháp Monte Carlo dựa trên khám phá $\varepsilon$-tham lam</div>
+<div align=center>
+
+Hình 3.26 Phương pháp Monte Carlo dựa trên khám phá $\varepsilon$-tham lam
+
+</div>
 
 Bản dịch thuật toán ở hình 3.26:
 

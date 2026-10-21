@@ -221,7 +221,11 @@ Như hình 5.3a, $\frac{p_{\theta}\left(a_{t} | s_{t}\right)}{p_{\theta^{k}}\lef
 <img width="550" src="../img/ch5/5.3.png"/>
 </div>
 
-<div align=center>Hình 5.3 Ảnh hưởng của $A$ đến đầu ra của hàm cắt</div>
+<div align=center>
+
+Hình 5.3 Ảnh hưởng của $A$ đến đầu ra của hàm cắt
+
+</div>
 
 Tuy biểu thức (5.8) trông hơi phức tạp, nhưng cài đặt lại khá đơn giản, vì việc biểu thức (5.8) muốn làm là mong $p_{\theta}(a_{t} | s_{t})$ và $p_{\theta^k}(a_{t} | s_{t})$ khá gần nhau, tức là mô hình làm mẫu và mô hình thực sự học sau khi tối ưu không chênh lệch quá lớn.
 
