@@ -366,9 +366,14 @@ $$
 V\left(s_{t}\right) \leftarrow V\left(s_{t}\right)+\alpha\left(G_{t}^{n}-V\left(s_{t}\right)\right)
 $$
 
-> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): chạy một tập với $n = 1, 2, 4, 8, \infty$ và xem ô nào được cập nhật, vì sao cập nhật trễ $n$ bước; phần dưới so sánh sai số theo $n$ trên bài bước ngẫu nhiên 19 trạng thái. [Mở trang riêng](viz/nstep-td.html ':ignore :target=_blank').
+<details class="viz-box">
+<summary>🎬 Mô phỏng TD n bước <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: chạy một tập với $n = 1, 2, 4, 8, \infty$ và xem ô nào được cập nhật, vì sao cập nhật trễ $n$ bước; phần dưới so sánh sai số theo $n$ trên bài bước ngẫu nhiên 19 trạng thái. [Mở trang riêng](viz/nstep-td.html ':ignore :target=_blank').
 
 <iframe class="viz-frame" src="viz/nstep-td.html?embed" style="height:1452px" title="Mô phỏng TD n bước" loading="lazy"></iframe>
+
+</details>
 
 ### 3.3.3 Bootstrapping và lấy mẫu trong phương pháp quy hoạch động, Monte Carlo và sai phân thời gian
 Bootstrapping nghĩa là khi cập nhật có dùng ước lượng. Phương pháp Monte Carlo không dùng bootstrapping, vì nó cập nhật dựa trên lợi tức thực tế.
@@ -548,9 +553,14 @@ $$
 \end{array}
 $$
 
-> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): chạy thuật toán ở hình 3.25 (khởi đầu khám phá, lần thăm đầu tiên) và hình 3.26 ($\varepsilon$-tham lam) từng bước: sinh tập, rồi quét ngược tính $G$ và cập nhật bảng $Q$. [Mở trang riêng](viz/mc-control.html ':ignore :target=_blank').
+<details class="viz-box">
+<summary>🎬 Mô phỏng Monte Carlo điều khiển <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: chạy thuật toán ở hình 3.25 (khởi đầu khám phá, lần thăm đầu tiên) và hình 3.26 ($\varepsilon$-tham lam) từng bước: sinh tập, rồi quét ngược tính $G$ và cập nhật bảng $Q$. [Mở trang riêng](viz/mc-control.html ':ignore :target=_blank').
 
 <iframe class="viz-frame" src="viz/mc-control.html?embed" style="height:1148px" title="Mô phỏng Monte Carlo điều khiển" loading="lazy"></iframe>
+
+</details>
 
 So với phương pháp Monte Carlo, phương pháp sai phân thời gian có các ưu thế sau: phương sai thấp, có thể học trực tuyến, có thể học từ chuỗi chưa hoàn chỉnh.
 Vì vậy ta có thể đưa cả phương pháp sai phân thời gian vào vòng lặp điều khiển (control loop) để ước lượng bảng Q, rồi dùng khám phá $\varepsilon$-tham lam để cải thiện. Như vậy có thể cập nhật giá trị của các trạng thái đã thu thập được ngay khi tập chưa kết thúc.
@@ -801,9 +811,14 @@ Như hình 3.34b, ta phân tích từng bước Q-learning, điểm khác duy nh
 </div>
 <div align=center>Hình 3.34 Khác biệt giữa Sarsa và Q-learning</div>
 
-> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): chạy Sarsa và Q-learning song song trên bài toán vách đá, xem từng phép cập nhật bảng $Q$ bằng số thật, và vì sao hai thuật toán học ra hai đường đi khác nhau. [Mở trang riêng](viz/td-control.html ':ignore :target=_blank').
+<details class="viz-box">
+<summary>🎬 Mô phỏng Sarsa và Q-learning <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: chạy Sarsa và Q-learning song song trên bài toán vách đá, xem từng phép cập nhật bảng $Q$ bằng số thật, và vì sao hai thuật toán học ra hai đường đi khác nhau. [Mở trang riêng](viz/td-control.html ':ignore :target=_blank').
 
 <iframe class="viz-frame" src="viz/td-control.html?embed" style="height:2005px" title="Mô phỏng Sarsa và Q-learning" loading="lazy"></iframe>
+
+</details>
 
 
 

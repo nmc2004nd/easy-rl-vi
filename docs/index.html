@@ -11,7 +11,18 @@
   <!-- <script src="https://cdn.jsdelivr.net/npm/katex@0.10.0-rc.1/dist/katex.min.js"></script> -->
   <!-- <link rel="stylesheet" href="//unpkg.com/docsify@4.7.0/lib/themes/vue.css"> -->
   <style>
-    iframe.viz-frame { width: 100%; height: 900px; border: 1px solid #dde2e8; border-radius: 12px; display: block; margin: 8px 0 20px; }
+    iframe.viz-frame { width: 100%; height: 900px; border: 1px solid #dde2e8; border-radius: 12px; display: block; margin: 8px 0 4px; }
+    /* mô phỏng nhúng trong chương: thu gọn mặc định, bấm để mở */
+    details.viz-box { border: 1px solid #dde2e8; border-radius: 12px; margin: 12px 0 20px; background: #f7faf8; }
+    details.viz-box > summary { cursor: pointer; padding: 9px 14px; font-weight: 600; color: #1f7a52; list-style: none; user-select: none; }
+    details.viz-box > summary::-webkit-details-marker { display: none; }
+    details.viz-box > summary::before { content: "▸"; display: inline-block; width: 1.1em; transition: transform .15s; }
+    details.viz-box[open] > summary::before { transform: rotate(90deg); }
+    details.viz-box > summary span { font-weight: 400; color: #5d6878; font-size: .9em; }
+    details.viz-box[open] > summary span { display: none; }
+    details.viz-box[open] > summary { border-bottom: 1px solid #dde2e8; }
+    details.viz-box > :not(summary) { margin-left: 12px; margin-right: 12px; }
+    details.viz-box > iframe.viz-frame { width: calc(100% - 24px); margin-bottom: 12px; }
     .katex-display > .katex {
       max-width: 100%;
       overflow-x: auto;
