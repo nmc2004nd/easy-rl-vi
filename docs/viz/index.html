@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mô phỏng thuật toán · Sách Nấm EasyRL</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <h1>Mô phỏng thuật toán</h1>
+    <div class="crumbs"><a href="../#/">Sách</a> · <a href="../review/index.html?ch=2">Ôn tập chương 2</a></div>
+  </div>
+  <p class="lead">Các thuật toán trong sách được chạy từng bước, kèm phép tính bằng số thật ở mỗi ô. Mỗi mô phỏng cũng được nhúng ngay dưới hình tương ứng trong chương.</p>
+
+  <h2 style="font-size:1.05rem;margin:18px 0 10px">Chương 2 · Quá trình quyết định Markov</h2>
+  <div class="cards">
+    <a class="card" href="mrp-return.html"><div class="ref">Mục 2.2 · hình 2.3–2.7</div><h3>Lợi tức và giá trị trong MRP</h3><p>Lấy mẫu quỹ đạo, tính $G$ từng số hạng, rồi so sánh Monte Carlo, quy hoạch động và nghiệm giải tích $V=(I-\gamma P)^{-1}R$.</p></a>
+    <a class="card" href="policy-eval.html"><div class="ref">Mục 2.3.9 · hình 2.18–2.20</div><h3>Đánh giá chính sách</h3><p>Lặp (2.18) trên lưới 4×4 từng ô một; so sánh cập nhật đồng bộ và tại chỗ.</p></a>
+    <a class="card" href="policy-iter.html"><div class="ref">Mục 2.3.11 · hình 2.21</div><h3>Lặp chính sách</h3><p>Đánh giá ⇄ cải thiện luân phiên; xem bảng $Q(s,a)$ và ô nào đổi hướng ở mỗi lần cải thiện.</p></a>
+    <a class="card" href="value-iter.html"><div class="ref">Mục 2.3.12 · hình 2.23</div><h3>Lặp giá trị</h3><p>Giá trị lan từ đích như làn sóng $V_1\to V_7$; vì sao chính sách giữa chừng vô nghĩa; rút trích chính sách.</p></a>
+    <a class="card" href="gridworld.html"><div class="ref">Mục 2.3.13 · hình 2.24–2.28</div><h3>Sân chơi thế giới lưới</h3><p>Tự vẽ bản đồ, chỉnh $\gamma$, xác suất trượt, thưởng mỗi bước; giải bằng lặp chính sách hoặc lặp giá trị.</p></a>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>Viz.texAll();</script>
+</body>
+</html>

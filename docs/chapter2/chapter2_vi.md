@@ -309,6 +309,10 @@ $$
 > Nghĩa gốc của bootstrap là "dây kéo ở cổ giày ống". Ở đây dùng điển tích trong tác phẩm văn học Đức *Những cuộc phiêu lưu của Nam tước Münchhausen*, nơi nhân vật tự kéo dây giày ống của mình để nhấc bản thân lên (tự thân vận động), vì vậy bản tiếng Trung dịch là "自举" (tự nâng). Trong tiếng Việt thường giữ nguyên thuật ngữ bootstrapping.
 
 
+> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): lấy mẫu quỹ đạo trên chuỗi ở hình 2.4, tính lợi tức $G$ từng số hạng, rồi so sánh ba cách tính giá trị: Monte Carlo (hình 2.6), quy hoạch động (hình 2.7) và nghiệm giải tích. [Mở trang riêng](viz/mrp-return.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/mrp-return.html?embed" style="height:1480px" title="Mô phỏng lợi tức và giá trị trong MRP" loading="lazy"></iframe>
+
 ### 2.2.4 Ví dụ về quá trình phần thưởng Markov
 
 Như hình 2.8, nếu ta thêm phần thưởng vào chuỗi Markov thì mỗi khi đến một trạng thái, ta sẽ nhận được một phần thưởng. Ta có thể thiết lập phần thưởng tương ứng, ví dụ khi tác tử đến trạng thái $s_1$ thì nhận phần thưởng 5; khi đến $s_7$ thì nhận phần thưởng 10; đến các trạng thái khác thì không có phần thưởng nào.
@@ -649,6 +653,11 @@ Như hình 2.20a, ta lặp thêm một lần, các trạng thái xung quanh nh�
 </div>
  <div align=center>Hình 2.20 Thế giới lưới: ví dụ quá trình đánh giá chính sách</div>
 
+> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): lặp biểu thức (2.18) trên thế giới lưới nhỏ ở hình 2.18, xem phép tính ở từng ô và so sánh cập nhật đồng bộ với cập nhật tại chỗ. [Mở trang riêng](viz/policy-eval.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/policy-eval.html?embed" style="height:1510px" title="Mô phỏng đánh giá chính sách" loading="lazy"></iframe>
+
+
 Sau khi lặp nhiều lần, hàm giá trị của một số trạng thái ở rất xa cũng đã có giá trị, và toàn bộ quá trình là một quá trình lan tỏa dần dần, đây thực chất cũng là sự trực quan hóa của đánh giá chính sách. Mỗi bước lặp, các trạng thái ở xa sẽ nhận được một ít giá trị, giá trị lan tỏa dần từ các trạng thái đã có phần thưởng. Sau khi thực hiện nhiều lần lặp, giá trị của các trạng thái sẽ dần ổn định, cuối cùng giá trị sẽ cố định không đổi. Sau khi hội tụ, giá trị của mỗi trạng thái chính là giá trị trạng thái của nó.
 
 ### 2.3.10 Điều khiển trong quá trình quyết định Markov
@@ -703,6 +712,11 @@ Quá trình lặp chính sách giống như đá bóng qua lại. Trước tiên
 <img width="550" src="../img/ch2/2.21.png"/>
 </div>
  <div align=center>Hình 2.21 Lặp chính sách</div>
+
+> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): chạy luân phiên đánh giá và cải thiện chính sách, xem bảng $Q(s,a)$ và các ô đổi hướng sau mỗi lần cải thiện. [Mở trang riêng](viz/policy-iter.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/policy-iter.html?embed" style="height:1400px" title="Mô phỏng lặp chính sách" loading="lazy"></iframe>
+
 
 
 Ở đây hãy xem lại bước thứ hai — cải thiện chính sách, xem ta cải thiện chính sách như thế nào. Sau khi có hàm giá trị trạng thái, ta có thể dùng hàm phần thưởng và hàm chuyển trạng thái để tính hàm Q:
@@ -839,6 +853,11 @@ Hãy nhớ lại định lý nguyên lý tối ưu: nếu hàm giá trị $V_{k+
 </div>
 <div align=center>Hình 2.23 Ví dụ: đường đi ngắn nhất</div>
 
+> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): giá trị lan từ đích ra qua $V_1, \dots, V_7$ như hình 2.23; bật chính sách tạm thời để thấy vì sao chính sách giữa chừng chưa có ý nghĩa. [Mở trang riêng](viz/value-iter.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/value-iter.html?embed" style="height:1130px" title="Mô phỏng lặp giá trị" loading="lazy"></iframe>
+
+
 Như hình 2.23, thực ra, với mỗi trạng thái, ta đều có thể xem nó là một điểm đích. Việc lặp bắt đầu từ mỗi điểm đích, mỗi lần ta đều tính lại giá trị dựa trên phương trình tối ưu Bellman. Nếu giá trị của các nút lân cận thay đổi, trở nên tốt hơn, thì giá trị của nó cũng sẽ tốt hơn, cho đến khi các nút lân cận không thay đổi nữa. Vì vậy, trước khi lặp đến $V_7$, tức là trước khi truyền giá trị tối ưu của mỗi điểm đích cho tất cả các trạng thái khác, các giá trị ở giữa chỉ là dữ liệu tạm thời chưa hoàn chỉnh, chúng không đại diện cho giá trị của mỗi trạng thái, vì vậy chính sách sinh ra là chính sách không có ý nghĩa. Lặp giá trị là một quá trình lặp, hình 2.23 trực quan hóa sự thay đổi giá trị của mỗi trạng thái từ $V_1$ đến $V_7$. Hơn nữa vì tác tử mỗi bước đi đều nhận một giá trị âm, nên nó cần đến đích càng nhanh càng tốt, có thể thấy trạng thái càng xa đích thì giá trị càng nhỏ. Sau khi $V_7$ hội tụ, giá trị ở góc dưới bên phải là $-$6, tương đương với việc nó phải đi 6 bước mới đến được đích. Tác tử càng gần đích thì giá trị càng lớn. Khi đã có giá trị tối ưu, ta có thể dùng phép rút trích chính sách (policy extraction) để có chính sách tối ưu.
 
 ### 2.3.13 Khác biệt giữa lặp chính sách và lặp giá trị
@@ -882,6 +901,11 @@ Như hình 2.28b, ta lại dùng lặp giá trị để giải quá trình quy�
 <img width="750" src="../img/ch2/2.28.png"/>
 </div>
 <div align=center>Hình 2.28 Điều khiển quá trình quyết định Markov: ví dụ lặp chính sách</div>
+
+> 🎬 **Mô phỏng tương tác** (phần bổ sung của người dịch): bản tiếng Việt của demo ở hình 2.24–2.28: tự vẽ bản đồ, chỉnh $\gamma$, xác suất trượt, phần thưởng mỗi bước, rồi giải bằng lặp chính sách hoặc lặp giá trị. [Mở trang riêng](viz/gridworld.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/gridworld.html?embed" style="height:1890px" title="Sân chơi thế giới lưới" loading="lazy"></iframe>
+
 
 
 Ta so sánh lại lặp chính sách và lặp giá trị, cả hai thuật toán đều có thể giải bài toán điều khiển của quá trình quyết định Markov. Lặp chính sách gồm hai bước. Trước tiên là đánh giá chính sách, tức là ước lượng giá trị cho hàm chính sách đã tìm được hiện tại. Sau khi có ước lượng, ta cải thiện chính sách, tức là tính hàm Q rồi cải thiện thêm. Lặp lại hai bước này cho đến khi chính sách hội tụ. Lặp giá trị trực tiếp dùng phương trình tối ưu Bellman để lặp, từ đó tìm hàm giá trị tối ưu. Tìm được hàm giá trị tối ưu rồi, ta mới rút ra chính sách tối ưu.

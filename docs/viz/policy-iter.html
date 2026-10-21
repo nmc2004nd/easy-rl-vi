@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lặp chính sách · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .cycle { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 4px 0 10px; }
+  .cycle .ph { border: 2px solid var(--border); border-radius: 12px; padding: 6px 12px; font-size: .88rem; text-align: center; background: var(--surface); transition: border-color .2s, background .2s; }
+  .cycle .ph.on { border-color: var(--hl); background: var(--hl-soft); }
+  .cycle .ph.ok { border-color: var(--accent); background: var(--accent-soft); }
+  .cycle .ph small { display: block; color: var(--muted); font-size: .75rem; }
+  .cycle .arr { color: var(--muted); font-size: 1.2rem; }
+  table.hist { width: 100%; border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; }
+  table.hist th, table.hist td { border-bottom: 1px solid var(--border); padding: 4px 6px; text-align: right; }
+  table.hist th:first-child, table.hist td:first-child { text-align: left; }
+  table.hist th { color: var(--muted); font-weight: 600; }
+  .gbox.main { max-width: 440px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Lặp chính sách</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter2/chapter2_vi?id=_2311-lặp-chính-sách">Mục 2.3.11</a></div>
+    </div>
+    <p class="lead">Hai bước luân phiên ở hình 2.21: <b>đánh giá</b> chính sách hiện tại cho tới khi $V$ hội tụ, rồi <b>cải thiện</b> bằng cách chọn $\arg\max_a Q(s,a)$. Ô có số $-1$ ở góc là ô phạt (vẫn đi tiếp được), ô $+1$ là đích (kết thúc), ô tối màu là tường.</p>
+  </div>
+  <div class="only-embed open-full"><a href="policy-iter.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="cycle" aria-live="polite">
+      <div class="ph" id="ph-eval">① Đánh giá chính sách<small>$V \leftarrow \sum_a \pi(a\mid s)\,Q(s,a)$</small></div>
+      <span class="arr">⇄</span>
+      <div class="ph" id="ph-imp">② Cải thiện chính sách<small>$\pi(s) \leftarrow \arg\max_a Q(s,a)$</small></div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="finish">Đánh giá tới hội tụ</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="4">
+    </div>
+    <div class="ctrl">
+      <label for="gamma">$\gamma$ =</label><span class="val" id="gammav"></span>
+      <input id="gamma" type="range" min="0.5" max="0.99" step="0.01" value="0.9">
+      <span class="lb">Mỗi lần đánh giá</span>
+      <div class="seg" id="evalk">
+        <button type="button" data-v="0" aria-pressed="true">Tới hội tụ</button>
+        <button type="button" data-v="3" aria-pressed="false">3 vòng</button>
+        <button type="button" data-v="1" aria-pressed="false">1 vòng</button>
+      </div>
+    </div>
+    <div class="stats"><span>Lần cải thiện <b id="it">0</b></span><span>Vòng đánh giá <b id="ev">0</b></span><span>max|ΔV| <b id="delta">–</b></span><span id="status" class="phase"></span></div>
+    <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
+    <div class="scale" id="scale"></div>
+  </div>
+
+  <div class="layout">
+    <div class="blk">
+      <h2>Phép tính ở ô <span id="selname"></span></h2>
+      <div class="calc" id="calc"></div>
+      <p class="note">Bấm vào ô khác để xem. Môi trường tất định: $p(s'\mid s,a)=1$ với ô $s'$ theo hướng $a$ (đụng tường hoặc biên thì $s'=s$), và $R(s,a)=R(s)$.</p>
+    </div>
+    <div class="blk">
+      <h2>Lịch sử</h2>
+      <table class="hist"><thead><tr><th>Lần cải thiện</th><th>Vòng đánh giá trước đó</th><th>Ô đổi hướng</th></tr></thead><tbody id="hist"></tbody></table>
+      <div class="insight" id="insight">Bắt đầu với chính sách ngẫu nhiên đều: mỗi ô có đủ 4 mũi tên.</div>
+    </div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, ROWS = 6, COLS = 6, THETA = 1e-3;
+  // Bản đồ: '.' trống, '#' tường, 'x' ô phạt −1, 'G' đích +1
+  var MAP = [
+    '......',
+    '.##.x.',
+    '....xG',
+    '.x#...',
+    '..#.x.',
+    '......'
+  ];
+  var wall = {}, term = {}, R = [];
+  MAP.join('').split('').forEach(function (ch, i) {
+    if (ch === '#') wall[i] = 1;
+    if (ch === 'G') term[i] = 1;
+    R.push(ch === 'x' ? -1 : ch === 'G' ? 1 : 0);
+  });
+  var mdp = new V_.GridMDP({ rows: ROWS, cols: COLS, wall: wall, term: term, R: R });
+  var N = ROWS * COLS, st, view, sel = 14;
+  var AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'];
+
+  function gamma() { return +V_.$('#gamma').value; }
+  function evalK() { return +V_.$('#evalk [aria-pressed=true]').dataset.v; }
+  function rc(s) { return '(' + Math.floor(s / COLS) + ',' + s % COLS + ')'; }
+
+  function reset() {
+    player && player.stop();
+    st = { V: new Array(N).fill(0), pi: [], phase: 'eval', it: 0, ev: 0, evThis: 0, delta: null, done: false, changed: [], hist: [] };
+    for (var s = 0; s < N; s++) st.pi.push([0.25, 0.25, 0.25, 0.25]);
+    render(); showCalc();
+    V_.$('#insight').textContent = 'Bắt đầu với chính sách ngẫu nhiên đều: mỗi ô có đủ 4 mũi tên.';
+  }
+
+  function evalSweep() {
+    var g = gamma(), Vn = st.V.slice(), d = 0;
+    for (var s = 0; s < N; s++) {
+      if (wall[s]) continue;
+      var v = term[s] ? R[s] : 0;
+      if (!term[s]) for (var a = 0; a < 4; a++) v += st.pi[s][a] * mdp.q(st.V, s, a, g);
+      d = Math.max(d, Math.abs(v - st.V[s])); Vn[s] = v;
+    }
+    st.V = Vn; st.delta = d; st.ev++; st.evThis++;
+    var k = evalK();
+    if (d < THETA || (k && st.evThis >= k)) st.phase = 'imp';
+  }
+  function improve() {
+    var g = gamma(), changed = [];
+    for (var s = 0; s < N; s++) {
+      if (!mdp.active(s)) continue;
+      var np = V_.greedy(mdp.qs(st.V, s, g), 1e-6);
+      if (!V_.samePolicy(np, st.pi[s])) changed.push(s);
+      st.pi[s] = np;
+    }
+    st.it++; st.changed = changed;
+    st.hist.push({ it: st.it, ev: st.evThis, ch: changed.length });
+    st.evThis = 0;
+    // Chỉ dừng khi chính sách không đổi VÀ V đã hội tụ (với đánh giá cắt ngắn, V có thể chưa hội tụ)
+    if (!changed.length && st.delta !== null && st.delta < THETA) { st.done = true; st.phase = 'done'; }
+    else st.phase = 'eval';
+    if (changed.length) sel = changed[0];
+    var ins = V_.$('#insight');
+    if (st.done) ins.innerHTML = 'Chính sách không còn thay đổi ⇒ $\\pi$ thỏa phương trình tối ưu Bellman, tức là đã <b>tối ưu</b>. Tổng cộng ' + st.it + ' lần cải thiện, ' + st.ev + ' vòng đánh giá.';
+    else if (!changed.length) ins.innerHTML = 'Không ô nào đổi hướng, nhưng $V$ chưa hội tụ (đánh giá bị cắt ngắn) nên tiếp tục đánh giá.';
+    else ins.innerHTML = '<b>' + changed.length + '</b> ô vừa đổi hướng (nhấp nháy). Ô đang xem là ô đầu tiên trong số đó.';
+    V_.texAll(ins);
+  }
+  function step() {
+    if (st.done) return false;
+    if (st.phase === 'eval') evalSweep(); else improve();
+    render(); showCalc();
+    if (st.phase === 'eval' && st.changed.length && st.evThis === 0) st.changed.forEach(function (s) { view.flash(s); });
+    return !st.done;
+  }
+
+  function render() {
+    var mx = 1;
+    st.V.forEach(function (v, s) { if (!wall[s]) mx = Math.max(mx, Math.abs(v)); });
+    for (var s = 0; s < N; s++) {
+      if (wall[s]) { view.set(s, { v: '', rw: '', arrows: null, aria: 'tường' }); view.cls(s, 'wall', true); continue; }
+      var c = V_.valueColor(st.V[s], mx);
+      view.set(s, { v: V_.fmt(st.V[s], window.innerWidth < 520 ? 1 : 2), rw: R[s] ? (R[s] > 0 ? '+1' : '−1') : '', bg: c.bg, fg: c.fg,
+                    arrows: term[s] ? null : st.pi[s], aria: 'ô ' + rc(s) + ', V = ' + V_.fmt(st.V[s], 2) });
+      view.cls(s, 'term', term[s]);
+    }
+    view.clear('sel'); view.cls(sel, 'sel', true);
+    V_.$('#it').textContent = st.it;
+    V_.$('#ev').textContent = st.ev;
+    V_.$('#delta').textContent = st.delta === null ? '–' : st.delta < 1e-3 ? st.delta.toExponential(1) : st.delta.toFixed(3);
+    V_.$('#ph-eval').className = 'ph' + (st.phase === 'eval' ? ' on' : st.done ? ' ok' : '');
+    V_.$('#ph-imp').className = 'ph' + (st.phase === 'imp' ? ' on' : st.done ? ' ok' : '');
+    var stt = V_.$('#status');
+    stt.className = 'phase ' + (st.done ? 'ok' : 'on');
+    stt.textContent = st.done ? 'Đã tối ưu' : st.phase === 'eval' ? 'Đang đánh giá' : 'Sắp cải thiện';
+    V_.scaleBar(V_.$('#scale'), mx, false);
+    V_.$('#hist').innerHTML = st.hist.map(function (h) { return '<tr><td>' + h.it + '</td><td>' + h.ev + '</td><td>' + h.ch + '</td></tr>'; }).join('') ||
+      '<tr><td colspan="3" style="text-align:left;color:var(--muted)">Chưa có.</td></tr>';
+    V_.$('#step').disabled = V_.$('#finish').disabled = st.done;
+    V_.$('#finish').disabled = st.done || st.phase !== 'eval';
+  }
+
+  function showCalc() {
+    var el = V_.$('#calc'), s = sel, g = gamma();
+    V_.tex(V_.$('#selname'), 's=' + rc(s));
+    if (wall[s]) { el.innerHTML = '<p class="hint">Đây là tường.</p>'; return; }
+    if (term[s]) { V_.tex(el, 'V(s)=R(s)=' + R[s] + '\\quad\\text{(ô kết thúc)}', true); return; }
+    var q = mdp.qs(st.V, s, g), best = V_.greedy(q, 1e-6), lines = [];
+    for (var a = 0; a < 4; a++) {
+      var t = mdp.move(s, a);
+      var row = 'Q(s,' + AN[a] + ')&=R(s)+\\gamma V(s\'_{' + AN[a] + '})=' + V_.tn(R[s], 0) + '+' + V_.tn(g, 2) + '\\cdot' + V_.tn(st.V[t], 2, true) + '=' + V_.tn(q[a], 3);
+      if (best[a] > 0) row = '\\colorbox{' + V_.cssVar('--hl-soft') + '}{$' + row.replace('&=', '=') + '$}';
+      else row = row.replace('&=', '=');
+      lines.push('&' + row);
+    }
+    var piStr = st.pi[s].map(function (p, a) { return p > 0 ? AN[a] : null; }).filter(Boolean).join(',');
+    var vNext = 0; for (a = 0; a < 4; a++) vNext += st.pi[s][a] * q[a];
+    var vt = st.pi[s].map(function (p, a) { return p > 0 ? (p === 1 ? '' : V_.tn(p, 2) + '\\cdot') + V_.tn(q[a], 3, true) : null; }).filter(Boolean).join('+');
+    var tex = '\\begin{aligned}' + lines.join('\\\\') +
+      '\\\\[4pt]&\\pi(s)\\text{ hiện tại: }' + piStr +
+      '\\\\&\\textstyle\\sum_a\\pi(a\\mid s)Q(s,a)=' + vt + '=' + V_.tn(vNext, 3) + '\\end{aligned}';
+    V_.tex(el, tex, true);
+    el.insertAdjacentHTML('beforeend', '<p class="hint">Ô tô màu là hành động có $Q$ lớn nhất: bước cải thiện sẽ chọn nó. Dòng cuối là giá trị mới mà bước đánh giá sẽ gán cho $V(s)$.</p>');
+    V_.texAll(el);
+    V_.postHeight();
+  }
+
+  view = V_.GridView(V_.$('#gbox'), ROWS, COLS, { onClick: function (i) { sel = i; render(); showCalc(); } });
+  var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
+  V_.$('#finish').addEventListener('click', function () {
+    player.stop();
+    var guard = 0; while (st.phase === 'eval' && guard++ < 5000) evalSweep();
+    render(); showCalc();
+  });
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#evalk').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    V_.$$('#evalk button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    reset();
+  });
+  V_.$('#gamma').addEventListener('input', function () { V_.$('#gammav').textContent = gamma().toFixed(2); reset(); });
+  V_.onTheme(function () { render(); showCalc(); });
+  V_.$('#gammav').textContent = gamma().toFixed(2);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lợi tức và giá trị MRP · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .chain { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 6px 0; }
+  .chain .st { text-align: center; cursor: pointer; border: 0; background: none; font: inherit; color: inherit; padding: 0; }
+  .chain .node { width: 46px; height: 46px; max-width: 100%; margin: 0 auto; border-radius: 50%; border: 2px solid var(--border); display: grid; place-items: center;
+                 font-weight: 700; background: var(--surface); transition: background .2s, border-color .2s, color .2s; }
+  .chain .st.sel .node { border-color: var(--s1); }
+  .chain .node.on { border-color: var(--s2); background: var(--s2); color: #fff; }
+  .chain .rw { font-size: .75rem; color: var(--muted); margin-top: 3px; }
+  .chain .rw b { color: var(--text); }
+  .chain .cnt { font-size: .7rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .trajbox { background: var(--surface-2); border-radius: 12px; padding: 8px 12px; min-height: 5.4em; overflow-x: auto; }
+  .trajbox .katex-display { margin: .3em 0; text-align: left; }
+  .trajbox .katex-display > .katex { text-align: left; }
+  table.vt { width: 100%; border-collapse: collapse; font-size: .84rem; font-variant-numeric: tabular-nums; }
+  table.vt th, table.vt td { border-bottom: 1px solid var(--border); padding: 4px 5px; text-align: right; }
+  table.vt th:first-child, table.vt td:first-child { text-align: left; }
+  table.vt th { color: var(--muted); font-weight: 600; }
+  .tscroll { overflow-x: auto; }
+  @media (max-width: 600px) { .chain { gap: 2px; } .chain .node { width: 36px; height: 36px; font-size: .82rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Lợi tức và giá trị trong MRP</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter2/chapter2_vi?id=_22-quá-trình-phần-thưởng-markov">Mục 2.2</a></div>
+    </div>
+    <p class="lead">Chuỗi 7 trạng thái ở hình 2.3–2.4: $\boldsymbol R=[5,0,0,0,0,0,10]$; mỗi trạng thái sang trái hoặc phải với xác suất 0.4, ở lại 0.2 (hai đầu ở lại 0.6). Ba cách tính $V(s)$ trong mục 2.2 được chạy song song: <b>Monte Carlo</b> (hình 2.6), <b>quy hoạch động</b> (hình 2.7) và <b>nghiệm giải tích</b> $V=(I-\gamma P)^{-1}R$.</p>
+  </div>
+  <div class="only-embed open-full"><a href="mrp-return.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <h2>① Monte Carlo: lấy mẫu quỹ đạo và tính lợi tức</h2>
+    <div class="ctrl">
+      <label for="start">Bắt đầu từ</label>
+      <select id="start" class="btn"></select>
+      <label for="gamma">$\gamma$ =</label><span class="val" id="gammav"></span>
+      <input id="gamma" type="range" min="0" max="0.95" step="0.05" value="0.5">
+    </div>
+    <div class="ctrl">
+      <span class="lb">Tầm $H$ (số trạng thái mỗi tập)</span>
+      <div class="seg" id="hor">
+        <button type="button" data-v="4" aria-pressed="true">4 (như sách)</button>
+        <button type="button" data-v="10" aria-pressed="false">10</button>
+        <button type="button" data-v="40" aria-pressed="false">40</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="one">1 tập</button>
+      <button type="button" class="btn" id="many">+100 tập</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <div class="chain" id="chain"></div>
+    <div class="trajbox" id="traj" aria-live="polite"></div>
+    <div class="legend" id="legend"></div>
+    <div id="chart"></div>
+    <div class="insight" id="insight"></div>
+  </div>
+
+  <div class="layout">
+    <div class="blk">
+      <h2>② Quy hoạch động: lặp $V_{k+1}=R+\gamma P V_k$</h2>
+      <div class="ctrl">
+        <button type="button" class="btn" id="dpstep">Vòng tiếp</button>
+        <button type="button" class="btn" id="dpreset">Đặt lại</button>
+        <span class="stats" style="margin:0"><span>$k$ = <b id="dpk">0</b></span><span>max|ΔV| <b id="dpd">–</b></span></span>
+      </div>
+      <div class="calc" id="dpcalc"></div>
+      <p class="note">Bấm vào một trạng thái trên chuỗi để đổi ô được giải thích.</p>
+    </div>
+    <div class="blk">
+      <h2>③ So sánh ba cách</h2>
+      <div class="tscroll"><table class="vt"><thead><tr><th></th><th>Giải tích</th><th>Đúng với tầm $H$</th><th>DP $V_k$</th><th>Monte Carlo (số tập)</th></tr></thead><tbody id="tbl"></tbody></table></div>
+      <p class="note">“Giải tích” là $V=(I-\gamma P)^{-1}R$, tức tầm vô hạn. “Đúng với tầm $H$” là $\mathbb E\big[\sum_{i=0}^{H-1}\gamma^i r_{t+i}\big]$, chính là giá trị DP sau đúng $H$ vòng.</p>
+    </div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, NS = 7, R = [5, 0, 0, 0, 0, 0, 10];
+  var P = [];
+  for (var i = 0; i < NS; i++) {
+    var row = new Array(NS).fill(0);
+    if (i === 0) { row[0] = 0.6; row[1] = 0.4; }
+    else if (i === NS - 1) { row[i] = 0.6; row[i - 1] = 0.4; }
+    else { row[i - 1] = 0.4; row[i] = 0.2; row[i + 1] = 0.4; }
+    P.push(row);
+  }
+  var mc, dp, ep = null, sel = 3, rot = 0, oneTimer = null;
+
+  function gamma() { return +V_.$('#gamma').value; }
+  function H() { return +V_.$('#hor [aria-pressed=true]').dataset.v; }
+  function gs(g) { return V_.tn(g, 4).replace(/0+$/, '').replace(/\.$/, ''); }
+
+  function dpIter(V) { var g = gamma(); return R.map(function (r, s) { var x = 0; for (var t = 0; t < NS; t++) x += P[s][t] * V[t]; return r + g * x; }); }
+  function exactH(h) { var V = new Array(NS).fill(0); for (var k = 0; k < h; k++) V = dpIter(V); return V; }
+  function analytic() {
+    var g = gamma(), A = P.map(function (r, s) { return r.map(function (p, t) { return (s === t ? 1 : 0) - g * p; }); });
+    return V_.solve(A, R);
+  }
+
+  function resetMC() {
+    player && player.stop(); clearInterval(oneTimer);
+    mc = { sum: new Array(NS).fill(0), cnt: new Array(NS).fill(0) }; ep = null; rot = 0;
+    V_.$('#traj').innerHTML = '<p class="note" style="margin:.4em 0">Bấm “1 tập” để lấy mẫu một quỹ đạo dài $H$ trạng thái và tính lợi tức $G=\\sum_{i=0}^{H-1}\\gamma^i R(s_i)$ từng số hạng một.</p>';
+    V_.texAll(V_.$('#traj'));
+    renderAll();
+  }
+  function resetDP() { dp = { V: new Array(NS).fill(0), k: 0, d: null }; renderAll(); }
+
+  function sampleNext(s) { var u = Math.random(), c = 0; for (var t = 0; t < NS; t++) { c += P[s][t]; if (u < c) return t; } return s; }
+  function pickStart() { var v = V_.$('#start').value; if (v === 'all') { var s = rot % NS; rot++; return s; } return +v; }
+  function newEpisode() { var s = pickStart(); ep = { states: [s], G: R[s], done: false }; }
+  // Tiến một bước trong tập hiện tại; trả về true khi tập vừa kết thúc
+  function epStep() {
+    if (!ep || ep.done) newEpisode();
+    else {
+      var s = sampleNext(ep.states[ep.states.length - 1]);
+      ep.G += Math.pow(gamma(), ep.states.length) * R[s];
+      ep.states.push(s);
+    }
+    if (ep.states.length >= H()) {
+      ep.done = true;
+      mc.sum[ep.states[0]] += ep.G; mc.cnt[ep.states[0]]++;
+      return true;
+    }
+    return false;
+  }
+  function runEpisodeInstant() { newEpisode(); while (!epStep()); }
+
+  function renderTraj() {
+    var el = V_.$('#traj');
+    if (!ep) return;
+    // Quỹ đạo dài (H lớn) chỉ hiện 8 số hạng đầu cho gọn, phần còn lại ghi là \cdots
+    var g = gamma(), MAXT = 8, cut = ep.states.length > MAXT;
+    var shown = cut ? ep.states.slice(0, MAXT) : ep.states;
+    var names = shown.map(function (s) { return 's_' + (s + 1); }).join('\\to ') + (cut ? '\\to\\cdots\\;(' + ep.states.length + '\\text{ trạng thái})' : '');
+    var terms = shown.map(function (s, i) {
+      var w = i === 0 ? '' : (gs(Math.pow(g, i)) + '\\times ');
+      return R[s] ? '\\underbrace{' + w + R[s] + '}_{' + 's_' + (s + 1) + '}' : w + '0';
+    });
+    var tex = '\\begin{aligned}&\\text{Quỹ đạo: }' + names + (ep.done ? '' : '\\to\\;?') + '\\\\&G=' + terms.join('+') + (cut ? '+\\cdots' : '') + '=' + V_.tn(ep.G, 4).replace(/0+$/, '').replace(/\.$/, '') + '\\end{aligned}';
+    V_.tex(el, tex, true);
+    if (ep.done) el.insertAdjacentHTML('beforeend', '<p class="note" style="margin:0">Mẫu này được cộng vào ước lượng của $V(s_' + (ep.states[0] + 1) + ')$: trung bình mới là <b>' + V_.fmt(mc.sum[ep.states[0]] / mc.cnt[ep.states[0]], 3) + '</b> sau ' + mc.cnt[ep.states[0]] + ' tập.</p>');
+    V_.texAll(el);
+  }
+
+  function renderChain() {
+    var on = ep ? ep.states[ep.states.length - 1] : -1;
+    V_.$('#chain').innerHTML = R.map(function (r, s) {
+      return '<button type="button" class="st' + (s === sel ? ' sel' : '') + '" data-s="' + s + '" aria-label="trạng thái s' + (s + 1) + ', phần thưởng ' + r + '">' +
+        '<div class="node' + (s === on ? ' on' : '') + '"><span>s<sub>' + (s + 1) + '</sub></span></div><div class="rw">R=<b>' + r + '</b></div><div class="cnt">' + mc.cnt[s] + ' tập</div></button>';
+    }).join('');
+  }
+
+  // Biểu đồ: cột = giá trị đúng với tầm H; chấm = trung bình Monte Carlo; vạch = nghiệm giải tích
+  function renderChart() {
+    var ex = exactH(H()), an = analytic(), est = mc.sum.map(function (x, s) { return mc.cnt[s] ? x / mc.cnt[s] : null; });
+    var all = ex.concat(an).concat(est.filter(function (v) { return v !== null; }));
+    var top = Math.max.apply(null, all.concat([1])), step = top > 20 ? 10 : top > 8 ? 2 : top > 4 ? 1 : 0.5;
+    top = Math.ceil(top / step) * step;
+    var W = 520, Hh = 200, m = { l: 36, r: 8, t: 10, b: 24 }, bw = (W - m.l - m.r) / NS;
+    var y = function (v) { return m.t + (Hh - m.t - m.b) * (1 - v / top); };
+    var c1 = V_.cssVar('--s1'), c2 = V_.cssVar('--s2'), surf = V_.cssVar('--surface'), txt = V_.cssVar('--text');
+    var barFill = V_.mix(V_.cssVar('--surface-2'), c1, 0.45);
+    var s = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" role="img" aria-label="So sánh giá trị đúng và ước lượng Monte Carlo"><g class="gl">';
+    for (var v = 0; v <= top + 1e-9; v += step) s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + y(v) + '" y2="' + y(v) + '"/>';
+    s += '</g>';
+    for (v = 0; v <= top + 1e-9; v += step) s += '<text x="' + (m.l - 6) + '" y="' + (y(v) + 4) + '" text-anchor="end">' + V_.fmt(v, step < 1 ? 1 : 0) + '</text>';
+    for (var i = 0; i < NS; i++) {
+      var cx = m.l + bw * (i + 0.5), w = Math.min(34, bw * 0.55);
+      var y0 = y(0), y1 = y(ex[i]);
+      // cột bo góc 4px ở đầu dữ liệu, neo ở trục 0
+      var hgt = Math.max(0, y0 - y1), r = Math.min(4, hgt / 2, w / 2);
+      s += '<path d="M' + (cx - w / 2) + ',' + y0 + 'V' + (y1 + r) + 'Q' + (cx - w / 2) + ',' + y1 + ' ' + (cx - w / 2 + r) + ',' + y1 + 'H' + (cx + w / 2 - r) + 'Q' + (cx + w / 2) + ',' + y1 + ' ' + (cx + w / 2) + ',' + (y1 + r) + 'V' + y0 + 'Z" fill="' + barFill + '"/>';
+      s += '<line x1="' + (cx - w / 2 - 4) + '" x2="' + (cx + w / 2 + 4) + '" y1="' + y(an[i]) + '" y2="' + y(an[i]) + '" stroke="' + txt + '" stroke-width="2" stroke-dasharray="3 2"/>';
+      if (est[i] !== null) s += '<circle cx="' + cx + '" cy="' + y(est[i]) + '" r="5" fill="' + c2 + '" stroke="' + surf + '" stroke-width="2"/>';
+      s += '<text x="' + cx + '" y="' + (Hh - 6) + '" text-anchor="middle">s' + (i + 1) + '</text>';
+      s += '<rect class="hit" data-i="' + i + '" x="' + (cx - bw / 2) + '" y="0" width="' + bw + '" height="' + Hh + '" fill="transparent"/>';
+    }
+    s += '</svg>';
+    var box = V_.$('#chart'); box.className = 'chart'; box.innerHTML = s + '<div class="tip"></div>';
+    var tip = box.querySelector('.tip'), svg = box.querySelector('svg');
+    svg.addEventListener('mousemove', function (e) {
+      var h = e.target.closest('.hit'); if (!h) { tip.style.display = 'none'; return; }
+      var k = +h.dataset.i, rct = svg.getBoundingClientRect();
+      tip.innerHTML = '<b>s' + (k + 1) + '</b> · đúng (H=' + H() + '): ' + V_.fmt(ex[k], 3) + ' · giải tích: ' + V_.fmt(an[k], 3) + '<br>Monte Carlo: ' + (est[k] === null ? 'chưa có' : V_.fmt(est[k], 3) + ' (' + mc.cnt[k] + ' tập)');
+      tip.style.display = 'block';
+      var tx = (m.l + bw * (k + 0.5)) * rct.width / W;
+      tip.style.left = Math.min(rct.width - tip.offsetWidth, Math.max(0, tx - tip.offsetWidth / 2)) + 'px';
+      tip.style.top = '0px';
+    });
+    svg.addEventListener('mouseleave', function () { tip.style.display = 'none'; });
+    V_.$('#legend').innerHTML =
+      '<span class="li"><span class="sw box" style="background:' + barFill + '"></span>Giá trị đúng với tầm H = ' + H() + '</span>' +
+      '<span class="li"><span class="sw" style="background:none;border-top:2px dashed ' + txt + ';height:0"></span>Nghiệm giải tích (tầm vô hạn)</span>' +
+      '<span class="li"><span class="sw dot" style="background:' + c2 + '"></span>Trung bình Monte Carlo</span>';
+
+    V_.$('#tbl').innerHTML = R.map(function (r, k) {
+      return '<tr><td>s' + (k + 1) + '</td><td>' + V_.fmt(an[k], 3) + '</td><td>' + V_.fmt(ex[k], 3) + '</td><td>' + V_.fmt(dp.V[k], 3) + '</td><td>' +
+        (est[k] === null ? '–' : V_.fmt(est[k], 3) + ' (' + mc.cnt[k] + ')') + '</td></tr>';
+    }).join('');
+
+    var gap = Math.max.apply(null, ex.map(function (x, k) { return Math.abs(x - an[k]); }));
+    V_.$('#insight').innerHTML = H() <= 4
+      ? 'Với tầm $H=' + H() + '$ như ví dụ trong sách, Monte Carlo hội tụ về cột (giá trị của tập dài ' + H() + ' bước), <b>không</b> về vạch đứt nét (nghiệm giải tích tầm vô hạn); hai thứ lệch nhau tới ' + V_.fmt(gap, 2) + '. Hãy tăng $H$ để thấy cột và vạch trùng nhau.'
+      : 'Với $H=' + H() + '$, phần bị cắt bỏ $\\gamma^{H}(\\dots)$ gần như bằng 0 (lệch tối đa ' + (gap < 1e-3 ? gap.toExponential(1) : V_.fmt(gap, 3)) + '), nên Monte Carlo, quy hoạch động và nghiệm giải tích cùng cho một đáp án. Sai số Monte Carlo giảm dần theo $1/\\sqrt{n}$ khi số tập $n$ tăng.';
+    V_.texAll(V_.$('#insight'));
+  }
+
+  function renderDP() {
+    var g = gamma(), s = sel, prev = dp.prevV || new Array(NS).fill(0);
+    V_.$('#dpk').textContent = dp.k;
+    V_.$('#dpd').textContent = dp.d === null ? '–' : dp.d < 1e-3 ? dp.d.toExponential(1) : dp.d.toFixed(3);
+    var el = V_.$('#dpcalc');
+    if (!dp.k) { V_.tex(el, 'V_0=[0,0,0,0,0,0,0]', true); V_.postHeight(); return; }
+    var nb = [], num = [];
+    for (var t = 0; t < NS; t++) if (P[s][t]) { nb.push(gs(P[s][t]) + 'V_{' + (dp.k - 1) + '}(s_' + (t + 1) + ')'); num.push(gs(P[s][t]) + '\\cdot' + V_.tn(prev[t], 3)); }
+    var tex = '\\begin{aligned}V_{' + dp.k + '}(s_' + (s + 1) + ')&=R(s_' + (s + 1) + ')+\\gamma\\big[' + nb.join('+') + '\\big]\\\\&=' + R[s] + '+' + gs(g) + '\\big[' + num.join('+') + '\\big]\\\\&=' + V_.tn(dp.V[s], 3) + '\\end{aligned}';
+    V_.tex(el, tex, true);
+    el.insertAdjacentHTML('beforeend', '<div class="katex-wrap"></div>');
+    V_.tex(el.lastChild, 'V_{' + dp.k + '}=[' + dp.V.map(function (x) { return V_.tn(x, 2); }).join(',\\;') + ']', true);
+    V_.postHeight();
+  }
+
+  function renderAll() { if (!mc || !dp) return; renderChain(); renderChart(); renderDP(); V_.postHeight(); }
+
+  function step() {
+    var fin = epStep();
+    renderChain(); renderTraj();
+    if (fin) renderChart();
+    V_.postHeight();
+    return true;
+  }
+
+  // khởi tạo điều khiển
+  V_.$('#start').innerHTML = '<option value="all">lần lượt s1…s7</option>' + R.map(function (r, s) { return '<option value="' + s + '"' + (s === 3 ? ' selected' : '') + '>s' + (s + 1) + '</option>'; }).join('');
+  var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#one').addEventListener('click', function () {
+    player.stop();
+    // hoạt ảnh một tập: chạy từng bước tới khi kết thúc
+    if (ep && !ep.done) { while (!epStep()); renderChain(); renderTraj(); renderChart(); return; }
+    clearInterval(oneTimer);
+    oneTimer = setInterval(function () { var fin = epStep(); renderChain(); renderTraj(); if (fin) { clearInterval(oneTimer); renderChart(); } V_.postHeight(); }, 260);
+  });
+  V_.$('#many').addEventListener('click', function () {
+    player.stop();
+    if (ep && !ep.done) while (!epStep());
+    for (var k = 0; k < 100; k++) runEpisodeInstant();
+    renderChain(); renderTraj(); renderChart();
+  });
+  V_.$('#reset').addEventListener('click', resetMC);
+  V_.$('#dpstep').addEventListener('click', function () {
+    var Vn = dpIter(dp.V); dp.d = Math.max.apply(null, Vn.map(function (x, k) { return Math.abs(x - dp.V[k]); }));
+    dp.prevV = dp.V; dp.V = Vn; dp.k++; renderDP(); renderChart();
+  });
+  V_.$('#dpreset').addEventListener('click', resetDP);
+  V_.$('#chain').addEventListener('click', function (e) { var b = e.target.closest('.st'); if (!b) return; sel = +b.dataset.s; renderChain(); renderDP(); });
+  V_.$('#hor').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    V_.$$('#hor button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    resetMC();
+  });
+  V_.$('#gamma').addEventListener('input', function () { V_.$('#gammav').textContent = gamma().toFixed(2); resetDP(); resetMC(); });
+  V_.onTheme(renderAll);
+  V_.$('#gammav').textContent = gamma().toFixed(2);
+  V_.texAll();
+  resetDP();
+  resetMC();
+})();
+</script>
+</body>
+</html>

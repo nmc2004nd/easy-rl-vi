@@ -579,10 +579,31 @@
     ctx.typeset(b3);
   }
 
+  // ---------- tab Mô phỏng: liên kết tới các trang docs/viz ----------
+  var VIZ = [
+    ['mrp-return.html', 'Mục 2.2', 'Lợi tức và giá trị trong MRP', 'Monte Carlo, quy hoạch động và nghiệm giải tích trên chuỗi 7 trạng thái.'],
+    ['policy-eval.html', 'Mục 2.3.9', 'Đánh giá chính sách', 'Lặp (2.18) trên lưới 4×4 từng ô; đồng bộ so với tại chỗ.'],
+    ['policy-iter.html', 'Mục 2.3.11', 'Lặp chính sách', 'Đánh giá ⇄ cải thiện; bảng $Q(s,a)$ và các ô đổi hướng.'],
+    ['value-iter.html', 'Mục 2.3.12', 'Lặp giá trị', 'Làn sóng giá trị $V_1 \\to V_7$ và rút trích chính sách.'],
+    ['gridworld.html', 'Mục 2.3.13', 'Sân chơi thế giới lưới', 'Tự vẽ bản đồ, chỉnh $\\gamma$ và xác suất trượt, so sánh hai thuật toán.']
+  ];
+  function renderViz(root, ctx) {
+    root.classList.add('rx');
+    var b = h('<section class="blk"><h2>Mô phỏng thuật toán</h2>' +
+      '<p class="lead">Chạy từng bước các thuật toán của chương, kèm phép tính bằng số thật ở mỗi ô. Mở trong cùng tab; bấm “← Các mô phỏng” để quay lại danh sách.</p>' +
+      '<div class="lanes">' + VIZ.map(function (v) {
+        return '<a class="lane" style="display:block;text-decoration:none;color:inherit" href="../viz/' + v[0] + '"><div class="lt">' + v[2] +
+          ' <span>· ' + v[1] + '</span></div><div class="rxs">' + v[3] + '</div></a>';
+      }).join('') + '</div></section>');
+    root.appendChild(b);
+    ctx.typeset(b);
+  }
+
   window.ReviewExtras = {
     tabs: [
       { id: 'lab', label: 'Thí nghiệm', render: renderLab },
-      { id: 'map', label: 'Sơ đồ', render: renderMap }
+      { id: 'map', label: 'Sơ đồ', render: renderMap },
+      { id: 'viz', label: 'Mô phỏng', render: renderViz }
     ]
   };
 })();

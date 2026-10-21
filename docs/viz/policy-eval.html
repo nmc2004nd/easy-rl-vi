@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đánh giá chính sách · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Đánh giá chính sách</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter2/chapter2_vi?id=_239-Đánh-giá-chính-sách-trong-quá-trình-quyết-định-markov">Mục 2.3.9</a></div>
+    </div>
+    <p class="lead">Lặp biểu thức (2.18) trên thế giới lưới nhỏ ở hình 2.18: 14 trạng thái, hai ô kết thúc (viền đậm), mỗi bước nhận phần thưởng $-1$, chính sách ngẫu nhiên đều $\pi(a\mid s)=0.25$.</p>
+  </div>
+  <div class="only-embed open-full"><a href="policy-eval.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <span class="lb">Cập nhật</span>
+      <div class="seg" id="mode">
+        <button type="button" data-v="sync" aria-pressed="true">Đồng bộ</button>
+        <button type="button" data-v="inplace" aria-pressed="false">Tại chỗ</button>
+      </div>
+      <span class="lb">Mỗi bước</span>
+      <div class="seg" id="gran">
+        <button type="button" data-v="cell" aria-pressed="true">Một ô</button>
+        <button type="button" data-v="sweep" aria-pressed="false">Cả vòng</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="conv">Chạy tới hội tụ</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <div class="ctrl">
+      <label for="gamma">$\gamma$ =</label><span class="val" id="gammav"></span>
+      <input id="gamma" type="range" min="0.5" max="1" step="0.05" value="1">
+      <label><input type="checkbox" id="arrows" checked> Mũi tên chính sách tham lam theo $V$</label>
+    </div>
+    <div class="stats"><span>Vòng lặp <b id="k">0</b></span><span>Ô đang tính <b id="cur">–</b></span><span>max|ΔV| vòng trước <b id="delta">–</b></span></div>
+    <div class="gwrap" id="grids"></div>
+    <div class="scale" id="scale"></div>
+  </div>
+
+  <div class="layout">
+    <div class="blk">
+      <h2>Phép tính ở ô đang chọn</h2>
+      <div class="calc" id="calc"></div>
+      <p class="note">Bấm vào một ô bất kỳ để xem phép tính của ô đó. Thứ tự hành động: lên, phải, xuống, trái. Đi ra ngoài biên thì đứng yên, nên $s'=s$.</p>
+    </div>
+    <div class="blk">
+      <h2>Tốc độ hội tụ: max|ΔV| sau mỗi vòng</h2>
+      <div id="chart"></div>
+      <p class="note">Trục tung theo thang log. Đường đứt nét là ngưỡng dừng $\theta$.</p>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Quan sát</h2>
+    <ul class="note" style="margin:0;padding-left:1.2em">
+      <li><b>Đồng bộ</b> (synchronous backup) đọc toàn bộ $V_k$ cũ rồi mới ghi $V_{k+1}$, nên cần hai bảng. Sau vòng 1 mọi ô là $-1.0$; sau vòng 2 các ô cạnh ô kết thúc là $-1.8$, còn lại $-2.0$; sau vòng 3 là $-2.4$, $-2.9$, $-3.0$. Đây đúng là các số trong ví dụ 4.1 của Sutton &amp; Barto.</li>
+      <li><b>Tại chỗ</b> (in-place) ghi đè ngay, nên ô tính sau đã dùng giá trị mới của ô tính trước. Cách này chỉ cần một bảng và thường hội tụ nhanh hơn: so sánh số vòng trên biểu đồ.</li>
+      <li>Với $\gamma=1$, giá trị hội tụ $V_\pi(s)$ chính là <b>âm số bước trung bình</b> mà bước đi ngẫu nhiên cần để chạm ô kết thúc, ví dụ $V_\pi(s_1)=-14$, $V_\pi(s_3)=-22$.</li>
+      <li>Mũi tên tham lam theo $V_\pi$ của chính sách <i>ngẫu nhiên</i> đã là chính sách tối ưu. Đây là ý tưởng của bước cải thiện chính sách trong lặp chính sách (mô phỏng tiếp theo).</li>
+    </ul>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, N = 4, TERM = { 0: 1, 15: 1 }, THETA = 1e-4;
+  var mdp = new V_.GridMDP({ rows: N, cols: N, term: TERM, R: new Array(16).fill(-1).map(function (r, i) { return TERM[i] ? 0 : r; }) });
+  var ORDER = []; for (var i = 1; i < 15; i++) ORDER.push(i);
+  var PI = [0.25, 0.25, 0.25, 0.25];
+  var st, gViews = {}, sel = null;
+
+  function name(s) { return TERM[s] ? 'T' : 's_{' + s + '}'; }
+  function gamma() { return +V_.$('#gamma').value; }
+  function mode() { return V_.$('#mode [aria-pressed=true]').dataset.v; }
+  function gran() { return V_.$('#gran [aria-pressed=true]').dataset.v; }
+
+  function trueV() {
+    // nghiệm đúng V_π = (I − γ P_π)^{-1} r_π, dùng để cố định thang màu
+    var g = gamma(), A = [], b = [];
+    for (var s = 0; s < 16; s++) {
+      var row = new Array(16).fill(0); row[s] = 1;
+      if (!TERM[s]) for (var a = 0; a < 4; a++) row[mdp.move(s, a)] -= g * 0.25;
+      A.push(row); b.push(TERM[s] ? 0 : -1);
+    }
+    if (g >= 1) { /* hệ vẫn khả nghịch vì có ô kết thúc hút */ }
+    return V_.solve(A, b);
+  }
+
+  function reset() {
+    player && player.stop();
+    var vt = trueV();
+    st = { V: new Array(16).fill(0), Vn: null, k: 0, pos: 0, sweepDelta: 0, last: null, done: false,
+           maxAbs: Math.max(1, Math.max.apply(null, vt.map(Math.abs))) };
+    startSweep();
+    chart.reset();
+    buildGrids();
+    sel = null;
+    render();
+    showCalc(null);
+  }
+  function startSweep() {
+    st.pos = 0; st.sweepDelta = 0;
+    st.Vn = mode() === 'sync' ? st.V.map(function (v, s) { return TERM[s] ? 0 : null; }) : null;
+  }
+
+  function backup(src, s) { var g = gamma(), v = 0; for (var a = 0; a < 4; a++) v += 0.25 * (-1 + g * src[mdp.move(s, a)]); return v; }
+
+  // Một bước nhỏ: cập nhật một ô. Trả về true nếu vừa xong một vòng.
+  function stepCell() {
+    var s = ORDER[st.pos], v;
+    if (mode() === 'sync') { v = backup(st.V, s); st.Vn[s] = v; }
+    else { v = backup(st.V, s); st.sweepDelta = Math.max(st.sweepDelta, Math.abs(v - st.V[s])); st.last = { s: s, before: st.V.slice() }; st.V[s] = v; }
+    if (mode() === 'sync') st.last = { s: s, before: st.V };
+    st.pos++;
+    if (st.pos < ORDER.length) return false;
+    if (mode() === 'sync') {
+      st.sweepDelta = 0;
+      for (var t = 0; t < 16; t++) st.sweepDelta = Math.max(st.sweepDelta, Math.abs(st.Vn[t] - st.V[t]));
+      st.prevV = st.V; st.V = st.Vn;
+    }
+    st.k++;
+    chart.push(st.k, st.sweepDelta);
+    st.lastDelta = st.sweepDelta;
+    if (st.sweepDelta < THETA) st.done = true;
+    startSweep();
+    return true;
+  }
+  function step() {
+    if (st.done) return false;
+    if (gran() === 'sweep') { while (!stepCell()); }
+    else stepCell();
+    render();
+    showCalc(st.last ? st.last.s : null, true);
+    return !st.done;
+  }
+
+  function buildGrids() {
+    var box = V_.$('#grids'); box.innerHTML = '';
+    gViews = {};
+    var defs = mode() === 'sync' ? [['old', 'V_k\\text{ (cũ, chỉ đọc)}'], ['new', 'V_{k+1}\\text{ (mới, đang ghi)}']] : [['one', 'V\\text{ (ghi đè tại chỗ)}']];
+    defs.forEach(function (d) {
+      var b = document.createElement('div'); b.className = 'gbox';
+      var cap = document.createElement('div'); cap.className = 'cap'; V_.tex(cap, d[1]);
+      b.appendChild(cap); box.appendChild(b);
+      gViews[d[0]] = V_.GridView(b, N, N, { onClick: function (i) { if (!TERM[i]) { sel = i; showCalc(i, false); } } });
+    });
+  }
+
+  function paint(view, vals, opt) {
+    for (var s = 0; s < 16; s++) {
+      var v = vals[s], c = v === null ? { bg: '', fg: '' } : V_.valueColor(v, st.maxAbs);
+      var arrows = null;
+      if (opt.arrows && !TERM[s] && v !== null) arrows = V_.greedy(mdp.qs(vals, s, gamma()), 1e-6);
+      view.set(s, { id: TERM[s] ? '' : s, v: v === null ? '' : V_.fmt(v, 1), bg: c.bg, fg: c.fg, arrows: arrows,
+                    aria: (TERM[s] ? 'ô kết thúc' : 'trạng thái ' + s) + (v === null ? ', chưa tính' : ', V = ' + V_.fmt(v, 2)) });
+      view.cls(s, 'term', TERM[s]);
+    }
+  }
+
+  function render() {
+    var arrows = V_.$('#arrows').checked, s = st.last && st.pos > 0 ? st.last.s : null;
+    if (mode() === 'sync') {
+      paint(gViews.old, st.V, { arrows: arrows });
+      paint(gViews.new, st.pos > 0 ? st.Vn : st.V.map(function (v, t) { return TERM[t] ? 0 : null; }), { arrows: false });
+      ['old', 'new'].forEach(function (g) { gViews[g].clear('cur'); gViews[g].clear('src'); });
+      if (s !== null) {
+        gViews.new.cls(s, 'cur', true);
+        for (var a = 0; a < 4; a++) gViews.old.cls(mdp.move(s, a), 'src', true);
+      }
+    } else {
+      paint(gViews.one, st.V, { arrows: arrows });
+      gViews.one.clear('cur'); gViews.one.clear('src');
+      if (s !== null) { gViews.one.cls(s, 'cur', true); for (var b = 0; b < 4; b++) if (mdp.move(s, b) !== s) gViews.one.cls(mdp.move(s, b), 'src', true); }
+    }
+    V_.$('#k').textContent = st.k;
+    V_.$('#cur').textContent = s === null ? '–' : 's' + s;
+    V_.$('#delta').textContent = st.lastDelta === undefined ? '–' : st.lastDelta < 1e-3 ? st.lastDelta.toExponential(1) : st.lastDelta.toFixed(3);
+    if (st.done) V_.$('#delta').textContent += ' (đã hội tụ)';
+    V_.scaleBar(V_.$('#scale'), st.maxAbs, true);
+    V_.$('#step').disabled = V_.$('#conv').disabled = st.done;
+  }
+
+  // Công thức cho ô s. justDone: ô vừa được cập nhật ở bước này (đọc từ bảng trước khi ghi).
+  function showCalc(s, justDone) {
+    var el = V_.$('#calc');
+    if (s === null || s === undefined) { el.innerHTML = '<p class="hint">Bấm “Bước tiếp” hoặc bấm vào một ô để xem phép tính.</p>'; return; }
+    var g = gamma(), sync = mode() === 'sync', src;
+    if (justDone) src = sync ? (st.pos === 0 ? st.prevV : st.V) : st.last.before;
+    else src = st.V;
+    var lhs = sync ? 'V_{' + (justDone && st.pos === 0 ? st.k : st.k + 1) + '}(' + name(s) + ')' : 'V(' + name(s) + ')';
+    var rd = sync ? 'V_{' + (justDone && st.pos === 0 ? st.k - 1 : st.k) + '}' : 'V';
+    var sym = [], num = [], tot = 0;
+    for (var a = 0; a < 4; a++) {
+      var t = mdp.move(s, a);
+      sym.push('(-1+\\gamma\\,' + rd + '(' + name(t) + '))');
+      num.push('(-1+' + V_.tn(g, 2).replace(/\.?0+$/, '') + '\\cdot' + V_.tn(src[t], 2, true) + ')');
+      tot += 0.25 * (-1 + g * src[t]);
+    }
+    var s1 = lhs + (sync ? '=' : '\\leftarrow') + '\\sum_{a}\\pi(a\\mid s)\\big(R(s,a)+\\gamma\\textstyle\\sum_{s\'}p(s\'\\mid s,a)\\,' + rd + '(s\')\\big)';
+    var tex = '\\begin{aligned}' + s1 + '\\\\[2pt]&=\\tfrac14\\big[' + sym.join('+') + '\\big]\\\\[2pt]&=\\tfrac14\\big[' + num.join('+') + '\\big]\\\\[2pt]&=' + V_.tn(tot, 3) + '\\end{aligned}';
+    tex = tex.replace(lhs + (sync ? '=' : '\\leftarrow'), lhs + (sync ? '&=' : '&\\leftarrow'));
+    V_.tex(el, tex, true);
+    if (!justDone && !st.done) el.insertAdjacentHTML('beforeend', '<p class="hint">Đây là giá trị ô này sẽ nhận ở lần cập nhật tới (tính từ bảng hiện tại).</p>');
+    V_.postHeight();
+  }
+
+  function seg(id, after) {
+    V_.$(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      V_.$$(id + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      after();
+    });
+  }
+
+  var chart = V_.DeltaChart(V_.$('#chart'), { theta: THETA });
+  var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
+  V_.$('#conv').addEventListener('click', function () {
+    player.stop();
+    var guard = 0; while (!st.done && guard++ < 20000) stepCell();
+    render(); showCalc(sel, false);
+  });
+  V_.$('#reset').addEventListener('click', reset);
+  seg('#mode', reset);
+  seg('#gran', function () {});
+  V_.$('#gamma').addEventListener('input', function () { V_.$('#gammav').textContent = gamma().toFixed(2); reset(); });
+  V_.$('#arrows').addEventListener('change', render);
+  V_.onTheme(render);
+  V_.$('#gammav').textContent = gamma().toFixed(2);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

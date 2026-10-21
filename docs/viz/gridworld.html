@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sân chơi thế giới lưới · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .gbox.main { max-width: 520px; flex-basis: 300px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Sân chơi thế giới lưới</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter2/chapter2_vi?id=_2313-khác-biệt-giữa-lặp-chính-sách-và-lặp-giá-trị">Hình 2.24–2.28</a></div>
+    </div>
+    <p class="lead">Bản tiếng Việt của demo GridWorld ở hình 2.24–2.28. Tự vẽ bản đồ, chỉnh $\gamma$, xác suất trượt và phần thưởng mỗi bước, rồi giải bằng <b>lặp chính sách</b> hoặc <b>lặp giá trị</b> và so sánh.</p>
+  </div>
+  <div class="only-embed open-full"><a href="gridworld.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <span class="lb">Thuật toán</span>
+      <div class="seg" id="algo">
+        <button type="button" data-v="pi" aria-pressed="true">Lặp chính sách</button>
+        <button type="button" data-v="vi" aria-pressed="false">Lặp giá trị</button>
+      </div>
+      <span id="status" class="phase"></span>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="solve">Giải tới hội tụ</button>
+      <button type="button" class="btn" id="reset">Đặt lại giá trị</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="4">
+    </div>
+    <div class="ctrl">
+      <span class="lb">Bấm ô để</span>
+      <div class="seg" id="tool">
+        <button type="button" data-v="see" aria-pressed="true">Xem phép tính</button>
+        <button type="button" data-v="wall" aria-pressed="false">Đặt/bỏ tường</button>
+        <button type="button" data-v="neg" aria-pressed="false">Ô phạt −1</button>
+        <button type="button" data-v="pos" aria-pressed="false">Đích +1</button>
+        <button type="button" data-v="clear" aria-pressed="false">Xóa</button>
+      </div>
+      <button type="button" class="btn" id="defmap">Bản đồ mặc định</button>
+    </div>
+    <div class="ctrl">
+      <label for="gamma">$\gamma$ =</label><span class="val" id="gammav"></span>
+      <input id="gamma" type="range" min="0.5" max="0.99" step="0.01" value="0.9">
+      <label for="slip">Trượt</label><span class="val" id="slipv"></span>
+      <input id="slip" type="range" min="0" max="0.4" step="0.05" value="0">
+      <label for="stepr">Thưởng mỗi bước</label>
+      <select id="stepr" class="btn"><option value="0">0</option><option value="-0.04">−0.04</option><option value="-0.1">−0.1</option><option value="-0.5">−0.5</option></select>
+    </div>
+    <div class="stats"><span id="s1"></span><span id="s2"></span><span>max|ΔV| <b id="delta">–</b></span></div>
+    <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
+    <div class="scale" id="scale"></div>
+    <div class="insight" id="insight"></div>
+  </div>
+
+  <div class="layout">
+    <div class="blk">
+      <h2>Phép tính ở ô <span id="selname"></span></h2>
+      <div class="calc" id="calc"></div>
+    </div>
+    <div class="blk">
+      <h2>max|ΔV| sau mỗi vòng quét</h2>
+      <div id="chart"></div>
+      <p class="note">Lặp chính sách: đường đi lên đột ngột ngay sau mỗi lần cải thiện, vì chính sách mới làm $V$ thay đổi lớn. Lặp giá trị: đường giảm đều.</p>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Gợi ý thử nghiệm</h2>
+    <ul class="note" style="margin:0;padding-left:1.2em">
+      <li>Giải cùng một bản đồ bằng hai thuật toán: chính sách cuối cùng giống nhau (như hình 2.28b), nhưng số vòng quét và cách đi tới đó khác nhau.</li>
+      <li>Tăng <b>trượt</b> lên 0.2–0.3: tác tử bắt đầu đi vòng xa các ô phạt, vì đi sát dễ trượt vào ô $-1$. Đây là lúc số hạng $\sum_{s'}p(s'\mid s,a)V(s')$ có nhiều hơn một số hạng.</li>
+      <li>Đặt <b>thưởng mỗi bước</b> là $-0.5$: đi lâu rất tốn, nên tác tử chấp nhận đi xuyên ô phạt để tới đích nhanh hơn.</li>
+      <li>Giảm $\gamma$ xuống 0.5: các ô xa đích có giá trị gần 0 và chính sách ở đó bắt đầu có nhiều hướng hòa nhau, vì phần thưởng tương lai bị chiết khấu quá mạnh.</li>
+    </ul>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, ROWS = 8, COLS = 8, N = 64, THETA = 1e-4;
+  var DEFAULT = [
+    '........',
+    '.####.#.',
+    '....#...',
+    '.xx.#.x.',
+    '..x....G',
+    '##x##.x.',
+    '....#...',
+    '.x......'
+  ];
+  var AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'];
+  var cellType, mdp, st, view, sel = 56;
+
+  function gamma() { return +V_.$('#gamma').value; }
+  function slip() { return +V_.$('#slip').value; }
+  function stepR() { return +V_.$('#stepr').value; }
+  function algo() { return V_.$('#algo [aria-pressed=true]').dataset.v; }
+  function tool() { return V_.$('#tool [aria-pressed=true]').dataset.v; }
+  function rc(s) { return '(' + Math.floor(s / COLS) + ',' + s % COLS + ')'; }
+
+  function loadDefault() { cellType = DEFAULT.join('').split(''); rebuild(); }
+  function rebuild() {
+    var wall = {}, term = {}, R = [];
+    cellType.forEach(function (ch, i) {
+      if (ch === '#') wall[i] = 1;
+      if (ch === 'G') term[i] = 1;
+      R.push(ch === 'G' ? 1 : (ch === 'x' ? -1 : 0) + stepR());
+    });
+    mdp = new V_.GridMDP({ rows: ROWS, cols: COLS, wall: wall, term: term, R: R, slip: slip() });
+    reset();
+  }
+  function reset() {
+    player && player.stop();
+    st = { V: new Array(N).fill(0), pi: [], phase: 'eval', it: 0, sweeps: 0, delta: null, done: false, changed: [] };
+    for (var s = 0; s < N; s++) st.pi.push([0.25, 0.25, 0.25, 0.25]);
+    chart && chart.reset();
+    render(); showCalc();
+  }
+
+  function sweep(kind) {
+    var g = gamma(), Vn = st.V.slice(), d = 0;
+    for (var s = 0; s < N; s++) {
+      if (mdp.wall[s]) continue;
+      var v;
+      if (mdp.term[s]) v = mdp.R[s];
+      else {
+        var q = mdp.qs(st.V, s, g);
+        if (kind === 'max') v = Math.max.apply(null, q);
+        else { v = 0; for (var a = 0; a < 4; a++) v += st.pi[s][a] * q[a]; }
+      }
+      d = Math.max(d, Math.abs(v - st.V[s])); Vn[s] = v;
+    }
+    st.V = Vn; st.delta = d; st.sweeps++;
+    chart.push(st.sweeps, d);
+  }
+  function improve() {
+    var g = gamma(), ch = [];
+    for (var s = 0; s < N; s++) {
+      if (!mdp.active(s)) continue;
+      var np = V_.greedy(mdp.qs(st.V, s, g), 1e-6);
+      if (!V_.samePolicy(np, st.pi[s])) ch.push(s);
+      st.pi[s] = np;
+    }
+    st.it++; st.changed = ch;
+    return ch;
+  }
+  function greedyAll() { for (var s = 0; s < N; s++) if (mdp.active(s)) st.pi[s] = V_.greedy(mdp.qs(st.V, s, gamma()), 1e-6); }
+
+  function step() {
+    if (st.done) return false;
+    if (algo() === 'vi') {
+      sweep('max'); greedyAll();
+      if (st.delta < THETA) st.done = true;
+    } else if (st.phase === 'eval') {
+      sweep('exp');
+      if (st.delta < THETA) st.phase = 'imp';
+    } else {
+      var ch = improve();
+      if (!ch.length) st.done = true; else st.phase = 'eval';
+      ch.forEach(function (s) { view.flash(s); });
+    }
+    render(); showCalc();
+    return !st.done;
+  }
+
+  function render() {
+    var mx = 1;
+    st.V.forEach(function (v, s) { if (!mdp.wall[s]) mx = Math.max(mx, Math.abs(v)); });
+    var showArrows = algo() === 'pi' || st.sweeps > 0;
+    for (var s = 0; s < N; s++) {
+      view.cls(s, 'wall', mdp.wall[s]); view.cls(s, 'term', mdp.term[s]);
+      if (mdp.wall[s]) { view.set(s, { v: '', rw: '', arrows: null, aria: 'tường ' + rc(s) }); continue; }
+      var c = V_.valueColor(st.V[s], mx), t = cellType[s];
+      view.set(s, { v: V_.fmt(st.V[s], window.innerWidth < 520 ? 1 : 2), rw: t === 'x' ? '−1' : t === 'G' ? '+1' : '', bg: c.bg, fg: c.fg,
+                    arrows: mdp.term[s] || !showArrows ? null : st.pi[s],
+                    aria: (t === 'G' ? 'đích ' : t === 'x' ? 'ô phạt ' : 'ô ') + rc(s) + ', V = ' + V_.fmt(st.V[s], 2) });
+    }
+    view.clear('sel'); if (tool() === 'see') view.cls(sel, 'sel', true);
+    var vi = algo() === 'vi';
+    V_.$('#s1').innerHTML = vi ? 'Vòng lặp giá trị <b>' + st.sweeps + '</b>' : 'Lần cải thiện <b>' + st.it + '</b>';
+    V_.$('#s2').innerHTML = vi ? '' : 'Tổng vòng đánh giá <b>' + st.sweeps + '</b>';
+    V_.$('#delta').textContent = st.delta === null ? '–' : st.delta < 1e-3 ? st.delta.toExponential(1) : st.delta.toFixed(3);
+    var stt = V_.$('#status');
+    stt.className = 'phase ' + (st.done ? 'ok' : 'on');
+    stt.textContent = st.done ? 'Đã hội tụ' : vi ? 'Đang lặp giá trị' : st.phase === 'eval' ? '① Đang đánh giá' : '② Sắp cải thiện';
+    V_.$('#step').disabled = V_.$('#solve').disabled = st.done;
+    V_.scaleBar(V_.$('#scale'), mx, false);
+    var ins = V_.$('#insight');
+    if (!Object.keys(mdp.term).length) ins.innerHTML = 'Bản đồ chưa có đích $+1$: hãy chọn “Đích +1” rồi bấm vào một ô.';
+    else if (st.done) ins.innerHTML = vi
+      ? 'Lặp giá trị hội tụ sau <b>' + st.sweeps + '</b> vòng quét. Mũi tên là chính sách rút trích $\\pi(s)=\\arg\\max_a Q(s,a)$. Chuyển sang “Lặp chính sách” để so sánh.'
+      : 'Lặp chính sách hội tụ sau <b>' + st.it + '</b> lần cải thiện và tổng cộng <b>' + st.sweeps + '</b> vòng đánh giá. Chuyển sang “Lặp giá trị” để so sánh.';
+    else if (vi) ins.innerHTML = 'Mỗi vòng: $V(s)\\leftarrow\\max_a Q(s,a)$ cho mọi ô. Mũi tên là chính sách tham lam theo $V$ hiện tại, chỉ có ý nghĩa khi đã hội tụ.';
+    else ins.innerHTML = st.phase === 'eval' ? 'Đang đánh giá chính sách hiện tại (mũi tên) cho tới khi max|ΔV| &lt; ' + THETA + '.' : 'Đánh giá xong. Bước tiếp theo sẽ đổi mũi tên ở mỗi ô sang hành động có $Q$ lớn nhất.';
+    V_.texAll(ins);
+  }
+
+  function showCalc() {
+    var el = V_.$('#calc'), s = sel, g = gamma();
+    V_.tex(V_.$('#selname'), 's=' + rc(s));
+    if (mdp.wall[s]) { el.innerHTML = '<p class="hint">Đây là tường.</p>'; V_.postHeight(); return; }
+    if (mdp.term[s]) { V_.tex(el, 'V(s)=R(s)=' + mdp.R[s] + '\\quad\\text{(đích, kết thúc)}', true); V_.postHeight(); return; }
+    var q = mdp.qs(st.V, s, g), best = V_.greedy(q, 1e-6), lines = [];
+    for (var a = 0; a < 4; a++) {
+      var tr = mdp.trans(s, a);
+      var sum = tr.map(function (tp) { return (tr.length > 1 ? V_.tn(tp[1], 2) + '\\cdot' : '') + V_.tn(st.V[tp[0]], 2, true); }).join('+');
+      var row = 'Q(s,' + AN[a] + ')=' + V_.tn(mdp.R[s], 2, false) + '+' + V_.tn(g, 2) + (tr.length > 1 ? '\\big[' + sum + '\\big]' : '\\cdot ' + sum) + '=' + V_.tn(q[a], 3);
+      lines.push(best[a] > 0 ? '\\colorbox{' + V_.cssVar('--hl-soft') + '}{$' + row + '$}' : row);
+    }
+    var head = 'Q(s,a)=R(s)+\\gamma\\sum_{s\'}p(s\'\\mid s,a)\\,V(s\')';
+    V_.tex(el, '\\begin{aligned}&' + head + '\\\\[4pt]&' + lines.join('\\\\&') + '\\end{aligned}', true);
+    var vNow = algo() === 'vi' ? Math.max.apply(null, q) : q.reduce(function (acc, x, a) { return acc + st.pi[s][a] * x; }, 0);
+    el.insertAdjacentHTML('beforeend', '<p class="hint">' + (slip() > 0 ? 'Có trượt: đi theo hướng chọn với xác suất ' + V_.fmt(1 - slip(), 2) + ', lệch sang mỗi bên ' + V_.fmt(slip() / 2, 3) + '. ' : '') +
+      'Ô tô màu là $\\arg\\max_a Q$. Lần cập nhật tới, $V(s)$ sẽ thành <b>' + V_.fmt(vNow, 3) + '</b> (' + (algo() === 'vi' ? 'lấy max' : 'trung bình theo $\\pi$') + ').</p>');
+    V_.texAll(el);
+    V_.postHeight();
+  }
+
+  function editCell(i) {
+    var t = tool();
+    if (t === 'see') { sel = i; render(); showCalc(); return; }
+    var cur = cellType[i];
+    if (t === 'wall') cellType[i] = cur === '#' ? '.' : '#';
+    else if (t === 'neg') cellType[i] = cur === 'x' ? '.' : 'x';
+    else if (t === 'pos') cellType[i] = cur === 'G' ? '.' : 'G';
+    else cellType[i] = '.';
+    rebuild();
+  }
+
+  function seg(id, after) {
+    V_.$(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      V_.$$(id + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      after();
+    });
+  }
+
+  view = V_.GridView(V_.$('#gbox'), ROWS, COLS, { dense: true, onClick: editCell });
+  var chart = V_.DeltaChart(V_.$('#chart'), { theta: THETA });
+  var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
+  V_.$('#solve').addEventListener('click', function () { player.stop(); var guard = 0; while (step() && guard++ < 5000); });
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#defmap').addEventListener('click', loadDefault);
+  seg('#algo', reset);
+  seg('#tool', function () { render(); });
+  V_.$('#gamma').addEventListener('input', function () { V_.$('#gammav').textContent = gamma().toFixed(2); reset(); });
+  V_.$('#slip').addEventListener('input', function () { V_.$('#slipv').textContent = slip().toFixed(2); rebuild(); });
+  V_.$('#stepr').addEventListener('change', rebuild);
+  V_.onTheme(function () { render(); showCalc(); });
+  V_.$('#gammav').textContent = gamma().toFixed(2);
+  V_.$('#slipv').textContent = slip().toFixed(2);
+  V_.texAll();
+  loadDefault();
+})();
+</script>
+</body>
+</html>

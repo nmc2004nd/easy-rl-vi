@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lặp giá trị · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .gbox.main { max-width: 380px; }
+  .snaps { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 10px; }
+  .snap .cap { text-align: center; font-size: .8rem; color: var(--muted); }
+  .snap .mini { display: grid; gap: 1px; }
+  .snap .mini span { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: .55rem; font-weight: 700; border-radius: 2px; font-variant-numeric: tabular-nums; }
+  .snap .mini span.term { box-shadow: inset 0 0 0 1px var(--text); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Lặp giá trị</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter2/chapter2_vi?id=_2312-lặp-giá-trị">Mục 2.3.12</a></div>
+    </div>
+    <p class="lead">Bài toán đường đi ngắn nhất ở hình 2.23: đích ở góc trên bên trái (viền đậm), mỗi bước nhận $-1$, $\gamma=1$. Mỗi vòng lặp áp dụng (2.23)–(2.24): $V_{k+1}(s)=\max_a\big(R(s,a)+\gamma V_k(s')\big)$.</p>
+  </div>
+  <div class="only-embed open-full"><a href="value-iter.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Vòng tiếp</button>
+      <button type="button" class="btn" id="extract">Rút trích chính sách</button>
+      <button type="button" class="btn" id="agent">Thả tác tử từ ô đang chọn</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+    </div>
+    <div class="ctrl">
+      <span class="lb">Lưới</span>
+      <div class="seg" id="size">
+        <button type="button" data-v="4" aria-pressed="true">4×4</button>
+        <button type="button" data-v="6" aria-pressed="false">6×6</button>
+      </div>
+      <button type="button" class="btn" id="goal">Đặt đích tại ô đang chọn</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="2">
+    </div>
+    <div class="ctrl">
+      <label><input type="checkbox" id="tmp"> Hiện chính sách tạm thời $\arg\max_a Q_k(s,a)$ ở mỗi vòng</label>
+    </div>
+    <div class="stats"><span>Đang hiển thị <b id="k"></b></span><span>Số ô vừa đổi giá trị <b id="nch">–</b></span><span id="status" class="phase"></span></div>
+    <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
+    <div class="scale" id="scale"></div>
+    <div class="insight" id="insight"></div>
+  </div>
+
+  <div class="layout">
+    <div class="blk">
+      <h2>Phép tính ở ô <span id="selname"></span></h2>
+      <div class="calc" id="calc"></div>
+      <p class="note">Bấm vào ô khác để xem. Thứ tự hành động: lên, phải, xuống, trái; đi ra biên thì đứng yên.</p>
+    </div>
+    <div class="blk">
+      <h2>Các vòng $V_0, V_1, \dots$ (như hình 2.23)</h2>
+      <div class="snaps" id="snaps"></div>
+    </div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'];
+  var n, N, goal = 0, mdp, st, view, sel, agentTimer = null;
+
+  function size() { return +V_.$('#size [aria-pressed=true]').dataset.v; }
+  function rc(s) { return '(' + Math.floor(s / n) + ',' + s % n + ')'; }
+
+  function build() {
+    n = size(); N = n * n;
+    if (goal >= N) goal = 0;
+    var term = {}; term[goal] = 1;
+    mdp = new V_.GridMDP({ rows: n, cols: n, term: term, R: new Array(N).fill(-1).map(function (r, i) { return i === goal ? 0 : r; }) });
+    var box = V_.$('#gbox'); box.innerHTML = '';
+    view = V_.GridView(box, n, n, { dense: n > 4, onClick: function (i) { sel = i; stopAgent(); render(); showCalc(); } });
+    sel = N - 1;
+    reset();
+  }
+  function reset() {
+    player && player.stop(); stopAgent();
+    st = { V: new Array(N).fill(0), k: 0, hist: [new Array(N).fill(0)], changed: [], conv: false, policy: null };
+    render(); showCalc(); snaps();
+  }
+
+  function sweep() {
+    var Vn = st.V.slice(), ch = [];
+    for (var s = 0; s < N; s++) {
+      if (s === goal) continue;
+      var v = Math.max.apply(null, mdp.qs(st.V, s, 1));
+      if (Math.abs(v - st.V[s]) > 1e-12) ch.push(s);
+      Vn[s] = v;
+    }
+    st.V = Vn; st.k++; st.changed = ch; st.hist.push(Vn.slice());
+    if (!ch.length) st.conv = true;
+  }
+  function step() {
+    if (st.conv) return false;
+    sweep();
+    render(); showCalc(); snaps();
+    st.changed.forEach(function (s) { view.flash(s); });
+    return !st.conv;
+  }
+  function extract() {
+    player.stop();
+    var guard = 0; while (!st.conv && guard++ < 500) sweep();
+    st.policy = [];
+    for (var s = 0; s < N; s++) st.policy.push(s === goal ? null : V_.greedy(mdp.qs(st.V, s, 1), 1e-9));
+    render(); showCalc(); snaps();
+  }
+
+  function render() {
+    var mx = 1, showTmp = V_.$('#tmp').checked;
+    st.V.forEach(function (v) { mx = Math.max(mx, Math.abs(v)); });
+    mx = Math.max(mx, 2 * (n - 1));
+    for (var s = 0; s < N; s++) {
+      var c = V_.valueColor(st.V[s], mx), arrows = null;
+      if (s !== goal) {
+        if (st.policy) arrows = st.policy[s];
+        else if (showTmp && st.k > 0) arrows = V_.greedy(mdp.qs(st.V, s, 1), 1e-9);
+      }
+      view.set(s, { v: V_.fmt(st.V[s], 0), bg: c.bg, fg: c.fg, arrows: arrows, aria: (s === goal ? 'đích' : 'ô ' + rc(s)) + ', V = ' + V_.fmt(st.V[s], 0) });
+      view.cls(s, 'term', s === goal);
+    }
+    view.clear('sel'); view.cls(sel, 'sel', true);
+    V_.tex(V_.$('#k'), 'V_{' + st.k + '}');
+    V_.$('#nch').textContent = st.k ? st.changed.length : '–';
+    var stt = V_.$('#status');
+    stt.className = 'phase ' + (st.policy ? 'ok' : st.conv ? 'ok' : 'on');
+    stt.textContent = st.policy ? 'Đã rút trích chính sách' : st.conv ? 'Đã hội tụ (không ô nào đổi)' : 'Đang lặp';
+    V_.scaleBar(V_.$('#scale'), mx, true);
+    V_.$('#step').disabled = st.conv;
+    V_.$('#agent').disabled = !st.policy || sel === goal;
+    var ins = V_.$('#insight');
+    if (st.policy) ins.innerHTML = 'Chính sách tối ưu: $\\pi(s)=\\arg\\max_a\\big(R(s,a)+\\gamma V^*(s\')\\big)$. Ô có nhiều mũi tên nghĩa là nhiều đường ngắn nhất như nhau. Chọn một ô rồi bấm “Thả tác tử” để xem tác tử đi theo chính sách.';
+    else if (st.conv) ins.innerHTML = 'Từ $V_{' + (st.k - 1) + '}$ sang $V_{' + st.k + '}$ không còn ô nào thay đổi, vậy $V_{' + (st.k - 1) + '}=V^*$. Giá trị mỗi ô bằng <b>âm số bước</b> ngắn nhất tới đích. Bấm “Rút trích chính sách”.';
+    else if (st.k === 0) ins.innerHTML = 'Khởi tạo $V_0(s)=0$ với mọi $s$. Bấm “Vòng tiếp” và theo dõi giá trị lan ra từ đích như một làn sóng: sau vòng $k$, mọi ô cách đích không quá $k$ bước đã có giá trị đúng.';
+    else if (showTmp) ins.innerHTML = 'Chính sách tạm thời ở các ô <b>chưa được sóng chạm tới</b> có đủ 4 mũi tên: mọi hành động đều cho $-1+V_k(s\')=-' + (st.k + 1) + '$ như nhau. Đó là lý do sách nói chính sách ở bước trung gian của lặp giá trị không có ý nghĩa.';
+    else ins.innerHTML = 'Sau vòng ' + st.k + ', các ô cách đích không quá ' + st.k + ' bước đã có giá trị cuối cùng; các ô xa hơn mới chỉ là $-' + st.k + '$ (chưa biết đích ở đâu). Thử bật “chính sách tạm thời”.';
+    V_.texAll(ins);
+  }
+
+  function showCalc() {
+    var el = V_.$('#calc'), s = sel;
+    V_.tex(V_.$('#selname'), 's=' + rc(s));
+    if (s === goal) { V_.tex(el, 'V(\\text{đích})=0\\quad\\text{(trạng thái kết thúc)}', true); V_.postHeight(); return; }
+    var src = st.k > 0 ? st.hist[st.k - 1] : st.V, q = mdp.qs(src, s, 1), mx = Math.max.apply(null, q);
+    var parts = q.map(function (v, a) {
+      var t = '-1+' + V_.tn(src[mdp.move(s, a)], 0, true);
+      return Math.abs(v - mx) < 1e-9 ? '\\colorbox{' + V_.cssVar('--hl-soft') + '}{$' + t + '$}' : t;
+    });
+    var names = AN.map(function (a) { return 'Q_{' + st.k + '}(s,' + a + ')'; });
+    var tex;
+    if (st.k === 0) tex = 'V_0(s)=0\\quad\\text{(khởi tạo)}';
+    else tex = '\\begin{aligned}V_{' + st.k + '}(s)&=\\max\\big\\{' + names.join(',\\;') + '\\big\\}\\\\&=\\max\\big\\{' + parts.join(',\\;') + '\\big\\}\\\\&=' + V_.tn(mx, 0) + '\\end{aligned}';
+    V_.tex(el, tex, true);
+    if (st.k > 0) {
+      var nq = mdp.qs(st.V, s, 1);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">Số trong ngoặc là $V_{' + (st.k - 1) + '}$ của ô kề theo thứ tự lên, phải, xuống, trái. Vòng tiếp theo ô này sẽ thành $' + V_.tn(Math.max.apply(null, nq), 0) + '$.</p>');
+      V_.texAll(el);
+    }
+    V_.postHeight();
+  }
+
+  function snaps() {
+    var box = V_.$('#snaps'), mx = 2 * (n - 1);
+    box.innerHTML = st.hist.map(function (V, k) {
+      return '<div class="snap"><div class="cap">V' + '<sub>' + k + '</sub></div><div class="mini" style="grid-template-columns:repeat(' + n + ',1fr)">' +
+        V.map(function (v, s) { var c = V_.valueColor(v, mx); return '<span class="' + (s === goal ? 'term' : '') + '" style="background:' + c.bg + ';color:' + c.fg + '">' + V_.fmt(v, 0) + '</span>'; }).join('') +
+        '</div></div>';
+    }).join('');
+    V_.postHeight();
+  }
+
+  function stopAgent() { if (agentTimer) clearInterval(agentTimer); agentTimer = null; view && view.clear('agent'); }
+  function runAgent() {
+    stopAgent();
+    var s = sel, steps = 0;
+    view.cls(s, 'agent', true);
+    agentTimer = setInterval(function () {
+      if (s === goal || steps++ > N) { stopAgent(); view.cls(goal, 'agent', true); setTimeout(function () { view.clear('agent'); }, 800); return; }
+      var a = st.policy[s].indexOf(Math.max.apply(null, st.policy[s]));
+      view.clear('agent'); s = mdp.move(s, a); view.cls(s, 'agent', true);
+    }, 380);
+  }
+
+  var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
+  V_.$('#extract').addEventListener('click', extract);
+  V_.$('#agent').addEventListener('click', runAgent);
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#goal').addEventListener('click', function () { goal = sel; var keep = sel; build(); sel = keep === 0 ? N - 1 : 0; render(); showCalc(); });
+  V_.$('#tmp').addEventListener('change', render);
+  V_.$('#size').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    V_.$$('#size button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    goal = 0; build();
+  });
+  V_.onTheme(function () { render(); showCalc(); snaps(); });
+  V_.texAll();
+  build();
+})();
+</script>
+</body>
+</html>
