@@ -333,6 +333,27 @@ Trong đó, $a$ là hành động làm giá trị $\hat{Q}$ lớn nhất. Vì h�
 </div>
 <div align=center>Hình 6.14 Thuật toán mạng Q sâu</div>
 
+Bản dịch thuật toán ở hình 6.14:
+
+$$
+\begin{array}{l}
+\hline
+\bullet\ \text{Khởi tạo hàm } Q \text{ và hàm mục tiêu } \hat{Q} \text{, đặt } \hat{Q} = Q \\
+\bullet\ \text{Với mỗi tập:} \\
+\quad \bullet\ \text{Với mỗi bước thời gian } t: \\
+\qquad \bullet\ \text{Với trạng thái } s_t \text{ đã cho, thực hiện hành động } a_t \text{ dựa trên } Q \text{ (}\varepsilon\text{-tham lam)} \\
+\qquad \bullet\ \text{Nhận phần thưởng } r_t \text{ và trạng thái mới } s_{t+1} \\
+\qquad \bullet\ \text{Lưu } (s_t, a_t, r_t, s_{t+1}) \text{ vào bộ đệm phát lại} \\
+\qquad \bullet\ \text{Lấy mẫu } (s_i, a_i, r_i, s_{i+1}) \text{ từ bộ đệm (thường theo lô)} \\
+\qquad \bullet\ \text{Giá trị mục tiêu là } y = r_i + \max\limits_{a} \hat{Q}(s_{i+1}, a) \\
+\qquad \bullet\ \text{Cập nhật tham số của } Q \text{ sao cho } Q(s_i, a_i) \text{ càng gần } y \text{ càng tốt (hồi quy)} \\
+\qquad \bullet\ \text{Cứ sau } C \text{ lần cập nhật, đặt lại } \hat{Q} = Q
+\\ \hline
+\end{array}
+$$
+
+> **Ghi chú của người dịch:** hình gốc (và công thức ở trên) bỏ qua hệ số chiết khấu, tức ngầm lấy $\gamma = 1$. Dạng đầy đủ thường gặp là $y = r_i + \gamma \max_a \hat{Q}(s_{i+1}, a)$, và nếu $s_{i+1}$ là trạng thái kết thúc thì $y = r_i$.
+
 
 Q: Mạng Q sâu và Q-learning khác nhau thế nào?
 
