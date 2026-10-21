@@ -1,4 +1,4 @@
-import gym
+import gymnasium as gym
 import numpy as np
 
 
@@ -23,23 +23,24 @@ class SimpleAgent:
 
 def play(env, agent, render=False, train=False):
     episode_reward = 0. # Ghi lại tổng phần thưởng của tập (episode), khởi tạo bằng 0
-    observation = env.reset() # Đặt lại môi trường trò chơi, bắt đầu tập mới
+    observation, info = env.reset() # Đặt lại môi trường trò chơi, bắt đầu tập mới
     while True: # Lặp liên tục cho đến khi tập kết thúc
         if render: # Kiểm tra có hiển thị hay không
-            env.render() # Hiển thị giao diện đồ họa, có thể đóng bằng env.close()
+            env.render() # Hiển thị giao diện đồ họa (môi trường cần được tạo với render_mode="human")
         action = agent.decide(observation)
-        next_observation, reward, done, _ = env.step(action) # Thực hiện hành động
+        next_observation, reward, terminated, truncated, _ = env.step(action) # Thực hiện hành động
+        done = terminated or truncated # Tập kết thúc thật (terminated) hoặc bị cắt do hết số bước (truncated)
         episode_reward += reward # Cộng dồn phần thưởng của tập
         if train: # Kiểm tra có huấn luyện tác tử hay không
-            agent.learn(observation, action, reward, done) # Học
+            agent.learn(observation, action, reward, terminated) # Học
         if done: # Tập kết thúc, thoát vòng lặp
             break
         observation = next_observation
     return episode_reward # Trả về tổng phần thưởng của tập
 
 
-env = gym.make('MountainCar-v0')
-env.seed(3) # Đặt hạt giống ngẫu nhiên (random seed) để kết quả có thể tái lập
+env = gym.make('MountainCar-v0', render_mode="human") # Gymnasium: chế độ hiển thị được khai báo khi tạo môi trường
+env.reset(seed=3) # Đặt hạt giống ngẫu nhiên (random seed) để kết quả có thể tái lập (Gymnasium bỏ env.seed())
 agent = SimpleAgent(env)
 print('Không gian quan sát = {}'.format(env.observation_space))
 print('Không gian hành động = {}'.format(env.action_space))
@@ -49,6 +50,8 @@ print('Số hành động = {}'.format(env.action_space.n))
 
 episode_reward = play(env, agent, render=True)
 print('Phần thưởng của tập = {}'.format(episode_reward))
+env.close() # Đóng giao diện đồ họa
 
+env = gym.make('MountainCar-v0') # Tạo lại môi trường không hiển thị đồ họa để chạy nhanh
 episode_rewards = [play(env, agent) for _ in range(100)]
 print('Phần thưởng trung bình của tập = {}'.format(np.mean(episode_rewards)))

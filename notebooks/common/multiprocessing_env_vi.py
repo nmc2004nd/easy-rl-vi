@@ -10,12 +10,15 @@ def worker(remote, parent_remote, env_fn_wrapper):
     while True:
         cmd, data = remote.recv()
         if cmd == 'step':
-            ob, reward, done, info = env.step(data)
+            # Gymnasium: step trả về 5 giá trị, reset trả về (obs, info).
+            # Vector env này vẫn giữ giao diện 4 giá trị của baselines, với done = terminated or truncated.
+            ob, reward, terminated, truncated, info = env.step(data)
+            done = terminated or truncated
             if done:
-                ob = env.reset()
+                ob, _ = env.reset()
             remote.send((ob, reward, done, info))
         elif cmd == 'reset':
-            ob = env.reset()
+            ob, _ = env.reset()
             remote.send(ob)
         elif cmd == 'reset_task':
             ob = env.reset_task()

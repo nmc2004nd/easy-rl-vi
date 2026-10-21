@@ -157,6 +157,8 @@ pip install pygame
 pip install gym==0.25.2
 ```
 
+> **Ghi chú của người dịch:** mục đính chính này dành cho sách in. Gym đã ngừng phát triển và bản 0.25.2 không còn chạy được với Python và NumPy bản mới, nên bản dịch đã chuyển toàn bộ code sang Gymnasium (`pip install "gymnasium[classic-control]"`); xem ghi chú ở mục 1.7.1 chương 1. Các đoạn code trong bảng đính chính này được giữ nguyên như sách in.
+
 * Trang 31, đoạn 3: "khai phát" (开发, exploitation) → "khai thác" (利用, exploitation) (thống nhất thuật ngữ tiếng Trung)
 * Hình 2.2 ở trang 35 và hình 2.5(a) ở trang 41 thêm mũi tên từ $s_1$ đến $s_4$, thay bằng hình dưới đây:
 

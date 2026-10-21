@@ -1,11 +1,15 @@
-pyyaml==6.0
-ipykernel==6.15.1
-jupyter==1.0.0
-matplotlib==3.5.3
-seaborn==0.12.1
-dill==0.3.5.1
-argparse==1.4.0
-pandas==1.3.5
-pyglet==1.5.26
-importlib-metadata<5.0
-setuptools==65.2.0
+# Ghi chú của người dịch: danh sách gốc ghim gym==0.25.2 (qua pyglet) và các phiên bản cũ cho Python 3.7.
+# Bản dịch đã chuyển code sang Gymnasium; danh sách dưới đây đã được thử với Python 3.13,
+# gymnasium 1.4.0, torch 2.11, numpy 2.5, matplotlib 3.10, seaborn 0.13, pandas 2.3.
+gymnasium[classic-control]>=1.0
+numpy
+matplotlib
+seaborn
+pandas
+easydict
+dill
+cloudpickle
+tqdm
+rich
+pyyaml
+jupyter

@@ -428,10 +428,23 @@ Như hình 1.24, **thư viện Gym** của OpenAI là một thư viện mô ph�
 
 
 Ta có thể cài thư viện Gym bằng pip. Vì Gym từ phiên bản 0.26.0 trở đi không tương thích với code trước đó, nên ta cài Gym phiên bản trước 0.26.0, ví dụ 0.25.2.
+
+> **Ghi chú của người dịch:** OpenAI Gym đã ngừng phát triển; thư viện kế nhiệm chính thức là **[Gymnasium](https://gymnasium.farama.org/)** do Farama Foundation duy trì. `gym==0.25.2` không còn chạy được với Python và NumPy bản mới, vì vậy toàn bộ code trong bản dịch (các chương và notebook) đã được chuyển sang Gymnasium. Những khác biệt chính:
+>
+> | Gym cũ | Gymnasium |
+> |---|---|
+> | `import gym` | `import gymnasium as gym` |
+> | `observation = env.reset()` | `observation, info = env.reset()` |
+> | `observation, reward, done, info = env.step(action)` | `observation, reward, terminated, truncated, info = env.step(action)` |
+> | `env.seed(3)` | `env.reset(seed=3)` |
+> | gọi `env.render()` | khai báo khi tạo môi trường: `gym.make(..., render_mode="human")` |
+>
+> `terminated` cho biết tập kết thúc vì đạt trạng thái kết thúc của bài toán (ví dụ cây sào đổ), còn `truncated` cho biết tập bị cắt ngang vì điều kiện bên ngoài như hết giới hạn số bước. `done` của Gym cũ tương ứng với `terminated or truncated`.
+
 ```bash
-pip install gym==0.25.2
+pip install "gymnasium[classic-control]"
 ```
-Ngoài ra, để hiển thị giao diện đồ họa, ta cần cài thêm thư viện pygame.
+Ngoài ra, để hiển thị giao diện đồ họa, ta cần cài thêm thư viện pygame (gói `gymnasium[classic-control]` ở trên đã kèm sẵn pygame).
 ```bash
 pip install pygame
 ```
@@ -441,19 +454,19 @@ Import thư viện Gym trong môi trường Python, nếu không báo lỗi thì
 
 ```bash
 $python
->>>import gym
+>>>import gymnasium as gym
 ```
 
-Ví dụ khi đã cài Gym, ta có thể gọi trực tiếp môi trường Taxi-v3. Sau khi khởi tạo môi trường này, ta có thể bắt đầu tương tác. Khi tác tử nhận được một quan sát, nó sẽ đưa ra một hành động. Hành động này được môi trường dùng để thực hiện một bước, sau đó môi trường tiến lên một bước, trả về quan sát mới, phần thưởng và một biến cờ (flag) done, done cho biết trò chơi đã kết thúc hay chưa. Chỉ với vài dòng code là có thể cài đặt khung (framework) của học tăng cường:
+Ví dụ khi đã cài Gym, ta có thể gọi trực tiếp môi trường Taxi-v3 (trong Gymnasium 1.x là Taxi-v4). Sau khi khởi tạo môi trường này, ta có thể bắt đầu tương tác. Khi tác tử nhận được một quan sát, nó sẽ đưa ra một hành động. Hành động này được môi trường dùng để thực hiện một bước, sau đó môi trường tiến lên một bước, trả về quan sát mới, phần thưởng và một biến cờ (flag) done, done cho biết trò chơi đã kết thúc hay chưa (trong Gymnasium, done được tách thành hai cờ terminated và truncated). Chỉ với vài dòng code là có thể cài đặt khung (framework) của học tăng cường:
 
 ```python
-import gym 
-env = gym.make("Taxi-v3") 
-observation = env.reset() 
-agent = load_agent() 
+import gymnasium as gym
+env = gym.make("Taxi-v4")
+observation, info = env.reset()
+agent = load_agent()
 for step in range(100):
-    action = agent(observation) 
-    observation, reward, done, info = env.step(action)
+    action = agent(observation)
+    observation, reward, terminated, truncated, info = env.step(action)
 ```
 
 > Đoạn code trên chỉ là ví dụ, mục đích giúp người đọc hiểu khung cài đặt code của thuật toán học tăng cường, không phải code hoàn chỉnh; hàm load\_agent chưa được định nghĩa nên chạy đoạn code này sẽ báo lỗi.
@@ -467,7 +480,7 @@ Như hình 1.25, thư viện Gym có nhiều trò chơi điều khiển kinh đi
 <div align=center>Hình 1.25 Các bài toán điều khiển kinh điển</div>
 
 
-Bạn có thể bấm vào [liên kết này](https://www.gymlibrary.dev/environments/classic_control/) để xem các môi trường này. Khi mới bắt đầu thử nghiệm học tăng cường, có thể chọn các môi trường đơn giản này, vì chúng có thể cho thấy kết quả trong một hai phút.
+Bạn có thể bấm vào [liên kết này](https://gymnasium.farama.org/environments/classic_control/) để xem các môi trường này. Khi mới bắt đầu thử nghiệm học tăng cường, có thể chọn các môi trường đơn giản này, vì chúng có thể cho thấy kết quả trong một hai phút.
 
 Như hình 1.26, môi trường CartPole-v0 có hai hành động: đẩy xe sang trái và đẩy xe sang phải. Ta còn nhận được quan sát: vị trí hiện tại của xe, vận tốc di chuyển sang trái/phải hiện tại của xe, góc của sào và vận tốc của điểm cao nhất (đỉnh) của sào.
 Quan sát càng chi tiết thì ta càng mô tả tốt toàn bộ trạng thái hiện tại. Ở đây có định nghĩa phần thưởng: nếu đi thêm được một bước, ta sẽ nhận một phần thưởng (giá trị phần thưởng là 1), vì vậy ta cần sống sót càng lâu càng tốt để nhận nhiều phần thưởng hơn. Khi góc của sào lớn hơn một góc nhất định (không giữ được thăng bằng), hoặc tâm của xe chạm tới mép cửa sổ giao diện đồ họa, hoặc số bước tích lũy vượt quá 200, trò chơi kết thúc. Vì vậy mục đích của tác tử là điều khiển sào, giữ nó thăng bằng lâu nhất có thể và giữ ở giữa môi trường càng nhiều càng tốt.
@@ -481,13 +494,12 @@ Quan sát càng chi tiết thì ta càng mô tả tốt toàn bộ trạng thái
 
 
 ```python
-import gym  # Import gói môi trường giao diện Python của Gym
-env = gym.make('CartPole-v0')  # Tạo môi trường thực nghiệm
+import gymnasium as gym  # Import gói môi trường giao diện Python của Gymnasium
+env = gym.make('CartPole-v0', render_mode="human")  # Tạo môi trường thực nghiệm; render_mode="human" để hiển thị giao diện đồ họa
 env.reset()  # Đặt lại (reset) một tập (episode)
 for _ in range(1000):
-    env.render()  # Hiển thị giao diện đồ họa
     action = env.action_space.sample() # Chọn ngẫu nhiên một hành động từ không gian hành động
-    env.step(action) # Gửi hành động, trong ngoặc là hành động cụ thể
+    env.step(action) # Gửi hành động, trong ngoặc là hành động cụ thể; với render_mode="human", mỗi bước sẽ tự hiển thị
 env.close() # Đóng môi trường
 ```
 
@@ -495,22 +507,21 @@ Lưu ý: nếu đã vẽ cửa sổ giao diện đồ họa của thực nghiệ
 
 Khi chạy đoạn code này, robot sẽ lái xe chạy mãi về một hướng cho đến khi ta không nhìn thấy nữa, vì ta chưa bắt đầu huấn luyện robot.
 
-Đa số trò chơi nhỏ trong Gym đều có thể biểu diễn hành động bằng một số thực bình thường hoặc một vectơ. In giá trị trả về của env.action\_space.sample() sẽ thấy kết quả là 1 hoặc 0. Ý nghĩa của env.action\_space.sample() là chọn ngẫu nhiên một hành động trong toàn bộ không gian hành động của trò chơi làm đầu ra. Trong ví dụ này, chỉ có hai hành động: 0 và 1, một trái một phải. Phương thức env.step() có 4 giá trị trả về: observation, reward, done, info.
+Đa số trò chơi nhỏ trong Gym đều có thể biểu diễn hành động bằng một số thực bình thường hoặc một vectơ. In giá trị trả về của env.action\_space.sample() sẽ thấy kết quả là 1 hoặc 0. Ý nghĩa của env.action\_space.sample() là chọn ngẫu nhiên một hành động trong toàn bộ không gian hành động của trò chơi làm đầu ra. Trong ví dụ này, chỉ có hai hành động: 0 và 1, một trái một phải. Trong Gym cũ, phương thức env.step() có 4 giá trị trả về: observation, reward, done, info; trong Gymnasium có 5 giá trị trả về: observation, reward, terminated, truncated, info.
 
-observation là thông tin trạng thái, là giá trị điểm ảnh màn hình hoặc thông tin mô tả trạng thái bàn chơi quan sát được trong trò chơi. reward là giá trị phần thưởng, tức phần thưởng nhận được sau khi gửi hành động. Giá trị phần thưởng khác nhau tùy trò chơi, nhưng nguyên tắc chung là hành động giúp hoàn thành trò chơi sẽ nhận phần thưởng cao hơn. done cho biết trò chơi đã kết thúc chưa, nếu đã kết thúc thì cần đặt lại trò chơi và bắt đầu một tập mới. info là một số thông tin thô dùng để chẩn đoán và gỡ lỗi (debug), có thể hữu ích cho việc huấn luyện. Tuy nhiên, khi OpenAI đánh giá robot ta nộp lên thì không cho phép dùng các thông tin này.
+observation là thông tin trạng thái, là giá trị điểm ảnh màn hình hoặc thông tin mô tả trạng thái bàn chơi quan sát được trong trò chơi. reward là giá trị phần thưởng, tức phần thưởng nhận được sau khi gửi hành động. Giá trị phần thưởng khác nhau tùy trò chơi, nhưng nguyên tắc chung là hành động giúp hoàn thành trò chơi sẽ nhận phần thưởng cao hơn. done cho biết trò chơi đã kết thúc chưa, nếu đã kết thúc thì cần đặt lại trò chơi và bắt đầu một tập mới. Trong Gymnasium, terminated cho biết tập kết thúc vì đạt trạng thái kết thúc của bài toán, truncated cho biết tập bị cắt ngang vì hết giới hạn số bước; done cũ tương ứng với terminated or truncated. info là một số thông tin thô dùng để chẩn đoán và gỡ lỗi (debug), có thể hữu ích cho việc huấn luyện. Tuy nhiên, khi OpenAI đánh giá robot ta nộp lên thì không cho phép dùng các thông tin này.
 
-Các giá trị trả về cần dùng trong mỗi lần huấn luyện là observation, reward, done. Nhưng cấu trúc của observation sẽ thay đổi tùy trò chơi. Lấy CartPole-v0 làm ví dụ, ta sửa code như sau:
+Các giá trị trả về cần dùng trong mỗi lần huấn luyện là observation, reward, done (trong Gymnasium là observation, reward, terminated, truncated). Nhưng cấu trúc của observation sẽ thay đổi tùy trò chơi. Lấy CartPole-v0 làm ví dụ, ta sửa code như sau:
 
 ```python
-import gym  
-env = gym.make('CartPole-v0')  
-env.reset()  
+import gymnasium as gym
+env = gym.make('CartPole-v0', render_mode="human")
+env.reset()
 for _ in range(1000):
-    env.render()  
-    action = env.action_space.sample() 
-    observation, reward, done, info = env.step(action)
+    action = env.action_space.sample()
+    observation, reward, terminated, truncated, info = env.step(action)
     print(observation)
-env.close()    
+env.close()
 ```
 
 Đầu ra:
@@ -527,9 +538,8 @@ env.step() hoàn thành trọn vẹn một quá trình $S \to A \to R \to S'$. C
 
 Các môi trường đã đăng ký trong Gym có thể xem bằng code sau:
 ```python
-from gym import envs
-env_specs = envs.registry.all()
-envs_ids = [env_spec.id for env_spec in env_specs]
+import gymnasium as gym
+envs_ids = list(gym.registry.keys())
 print(envs_ids)
 ```
 Mỗi môi trường trong Gym đều định nghĩa không gian quan sát (observation space) và không gian hành động (action space). Không gian quan sát và không gian hành động có thể là rời rạc (nhận một số hữu hạn giá trị rời rạc), cũng có thể là liên tục (nhận giá trị liên tục).
@@ -540,7 +550,7 @@ Tiếp theo, ta học cách tương tác với Gym qua một ví dụ. Ta chọn
 
 Trước tiên hãy xem không gian quan sát và không gian hành động của nhiệm vụ này:
 ```python
-import gym
+import gymnasium as gym
 env = gym.make('MountainCar-v0')
 print('Không gian quan sát = {}'.format(env.observation_space))
 print('Không gian hành động = {}'.format(env.action_space))
@@ -591,15 +601,16 @@ Tiếp theo ta cho tác tử tương tác với môi trường, code như sau.
 ```python
 def play(env, agent, render=False, train=False):
     episode_reward = 0. # Ghi lại tổng phần thưởng của tập, giá trị ban đầu là 0
-    observation = env.reset() # Đặt lại môi trường trò chơi, bắt đầu tập mới
+    observation, info = env.reset() # Đặt lại môi trường trò chơi, bắt đầu tập mới
     while True: # Lặp liên tục cho đến khi tập kết thúc
         if render: # Kiểm tra có hiển thị hay không
-            env.render() # Hiển thị giao diện đồ họa
+            env.render() # Hiển thị giao diện đồ họa (môi trường cần được tạo với render_mode="human")
         action = agent.decide(observation)
-        next_observation, reward, done, _ = env.step(action) # Thực hiện hành động
+        next_observation, reward, terminated, truncated, _ = env.step(action) # Thực hiện hành động
+        done = terminated or truncated # Tập kết thúc thật (terminated) hoặc bị cắt do hết số bước (truncated)
         episode_reward += reward # Cộng dồn phần thưởng của tập
         if train: # Kiểm tra có huấn luyện tác tử hay không
-            agent.learn(observation, action, reward, done) # Học
+            agent.learn(observation, action, reward, terminated) # Học
         if done: # Tập kết thúc, thoát vòng lặp
             break
         observation = next_observation
@@ -611,7 +622,8 @@ Hàm play trong đoạn code trên cho tác tử tương tác với môi trườ
 Tiếp theo, ta dùng code dưới đây để cho tác tử tương tác với môi trường một tập và hiển thị giao diện đồ họa.
 
 ```python
-env.seed(3) # Đặt hạt giống ngẫu nhiên (random seed) để kết quả có thể tái lập
+env = gym.make('MountainCar-v0', render_mode="human") # Gymnasium: chế độ hiển thị được khai báo khi tạo môi trường
+env.reset(seed=3) # Đặt hạt giống ngẫu nhiên (random seed) để kết quả có thể tái lập (Gymnasium bỏ env.seed())
 episode_reward = play(env, agent, render=True)
 print('Phần thưởng của tập = {}'.format(episode_reward))
 env.close() # Đóng giao diện đồ họa
@@ -624,6 +636,7 @@ Phần thưởng của tập = -105.0
 
 Để đánh giá hiệu năng của tác tử, cần tính phần thưởng trung bình của tập qua 100 tập tương tác liên tiếp, code như sau.
 ```python
+env = gym.make('MountainCar-v0') # Tạo lại môi trường không hiển thị đồ họa để chạy nhanh
 episode_rewards = [play(env, agent) for _ in range(100)]
 print('Phần thưởng trung bình của tập = {}'.format(np.mean(episode_rewards)))
 ```
@@ -633,11 +646,11 @@ print('Phần thưởng trung bình của tập = {}'.format(np.mean(episode_rew
 Phần thưởng trung bình của tập = -106.63
 ```
 
-Phần thưởng trung bình của tập ứng với chính sách của lớp SimpleAgent vào khoảng $-$110, còn với nhiệm vụ xe leo núi, chỉ cần phần thưởng trung bình của 100 tập liên tiếp lớn hơn $-$110 là có thể coi nhiệm vụ đã được giải quyết. Code cài đặt đầy đủ xem tại [code xe leo núi](https://github.com/datawhalechina/easy-rl/blob/master/docs/chapter1/RL_example.py) (bản tiếng Việt: [RL_example_vi.py](./RL_example_vi.py)).
+Phần thưởng trung bình của tập ứng với chính sách của lớp SimpleAgent vào khoảng $-$110 (khi chạy bằng Gymnasium, các con số ở trên có thể hơi khác do cách sinh số ngẫu nhiên thay đổi), còn với nhiệm vụ xe leo núi, chỉ cần phần thưởng trung bình của 100 tập liên tiếp lớn hơn $-$110 là có thể coi nhiệm vụ đã được giải quyết. Code cài đặt đầy đủ xem tại [code xe leo núi](https://github.com/datawhalechina/easy-rl/blob/master/docs/chapter1/RL_example.py) (bản tiếng Việt: [RL_example_vi.py](./RL_example_vi.py)).
 
 Khi kiểm tra hiệu năng của tác tử trên một nhiệm vụ nào đó trong Gym, theo thói quen, giới học thuật thường quan tâm nhất đến phần thưởng trung bình của 100 tập. Với một số nhiệm vụ, còn có quy định một giá trị phần thưởng tham chiếu; khi phần thưởng của 100 tập liên tiếp lớn hơn giá trị quy định thì coi nhiệm vụ đã được giải quyết. Còn với nhiệm vụ không quy định giá trị thì không có khái niệm nhiệm vụ đã được giải quyết hay chưa.
 
-Tóm tắt cách dùng Gym: dùng env=gym.make(tên môi trường) để lấy môi trường, dùng env.reset() để khởi tạo môi trường, dùng env.step(hành động) để thực hiện một bước môi trường, dùng env.render() để hiển thị môi trường, dùng env.close() để đóng môi trường. Gym có [tài liệu chính thức](https://www.gymlibrary.dev/), người đọc có thể đọc tài liệu để học thêm về Gym.
+Tóm tắt cách dùng Gym: dùng env=gym.make(tên môi trường) để lấy môi trường, dùng env.reset() để khởi tạo môi trường, dùng env.step(hành động) để thực hiện một bước môi trường, dùng env.render() để hiển thị môi trường (trong Gymnasium: truyền render_mode="human" vào gym.make), dùng env.close() để đóng môi trường. Gym có [tài liệu chính thức](https://www.gymlibrary.dev/), người đọc có thể đọc tài liệu để học thêm về Gym; tài liệu của Gymnasium ở [gymnasium.farama.org](https://gymnasium.farama.org/).
 
 ## Tài liệu tham khảo
 

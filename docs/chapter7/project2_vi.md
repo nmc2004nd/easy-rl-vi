@@ -4,7 +4,7 @@ Khuyến nghị dùng Double-DQN (mạng Q sâu kép) để giải, tức là x�
 
 ## CartPole-v0
 
-CartPole-v0 là một môi trường kinh điển trong OpenAI gym, bằng cách đẩy xe sang trái (action=0) hoặc sang phải (action=1) để giữ thăng bằng, nên không gian hành động gồm hai hành động. Mỗi khi thực hiện một step (bước) sẽ nhận reward (phần thưởng) +1, nếu không giữ được thăng bằng thì done bằng true, episode (tập) lần này thất bại.
+CartPole-v0 là một môi trường kinh điển trong OpenAI gym (nay là Gymnasium), bằng cách đẩy xe sang trái (action=0) hoặc sang phải (action=1) để giữ thăng bằng, nên không gian hành động gồm hai hành động. Mỗi khi thực hiện một step (bước) sẽ nhận reward (phần thưởng) +1, nếu không giữ được thăng bằng thì done bằng true, episode (tập) lần này thất bại.
 
 **Trong trạng thái lý tưởng, mỗi episode ít nhất có thể thực hiện 200 step, tức là tổng reward của mỗi episode ít nhất là 200, số step ít nhất là 200**.
 
@@ -13,8 +13,8 @@ CartPole-v0 là một môi trường kinh điển trong OpenAI gym, bằng cách
 Môi trường được tạo như sau:
 
 ```python
-env = gym.make('CartPole-v0') 
-env.seed(1) # Đặt hạt giống ngẫu nhiên (random seed) cho env
+env = gym.make('CartPole-v0') # cần import gymnasium as gym
+env.reset(seed=1) # Đặt hạt giống ngẫu nhiên (random seed) cho env (Gymnasium bỏ env.seed())
 n_states = env.observation_space.shape[0] # Lấy tổng số chiều trạng thái
 n_actions = env.action_space.n # Lấy tổng số hành động
 ```
@@ -26,13 +26,14 @@ rewards = [] # Ghi lại tổng rewards
 moving_average_rewards = [] # Ghi lại tổng rewards sau khi xử lý trung bình trượt
 ep_steps = []
 for i_episode in range(1, cfg.max_episodes+1): # cfg.max_episodes là số episode huấn luyện tối đa
-    state = env.reset() # Đặt lại (reset) trạng thái môi trường
+    state, info = env.reset() # Đặt lại (reset) trạng thái môi trường
     ep_reward = 0
     for i_step in range(1, cfg.max_steps+1): # cfg.max_steps là số bước tối đa của mỗi episode
         action = agent.select_action(state) # Chọn action dựa trên state hiện tại của môi trường
-        next_state, reward, done, _ = env.step(action) # Cập nhật tham số môi trường
+        next_state, reward, terminated, truncated, _ = env.step(action) # Cập nhật tham số môi trường
+        done = terminated or truncated # Gymnasium tách done thành terminated và truncated
         ep_reward += reward
-        agent.memory.push(state, action, reward, next_state, done) # Lưu các transition như state vào memory
+        agent.memory.push(state, action, reward, next_state, terminated) # Lưu các transition như state vào memory
         state = next_state # Chuyển sang trạng thái tiếp theo
         agent.update() # Cập nhật mạng sau mỗi bước
         if done:

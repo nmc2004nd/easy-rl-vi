@@ -28,7 +28,7 @@ Dưới đây là giao diện cơ bản của thuật toán học tăng cường
 
 ```python
   '''Khởi tạo môi trường'''  
-env = gym.make("CliffWalking-v0")  # 0 up, 1 right, 2 down, 3 left
+env = gym.make("CliffWalking-v1")  # 0 up, 1 right, 2 down, 3 left (Gymnasium 1.x: CliffWalking-v1)
 env = CliffWalkingWapper(env)
 agent = QLearning(
     state_dim=env.observation_space.n,
@@ -39,11 +39,12 @@ rewards = []
 ma_rewards = [] # moving average reward
 for i_ep in range(cfg.train_eps): # train_eps: số episode huấn luyện tối đa
     ep_reward = 0  # Ghi lại reward của mỗi episode
-    state = env.reset()  # Đặt lại môi trường, bắt đầu ván mới (tức bắt đầu một episode mới)
+    state, info = env.reset()  # Đặt lại môi trường, bắt đầu ván mới (tức bắt đầu một episode mới)
     while True:
         action = agent.choose_action(state)  # Chọn một hành động theo thuật toán
-        next_state, reward, done, _ = env.step(action)  # Thực hiện một lần tương tác hành động với môi trường
-        agent.update(state, action, reward, next_state, done)  # Cập nhật theo thuật toán Q-learning
+        next_state, reward, terminated, truncated, _ = env.step(action)  # Thực hiện một lần tương tác hành động với môi trường
+        done = terminated or truncated  # Gymnasium tách done thành terminated và truncated
+        agent.update(state, action, reward, next_state, terminated)  # Cập nhật theo thuật toán Q-learning
         state = next_state  # Lưu giá trị quan sát trước đó
         ep_reward += reward
         if done:
@@ -55,6 +56,8 @@ for i_ep in range(cfg.train_eps): # train_eps: số episode huấn luyện tối
         ma_rewards.append(ep_reward)
     print("Episode:{}/{}: reward:{:.1f}".format(i_ep+1, cfg.train_eps,ep_reward))
 ```
+
+> **Ghi chú của người dịch:** code trên đã được chuyển từ `gym` sang Gymnasium (`import gymnasium as gym`), xem ghi chú ở mục 1.7.1 chương 1.
 
 ## Yêu cầu nhiệm vụ
 

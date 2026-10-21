@@ -11,8 +11,8 @@ Con lắc bắt đầu ở vị trí ngẫu nhiên, mục tiêu là lắc nó l�
 Môi trường được tạo như sau:
 
 ```python
-env = gym.make('Pendulum-v0') 
-env.seed(1) # Đặt hạt giống ngẫu nhiên (random seed) cho env
+env = gym.make('Pendulum-v1') # cần import gymnasium as gym; Gymnasium chỉ còn Pendulum-v1
+env.reset(seed=1) # Đặt hạt giống ngẫu nhiên (random seed) cho env (Gymnasium bỏ env.seed())
 n_states = env.observation_space.shape[0] # Lấy tổng số chiều trạng thái
 ```
 
@@ -23,13 +23,14 @@ rewards = [] # Ghi lại tổng rewards
 moving_average_rewards = [] # Ghi lại tổng rewards sau khi xử lý trung bình trượt
 ep_steps = []
 for i_episode in range(1, cfg.max_episodes+1): # cfg.max_episodes là số episode huấn luyện tối đa
-    state = env.reset() # Đặt lại (reset) trạng thái môi trường
+    state, info = env.reset() # Đặt lại (reset) trạng thái môi trường
     ep_reward = 0
     for i_step in range(1, cfg.max_steps+1): # cfg.max_steps là số bước tối đa của mỗi episode
         action = agent.select_action(state) # Chọn action dựa trên state hiện tại của môi trường
-        next_state, reward, done, _ = env.step(action) # Cập nhật tham số môi trường
+        next_state, reward, terminated, truncated, _ = env.step(action) # Cập nhật tham số môi trường
+        done = terminated or truncated # Gymnasium tách done thành terminated và truncated
         ep_reward += reward
-        agent.memory.push(state, action, reward, next_state, done) # Lưu các transition như state vào memory
+        agent.memory.push(state, action, reward, next_state, terminated) # Lưu các transition như state vào memory
         state = next_state # Chuyển sang trạng thái tiếp theo
         agent.update() # Cập nhật mạng sau mỗi bước
         if done:
@@ -77,4 +78,4 @@ Cũng có thể dùng [tensorboard](https://pytorch.org/docs/stable/tensorboard.
 2. Vì môi trường lần này là hệ có quán tính, khuyến nghị thêm nhiễu Ornstein-Uhlenbeck để tăng mức khám phá, có thể tham khảo [bài viết trên Zhihu](https://zhuanlan.zhihu.com/p/96720878)
 3. Khuyến nghị làm thí nghiệm nhiều lần và lưu lại rewards, rồi dùng seaborn để vẽ, có thể tham khảo [CSDN](https://blog.csdn.net/JohnJim0/article/details/106715402)
 
-> Ghi chú của người dịch: bản gốc ghi miền giá trị của tanh là [0,1] và tên thư viện là "searborn"; bản dịch đã sửa thành [-1,1] (miền giá trị đúng của tanh) và "seaborn". Chú thích của `cfg.max_steps` trong code gốc ghi "补偿" (bù trừ), có lẽ là lỗi gõ của "số bước"; bản dịch ghi theo nghĩa đúng của biến.
+> Ghi chú của người dịch: code trên đã được chuyển từ `gym` sang Gymnasium; Gymnasium không còn `Pendulum-v0` nên dùng `Pendulum-v1` (cùng bài toán, phiên bản mới hơn). Bản gốc ghi miền giá trị của tanh là [0,1] và tên thư viện là "searborn"; bản dịch đã sửa thành [-1,1] (miền giá trị đúng của tanh) và "seaborn". Chú thích của `cfg.max_steps` trong code gốc ghi "补偿" (bù trừ), có lẽ là lỗi gõ của "số bước"; bản dịch ghi theo nghĩa đúng của biến.

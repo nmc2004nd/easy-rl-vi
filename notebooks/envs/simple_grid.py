@@ -10,10 +10,8 @@ from contextlib import closing
 import numpy as np
 from io import StringIO
 #from six import StringIO, b
-import gym
-from gym import utils
-from gym import Env, spaces
-from gym.utils import seeding
+from gymnasium import utils
+from gymnasium import Env, spaces
 
 
 def categorical_sample(prob_n, np_random):
@@ -23,7 +21,7 @@ def categorical_sample(prob_n, np_random):
     """
     prob_n = np.asarray(prob_n)
     csprob_n = np.cumsum(prob_n)
-    return (csprob_n > np_random.rand()).argmax()
+    return (csprob_n > np_random.random()).argmax()
 
 
 class DiscreteEnv(Env):
@@ -52,17 +50,14 @@ class DiscreteEnv(Env):
         self.action_space = spaces.Discrete(self.nA)
         self.observation_space = spaces.Discrete(self.nS)
 
-        self.seed()
         self.s = categorical_sample(self.isd, self.np_random)
 
-    def seed(self, seed=None):
-        self.np_random, seed = seeding.np_random(seed)
-        return [seed]
-
-    def reset(self):
+    # Gymnasium: không còn seed(); seed được truyền qua reset(seed=...), self.np_random do lớp Env quản lý
+    def reset(self, seed=None, options=None):
+        super().reset(seed=seed)
         self.s = categorical_sample(self.isd, self.np_random)
         self.lastaction = None
-        return int(self.s)
+        return int(self.s), {"prob": 1}
 
     def step(self, a):
         transitions = self.P[self.s][a]
@@ -70,7 +65,7 @@ class DiscreteEnv(Env):
         p, s, r, d = transitions[i]
         self.s = s
         self.lastaction = a
-        return (int(s), r, d, {"prob": p})
+        return (int(s), r, d, False, {"prob": p})  # (obs, reward, terminated, truncated, info)
 LEFT = 0
 DOWN = 1
 RIGHT = 2
@@ -180,7 +175,7 @@ class DrunkenWalkEnv(DiscreteEnv):
 
     """
 
-    metadata = {'render.modes': ['human', 'ansi']}
+    metadata = {'render_modes': ['human', 'ansi']}
 
     def __init__(self, desc=None, map_name="4x4",is_slippery=True):
         """ This generates a map and sets all transition probabilities.

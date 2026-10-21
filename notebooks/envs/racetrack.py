@@ -5,8 +5,8 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.patheffects as pe
 from IPython.display import clear_output
-from gym.spaces import Discrete,Box
-from gym import Env
+from gymnasium.spaces import Discrete,Box
+from gymnasium import Env
 from matplotlib import colors
 
 class RacetrackEnv(Env) :
@@ -103,7 +103,8 @@ class RacetrackEnv(Env) :
         else :
             (d_y, d_x) = (0, 0)
 
-        self.velocity = (self.velocity[0] + d_y, self.velocity[1] + d_x)
+        # Ghi chú của người dịch: bản gốc dùng tuple nên phép gán self.velocity[0] = 10 bên dưới sẽ lỗi; đổi sang list.
+        self.velocity = [self.velocity[0] + d_y, self.velocity[1] + d_x]
 
 		# Keep velocity within bounds (-10, 10).
         if (self.velocity[0] > 10) :
@@ -150,11 +151,11 @@ class RacetrackEnv(Env) :
         if (done) :
             self.is_reset = False
 
-        # Return next state, reward, and whether the episode has ended.
-        return np.array([self.position[0], self.position[1], self.velocity[0], self.velocity[1]]), reward, done,{}
+        # Return next state, reward, terminated, truncated, info (Gymnasium API).
+        return np.array([self.position[0], self.position[1], self.velocity[0], self.velocity[1]]), reward, done, False, {}
 
 
-    def reset(self,seed=None) :
+    def reset(self, seed=None, options=None) :
         """
         Resets the environment, ready for a new episode to begin, then returns an initial state.
         The initial state will be a starting grid square randomly chosen using a uniform distribution,
@@ -164,6 +165,8 @@ class RacetrackEnv(Env) :
             {(int, int, int, int)} -- an initial state, a tuple of (y_pos, x_pos, y_velocity, x_velocity).
         """
 
+        super().reset(seed=seed)  # Gymnasium: seed được truyền qua reset()
+
         # Pick random starting grid-square.
         self.position = random.choice(self.initial_states)
 
@@ -172,7 +175,7 @@ class RacetrackEnv(Env) :
 
         self.is_reset = True
 
-        return np.array([self.position[0], self.position[1], self.velocity[0], self.velocity[1]])
+        return np.array([self.position[0], self.position[1], self.velocity[0], self.velocity[1]]), {}
 
 
     def render(self, render_mode = 'human') :
@@ -204,7 +207,7 @@ class RacetrackEnv(Env) :
         ax.imshow(env_plot, cmap = cmap, norm = norm, zorder = 0)
 
         # Plot the velocity.
-        if (not self.velocity == (0, 0)) :
+        if (not tuple(self.velocity) == (0, 0)) :
             ax.arrow(self.position[1], self.track.shape[0] - 1 - self.position[0], self.velocity[1], -self.velocity[0],
                      path_effects=[pe.Stroke(linewidth=1, foreground='black')], color = "yellow", width = 0.1, length_includes_head = True, zorder = 2)
 
@@ -231,11 +234,11 @@ class RacetrackEnv(Env) :
 if __name__ == "__main__":
     num_steps = 1000000
     env = RacetrackEnv()
-    state = env.reset()
+    state, _ = env.reset()
     print(state)
     for _ in range(num_steps) :
 
-        next_state, reward, done,_ = env.step(random.choice(env.get_actions()))
+        next_state, reward, done, _, _ = env.step(random.choice(env.get_actions()))
         print(next_state)
         env.render()
 
