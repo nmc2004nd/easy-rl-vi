@@ -164,6 +164,25 @@ Hình 9.10 là thuật toán mạng Q sâu ban đầu. Ta có một hàm Q $Q$ v
 </div>
  <div align=center>Hình 9.10 Thuật toán mạng Q sâu</div>
 
+Bản dịch thuật toán ở hình 9.10:
+
+$$
+\begin{array}{l}
+\hline
+\bullet\ \text{Khởi tạo hàm Q } Q \text{, hàm Q mục tiêu } \hat{Q} = Q \\
+\bullet\ \text{Với mỗi tập:} \\
+\quad \bullet\ \text{Với mỗi bước thời gian } t: \\
+\qquad \bullet\ \text{Với trạng thái } s_t \text{ đã cho, thực hiện hành động } a_t \text{ dựa trên } Q \text{ (}\varepsilon\text{-tham lam)} \\
+\qquad \bullet\ \text{Nhận phần thưởng } r_t \text{ và trạng thái mới } s_{t+1} \\
+\qquad \bullet\ \text{Lưu } (s_t, a_t, r_t, s_{t+1}) \text{ vào bộ đệm phát lại} \\
+\qquad \bullet\ \text{Lấy mẫu } (s_i, a_i, r_i, s_{i+1}) \text{ từ bộ đệm (thường theo lô)} \\
+\qquad \bullet\ \text{Giá trị mục tiêu là } y = r_i + \max_{a} \hat{Q}(s_{i+1}, a) \\
+\qquad \bullet\ \text{Cập nhật tham số của } Q \text{ sao cho } Q(s_i, a_i) \text{ càng gần } y \text{ càng tốt (hồi quy)} \\
+\qquad \bullet\ \text{Cứ sau } C \text{ bước, đặt lại } \hat{Q} = Q
+\\ \hline
+\end{array}
+$$
+
 
 Tiếp theo ta đổi mạng Q sâu thành gradient chính sách đạo hàm theo đường đi, cần làm 4 thay đổi, như hình 9.11.
 
@@ -186,6 +205,29 @@ Tóm lại, thay đổi thứ hai là ta dùng chính sách thay cho chỗ vốn
 </div>
  <div align=center>Hình 9.11 Từ mạng Q sâu đến gradient chính sách đạo hàm theo đường đi</div>
 
+Bản dịch thuật toán ở hình 9.11:
+
+$$
+\begin{array}{rl}
+\hline
+& \bullet\ \text{Khởi tạo hàm Q } Q \text{, hàm Q mục tiêu } \hat{Q} = Q \text{, diễn viên } \pi \text{, diễn viên mục tiêu } \hat{\pi} = \pi \\
+& \bullet\ \text{Với mỗi tập:} \\
+& \quad \circ\ \text{Với mỗi bước thời gian } t: \\
+\textbf{(1)} & \qquad \blacksquare\ \text{Nhận trạng thái } s_t \text{, thực hiện hành động } a_t \text{ theo } \cancel{Q}\ \pi \text{ (có khám phá)} \\
+& \qquad \blacksquare\ \text{Nhận phần thưởng } r_t \text{, đến trạng thái mới } s_{t+1} \\
+& \qquad \blacksquare\ \text{Lưu } (s_t, a_t, r_t, s_{t+1}) \text{ vào bộ đệm} \\
+& \qquad \blacksquare\ \text{Lấy mẫu } (s_i, a_i, r_i, s_{i+1}) \text{ từ bộ đệm (thường là một lô)} \\
+\textbf{(2)} & \qquad \blacksquare\ \text{Mục tiêu } y = r_i + \cancel{\max_a \hat{Q}(s_{i+1}, a)}\ \hat{Q}\big(s_{i+1}, \hat{\pi}(s_{i+1})\big) \\
+& \qquad \blacksquare\ \text{Cập nhật tham số của } Q \text{ sao cho } Q(s_i, a_i) \text{ gần } y \text{ (hồi quy)} \\
+\textbf{(3)} & \qquad \blacksquare\ \text{Cập nhật tham số của } \pi \text{ để } Q\big(s_i, \pi(s_i)\big) \text{ lớn nhất} \\
+& \qquad \blacksquare\ \text{Cứ sau } C \text{ bước, đặt lại } \hat{Q} = Q \\
+\textbf{(4)} & \qquad \blacksquare\ \text{Cứ sau } C \text{ bước, đặt lại } \hat{\pi} = \pi
+\\ \hline
+\end{array}
+$$
+
+Các số (1)–(4) đánh dấu 4 thay đổi so với mạng Q sâu đã nêu ở trên; phần bị gạch là chỗ của mạng Q sâu bị thay thế. Hình gốc ghi mẫu lấy ra là $(s_t, a_t, r_t, s_{t+1})$, bản dịch viết thống nhất là $(s_i, a_i, r_i, s_{i+1})$ cho khớp với các dòng sau.
+
 
 ## 9.6 Liên hệ với mạng đối sinh
 
@@ -198,3 +240,17 @@ Mạng đối sinh và diễn viên-nhà phê bình đều khá khó huấn luy�
  <div align=center>
 <img width="550" src="https://ai-studio-static-online.cdn.bcebos.com/818c1c2e603341f881dd57fb59e109c81702722156be4e6481b276b894c51290"/>
 </div>
+
+> Ghi chú bảng 9.1 (ảnh gốc bằng tiếng Trung):
+>
+> | Phương pháp | Mạng đối sinh (GAN) | Diễn viên-nhà phê bình |
+> |---|---|---|
+> | Đóng băng khi học (freezing learning) | Có | Có |
+> | Làm mượt nhãn (label smoothing) | Có | Không |
+> | Trung bình lịch sử (historical averaging) | Có | Không |
+> | Phân biệt theo lô nhỏ (minibatch discrimination) | Có | Không |
+> | Chuẩn hóa theo lô (batch normalization) | Có | Có |
+> | Mạng mục tiêu (target network) | Không áp dụng | Có |
+> | Phát lại kinh nghiệm (experience replay) | Không | Có |
+> | Chính quy hóa entropy (entropy regularization) | Không | Có |
+> | Tính tương thích (compatibility) | Không | Có |
