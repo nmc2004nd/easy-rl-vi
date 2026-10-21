@@ -461,6 +461,33 @@ Cách dùng phương pháp Monte Carlo để điền bảng Q là cốt lõi c�
 </div>
 <div align=center>Hình 3.25 Phương pháp Monte Carlo dựa trên khởi đầu khám phá</div>
 
+Bản dịch thuật toán ở hình 3.25:
+
+$$
+\begin{array}{l}
+\hline
+\textbf{Phương pháp Monte Carlo dựa trên khởi đầu khám phá, dùng để ước lượng } \pi \approx \pi^{*} \\
+\hline
+\text{Khởi tạo:} \\
+\quad \pi(s) \in A(s) \text{ (khởi tạo ngẫu nhiên), với mọi } s \in S \\
+\quad Q(s,a) \in \mathbb{R} \text{ (khởi tạo ngẫu nhiên), với mọi } s \in S,\ a \in A(s) \\
+\quad R(s,a) \leftarrow \text{danh sách rỗng, với mọi } s \in S,\ a \in A(s) \\
+\text{Lặp với mỗi tập:} \\
+\quad \text{Chọn ngẫu nhiên } s_0 \in S,\ a_0 \in A(s_0) \text{ sao cho mọi cặp đều có xác suất lớn hơn } 0 \\
+\quad \text{Từ } s_0, a_0 \text{ sinh một tập theo } \pi:\ s_0, a_0, r_1, \cdots, s_{T-1}, a_{T-1}, r_T \\
+\quad G \leftarrow 0 \\
+\quad \text{Lặp với mỗi bước của tập, } t = T-1, T-2, \cdots, 0: \\
+\qquad G \leftarrow \gamma G + r_{t+1} \\
+\qquad \text{Nếu } (s_t, a_t) \text{ \textbf{không} xuất hiện trong } s_0, a_0, s_1, a_1, \cdots, s_{t-1}, a_{t-1}: \\
+\qquad\qquad \text{Thêm } G \text{ vào } R(s_t, a_t) \\
+\qquad\qquad Q(s_t, a_t) \leftarrow \overline{R(s_t, a_t)} \quad \text{(trung bình của } R(s_t,a_t)\text{)} \\
+\qquad\qquad \pi(s_t) \leftarrow \underset{a}{\arg\max}\, Q(s_t, a)
+\\ \hline
+\end{array}
+$$
+
+> **Ghi chú của người dịch:** hình gốc ghi "nếu $(s_t, a_t)$ **xuất hiện** trong …", nhưng đây là Monte Carlo lần thăm đầu tiên (first-visit), nên điều kiện đúng là "nếu $(s_t, a_t)$ **không** xuất hiện ở các bước trước" (giống Sutton & Barto). Bản dịch ở trên đã sửa lại; ngoài ra $A(S_0)$ được viết lại thành $A(s_0)$, $\arg\max_a Q(s_t)$ thành $\arg\max_a Q(s_t, a)$.
+
 
 Để đảm bảo phương pháp Monte Carlo có đủ khám phá, ta dùng khám phá $\varepsilon$-tham lam ($\varepsilon\text{-greedy}$).
 $\varepsilon$-tham lam nghĩa là ta có xác suất $1-\varepsilon$ quyết định hành động theo hàm Q, thường $\varepsilon$ được đặt một giá trị rất nhỏ, $1-\varepsilon$ có thể là 0.9, tức là có xác suất 0.9 quyết định hành động theo hàm Q, nhưng có xác suất 0.1 là ngẫu nhiên. Thông thường khi cài đặt, giá trị $\varepsilon$ sẽ giảm dần theo thời gian. Lúc đầu, vì ta chưa biết hành động nào tốt hơn, nên sẽ dành nhiều thời gian khám phá. Sau đó khi số lần huấn luyện ngày càng nhiều, ta đã khá chắc chắn hành động nào tốt hơn, sẽ giảm khám phá, giảm giá trị $\varepsilon$. Chủ yếu quyết định hành động theo hàm Q, ít quyết định ngẫu nhiên, đây chính là $\varepsilon$-tham lam.
@@ -483,6 +510,27 @@ Phương pháp Monte Carlo dựa trên khám phá $\varepsilon$-tham lam đượ
 </div>
 
 <div align=center>Hình 3.26 Phương pháp Monte Carlo dựa trên khám phá $\varepsilon$-tham lam</div>
+
+Bản dịch thuật toán ở hình 3.26:
+
+$$
+\begin{array}{l}
+\hline
+\textbf{Phương pháp Monte Carlo dựa trên khám phá } \varepsilon\textbf{-tham lam} \\
+\hline
+\text{Khởi tạo } Q(S,A)=0,\ N(S,A)=0,\ \varepsilon=1,\ k=1 \\
+\pi_k = \varepsilon\text{-tham lam}(Q) \\
+\text{Lặp:} \\
+\quad \text{Lấy mẫu tập thứ } k:\ (S_1, A_1, R_2, \cdots, S_T) \sim \pi_k \\
+\quad \text{Với mỗi trạng thái } S_t \text{ và hành động } A_t \text{ trong tập:} \\
+\qquad N(S_t, A_t) \leftarrow N(S_t, A_t) + 1 \\
+\qquad Q(S_t, A_t) \leftarrow Q(S_t, A_t) + \dfrac{1}{N(S_t, A_t)}\big(G_t - Q(S_t, A_t)\big) \\
+\quad k \leftarrow k+1,\ \varepsilon \leftarrow 1/k \\
+\quad \pi_k = \varepsilon\text{-tham lam}(Q) \\
+\text{Dừng lặp.}
+\\ \hline
+\end{array}
+$$
 
 So với phương pháp Monte Carlo, phương pháp sai phân thời gian có các ưu thế sau: phương sai thấp, có thể học trực tuyến, có thể học từ chuỗi chưa hoàn chỉnh.
 Vì vậy ta có thể đưa cả phương pháp sai phân thời gian vào vòng lặp điều khiển (control loop) để ước lượng bảng Q, rồi dùng khám phá $\varepsilon$-tham lam để cải thiện. Như vậy có thể cập nhật giá trị của các trạng thái đã thu thập được ngay khi tập chưa kết thúc.
@@ -550,6 +598,28 @@ Ta xét lợi tức $n$ bước ($n=1,2,\cdots,\infty$), như biểu thức (3.5
 <img width="550" src="../img/ch3/3.15.png"/>
 </div>
 <div align=center>Hình 3.29 Thuật toán Sarsa</div>
+
+Bản dịch thuật toán ở hình 3.29:
+
+$$
+\begin{array}{l}
+\hline
+\textbf{Sarsa (điều khiển sai phân thời gian on-policy) dùng để ước lượng } Q \approx Q^{*} \\
+\hline
+\text{Tham số: bước cập nhật } \alpha \in (0,1] \text{, một giá trị rất nhỏ } \varepsilon > 0 \text{ (hai siêu tham số)} \\
+\text{Với mọi } s \in S^{+},\ a \in A(s) \text{, khởi tạo ngẫu nhiên } Q(s,a) \text{, riêng } Q(\text{trạng thái kết thúc}, \cdot) = 0 \\
+\text{Lặp với mỗi tập:} \\
+\quad \text{Khởi tạo } S \\
+\quad \text{Chọn } A \text{ từ } S \text{ theo chính sách suy ra từ } Q \text{ (ví dụ } \varepsilon\text{-tham lam)} \\
+\quad \text{Lặp với mỗi bước của tập:} \\
+\qquad \text{Thực hiện hành động } A \text{, quan sát } R, S' \\
+\qquad \text{Chọn } A' \text{ từ } S' \text{ theo chính sách suy ra từ } Q \text{ (ví dụ } \varepsilon\text{-tham lam)} \\
+\qquad Q(S,A) \leftarrow Q(S,A) + \underbrace{\alpha\big[\underbrace{R + \gamma Q(S',A')}_{\text{giá trị mục tiêu}} - \underbrace{Q(S,A)}_{\text{giá trị hiện tại}}\big]}_{\text{cập nhật mềm (soft update)}} \\
+\qquad S \leftarrow S';\ A \leftarrow A' \\
+\quad \text{cho đến khi } S \text{ là trạng thái kết thúc}
+\\ \hline
+\end{array}
+$$
 
 
 
@@ -649,6 +719,49 @@ Hành động tiếp theo mà Q-learning mặc định không được chọn b�
 <img width="550" src="../img/ch3/3.18.png"/>
 </div>	
 <div align=center>Hình 3.33 Mã giả của Sarsa và Q-learning</div>
+
+Bản dịch thuật toán ở hình 3.33 (a) Sarsa:
+
+$$
+\begin{array}{l}
+\hline
+\textbf{Sarsa (điều khiển sai phân thời gian on-policy) dùng để ước lượng } Q \approx Q^{*} \\
+\hline
+\text{Tham số: bước cập nhật } \alpha \in (0,1] \text{, một giá trị rất nhỏ } \varepsilon > 0  \\
+\text{Với mọi } s \in S^{+},\ a \in A(s) \text{, khởi tạo ngẫu nhiên } Q(s,a) \text{, riêng } Q(\text{trạng thái kết thúc}, \cdot) = 0 \\
+\text{Lặp với mỗi tập:} \\
+\quad \text{Khởi tạo } S \\
+\quad \text{Chọn } A \text{ từ } S \text{ theo chính sách suy ra từ } Q \text{ (ví dụ } \varepsilon\text{-tham lam)} \\
+\quad \text{Lặp với mỗi bước của tập:} \\
+\qquad \text{Thực hiện hành động } A \text{, quan sát } R, S' \\
+\qquad \text{Chọn } A' \text{ từ } S' \text{ theo chính sách suy ra từ } Q \text{ (ví dụ } \varepsilon\text{-tham lam)} \\
+\qquad Q(S,A) \leftarrow Q(S,A) + \alpha\big[R + \gamma Q(S',A') - Q(S,A)\big] \\
+\qquad S \leftarrow S';\ A \leftarrow A' \\
+\quad \text{cho đến khi } S \text{ là trạng thái kết thúc}
+\\ \hline
+\end{array}
+$$
+
+Bản dịch thuật toán ở hình 3.33 (b) Q-learning:
+
+$$
+\begin{array}{l}
+\hline
+\textbf{Q-learning (điều khiển sai phân thời gian off-policy) dùng để ước lượng } \pi \approx \pi^{*} \\
+\hline
+\text{Tham số: bước cập nhật } \alpha \in (0,1] \text{, một giá trị rất nhỏ } \varepsilon > 0 \\
+\text{Với mọi } s \in S^{+},\ a \in A(s) \text{, khởi tạo ngẫu nhiên } Q(s,a) \text{, riêng } Q(\text{trạng thái kết thúc}, \cdot) = 0 \\
+\text{Lặp với mỗi tập:} \\
+\quad \text{Khởi tạo } S \\
+\quad \text{Lặp với mỗi bước của tập:} \\
+\qquad \text{Chọn } A \text{ từ } S \text{ theo chính sách suy ra từ } Q \text{ (ví dụ } \varepsilon\text{-tham lam)} \\
+\qquad \text{Thực hiện hành động } A \text{, quan sát } R, S' \\
+\qquad Q(S,A) \leftarrow Q(S,A) + \alpha\Big[R + \gamma \max\limits_{a} Q(S',a) - Q(S,A)\Big] \\
+\qquad S \leftarrow S' \\
+\quad \text{cho đến khi } S \text{ là trạng thái kết thúc}
+\\ \hline
+\end{array}
+$$
 
 
 Công thức cập nhật của Sarsa và Q-learning là như nhau, khác biệt chỉ ở phần tính mục tiêu,
