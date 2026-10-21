@@ -89,6 +89,19 @@
     flex: 1; border: 0; background: transparent; color: var(--muted); font: inherit; font-weight: 600; font-size: .95rem;
     padding: 9px 8px; border-radius: 9px; cursor: pointer;
   }
+  .tabs { overflow-x: auto; scrollbar-width: none; }
+  .tab { white-space: nowrap; }
+  .answer { margin-top: 12px; }
+  .answer textarea {
+    width: 100%; min-height: 84px; resize: vertical; border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px;
+    font: inherit; color: var(--text); background: var(--surface);
+  }
+  .answer textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+  .answer .row { align-items: center; justify-content: space-between; margin-top: 8px; }
+  .opt-type { font-size: .85rem; color: var(--muted); display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+  .card .mine { margin-top: 16px; padding: 10px 12px; border-radius: 10px; background: var(--surface-2); white-space: pre-line; }
+  .card .lbl2 { font-size: .78rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+  .card .back .lbl2 { margin-bottom: 4px; }
   .tab[aria-selected="true"] { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
   .tab:focus-visible, button:focus-visible, .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
@@ -170,6 +183,7 @@
   .toast { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 8px 16px; border-radius: 10px; font-size: .9rem; opacity: 0; transition: opacity .2s; pointer-events: none; }
   .toast.show { opacity: .95; }
   @media (max-width: 480px) {
+    .tab { font-size: .82rem; padding: 8px 6px; }
     .card { padding: 18px 16px 14px; min-height: 240px; }
     .card .front { font-size: 1.05rem; }
     .panel { padding: 18px 16px; }
@@ -382,9 +396,16 @@
       '<div class="card' + (flipped ? ' flipped' : '') + '" id="the-card" tabindex="0" aria-live="polite">' +
         '<div class="meta"><span class="tagchip">' + esc(c.tag) + '</span><span>Mục ' + esc(c.ref) + '</span></div>' +
         '<div class="front">' + fmt(c.front) + '</div>' +
-        (flipped ? '<div class="back">' + fmt(c.back) + '</div>'
-                 : '<div class="hint">Tự trả lời trong đầu (hoặc nói ra), rồi bấm để xem đáp án</div>') +
+        (flipped
+          ? (session.typed && session.typed.trim() ? '<div class="mine"><div class="lbl2">Bạn trả lời</div>' + esc(session.typed.trim()) + '</div>' : '') +
+            '<div class="back">' + (typeMode() ? '<div class="lbl2">Đáp án</div>' : '') + fmt(c.back) + '</div>'
+          : (typeMode() ? '' : '<div class="hint">Tự trả lời trong đầu (hoặc nói ra), rồi bấm để xem đáp án</div>')) +
       '</div>';
+    if (!flipped && typeMode()) {
+      html += '<div class="answer"><textarea id="ans" placeholder="Gõ câu trả lời của bạn trước khi xem đáp án (vài ý chính là đủ)…" aria-label="Câu trả lời của bạn">' +
+        esc(session.typed || '') + '</textarea><div class="row"><button class="btn primary" id="btn-flip">Xem đáp án</button>' +
+        '<span class="muted" style="font-size:.8rem"><kbd>Ctrl</kbd> + <kbd>Enter</kbd></span></div></div>';
+    }
     if (flipped) {
       if (session.practice) {
         html += '<div class="grades" style="grid-template-columns:1fr 1fr">' +
@@ -397,17 +418,32 @@
           return '<button class="grade ' + g + '" data-grade="' + g + '">' + labels[g] + '<small>' + preview + '</small></button>';
         }).join('') + '</div>';
       }
+      if (typeMode() && session.typed && session.typed.trim()) html += '<div class="kbd" style="margin-top:10px">So sánh với đáp án: bạn đã nêu được các ý <b>in đậm</b> chưa? Chấm trung thực để lịch ôn chính xác.</div>';
       html += '<div class="kbd">Phím tắt: <kbd>1</kbd> ' + (session.practice ? 'Chưa nhớ' : 'Quên') + (session.practice ? '' : ' · <kbd>2</kbd> Khó') + ' · <kbd>' + (session.practice ? '2' : '3') + '</kbd> Nhớ</div>';
     } else {
-      html += '<div class="kbd">Phím tắt: <kbd>Space</kbd> lật thẻ</div>';
+      html += '<div class="kbd">' + (typeMode() ? '' : 'Phím tắt: <kbd>Space</kbd> lật thẻ · ') +
+        '<label class="opt-type"><input type="checkbox" id="opt-type"' + (typeMode() ? ' checked' : '') + '> Gõ câu trả lời trước khi lật</label></div>';
     }
     area.innerHTML = html;
     typeset(area);
     var cardEl = document.getElementById('the-card');
     if (!flipped) cardEl.onclick = flip;
+    var ans = document.getElementById('ans');
+    if (ans) {
+      ans.oninput = function () { session.typed = ans.value; };
+      ans.onkeydown = function (e) { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); flip(); } };
+      document.getElementById('btn-flip').onclick = flip;
+      // chỉ tự focus trên máy có chuột, tránh bật bàn phím ảo trên điện thoại
+      try { if (window.matchMedia('(pointer: fine)').matches) ans.focus(); } catch (e) {}
+    }
+    var optType = document.getElementById('opt-type');
+    if (optType) optType.onchange = function () {
+      store.settings = store.settings || {}; store.settings.typeAnswer = optType.checked; saveStore(); renderCard();
+    };
     area.querySelectorAll('.grade').forEach(function (b) { b.onclick = function () { grade(b.getAttribute('data-grade')); }; });
   }
 
+  function typeMode() { return !store.settings || store.settings.typeAnswer !== false; }
   function flip() { if (session && session.queue.length && !session.flipped) { session.flipped = true; renderCard(); } }
 
   function grade(g) {
@@ -425,6 +461,7 @@
       session.done += 1;
     }
     session.flipped = false;
+    session.typed = '';
     renderCard();
   }
 
@@ -580,18 +617,49 @@
 
   // ---------- tab & phím tắt ----------
   var current = 'cards';
+  var extras = []; // tab mở rộng của chương (thí nghiệm, sơ đồ), nạp từ file JS riêng
+  function tabNames() { return ['cards', 'quiz'].concat(extras.map(function (x) { return x.id; }), ['progress']); }
   function showTab(name) {
+    if (tabNames().indexOf(name) < 0) name = 'cards';
     current = name;
     document.querySelectorAll('.tab').forEach(function (t) { t.setAttribute('aria-selected', t.getAttribute('data-tab') === name ? 'true' : 'false'); });
-    ['cards', 'quiz', 'progress'].forEach(function (n) { document.getElementById('tab-' + n).classList.toggle('hidden', n !== name); });
+    tabNames().forEach(function (n) { document.getElementById('tab-' + n).classList.toggle('hidden', n !== name); });
     if (name === 'cards') renderCard();
     if (name === 'quiz') renderQuiz();
     if (name === 'progress') renderProgress();
+    extras.forEach(function (x) {
+      if (x.id === name && !x.rendered) { x.rendered = true; x.render(document.getElementById('tab-' + x.id), { typeset: typeset, esc: esc }); }
+    });
     try { sessionStorage.setItem('easyrl-vi:review:tab', name); } catch (e) {}
   }
   function renderAll() { showTab(current); }
 
-  document.querySelectorAll('.tab').forEach(function (t) { t.onclick = function () { showTab(t.getAttribute('data-tab')); }; });
+  function bindTabs() {
+    document.querySelectorAll('.tab').forEach(function (t) { t.onclick = function () { showTab(t.getAttribute('data-tab')); }; });
+  }
+  bindTabs();
+  function loadExtras(src) {
+    return new Promise(function (resolve) {
+      if (!src) return resolve();
+      var sc = document.createElement('script');
+      sc.src = src;
+      sc.onload = function () {
+        var ex = (window.ReviewExtras && window.ReviewExtras.tabs) || [];
+        var progBtn = document.querySelector('.tab[data-tab="progress"]'), progSec = document.getElementById('tab-progress');
+        ex.forEach(function (x) {
+          var b = document.createElement('button');
+          b.className = 'tab'; b.setAttribute('role', 'tab'); b.setAttribute('aria-selected', 'false'); b.setAttribute('data-tab', x.id); b.textContent = x.label;
+          progBtn.parentNode.insertBefore(b, progBtn);
+          var sec = document.createElement('section'); sec.id = 'tab-' + x.id; sec.className = 'hidden';
+          progSec.parentNode.insertBefore(sec, progSec);
+          extras.push({ id: x.id, render: x.render, rendered: false });
+        });
+        bindTabs(); resolve();
+      };
+      sc.onerror = function () { resolve(); };
+      document.head.appendChild(sc);
+    });
+  }
   document.addEventListener('click', function (e) {
     var go = e.target.closest && e.target.closest('[data-go]');
     if (go) showTab(go.getAttribute('data-go'));
@@ -625,9 +693,11 @@
       if (d.exerciseLink) document.getElementById('lnk-ex').href = d.exerciseLink;
       ensureChapter();
       buildSession(false);
-      var saved = null;
-      try { saved = sessionStorage.getItem('easyrl-vi:review:tab'); } catch (e) {}
-      showTab(saved === 'quiz' || saved === 'progress' ? saved : 'cards');
+      return loadExtras(d.extras).then(function () {
+        var saved = null;
+        try { saved = sessionStorage.getItem('easyrl-vi:review:tab'); } catch (e) {}
+        showTab(saved || 'cards');
+      });
     })
     .catch(function () {
       var el = document.getElementById('err');

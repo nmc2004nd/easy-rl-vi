@@ -3,6 +3,7 @@
   "title": "Chương 1 · Cơ bản về học tăng cường",
   "chapterLink": "../#/chapter1/chapter1_vi",
   "exerciseLink": "../#/chapter1/chapter1_questions&keywords_vi",
+  "extras": "ch1-extras.js",
   "cards": [
     {
       "id": "c1-rl-one-line",
