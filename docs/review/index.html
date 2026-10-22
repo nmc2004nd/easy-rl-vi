@@ -1006,9 +1006,9 @@
     .catch(function () {
       var el = document.getElementById('err');
       el.classList.remove('hidden');
-      el.innerHTML = '<h2>Chưa có bộ ôn tập cho chương ' + esc(CH) + '</h2><p class="muted">Hiện đã có chương 1 đến 7. ' +
+      el.innerHTML = '<h2>Chưa có bộ ôn tập cho chương ' + esc(CH) + '</h2><p class="muted">Hiện đã có chương 1 đến 8. ' +
         'Nếu bạn mở file trực tiếp trên máy (file://), hãy chạy <code>python3 -m http.server</code> trong thư mục <code>docs</code> rồi mở qua http://localhost.</p>' +
-        '<p><a href="?ch=1">Ôn tập chương 1</a> · <a href="?ch=2">Ôn tập chương 2</a> · <a href="?ch=3">Ôn tập chương 3</a> · <a href="?ch=4">Ôn tập chương 4</a> · <a href="?ch=5">Ôn tập chương 5</a> · <a href="?ch=6">Ôn tập chương 6</a> · <a href="?ch=7">Ôn tập chương 7</a></p>';
+        '<p><a href="?ch=1">Ôn tập chương 1</a> · <a href="?ch=2">Ôn tập chương 2</a> · <a href="?ch=3">Ôn tập chương 3</a> · <a href="?ch=4">Ôn tập chương 4</a> · <a href="?ch=5">Ôn tập chương 5</a> · <a href="?ch=6">Ôn tập chương 6</a> · <a href="?ch=7">Ôn tập chương 7</a> · <a href="?ch=8">Ôn tập chương 8</a></p>';
       document.querySelectorAll('section, .tabs').forEach(function (s) { s.classList.add('hidden'); });
     });
 })();

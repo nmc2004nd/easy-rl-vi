@@ -30,6 +30,7 @@
 - [Dự án 2 Dùng DQN giải CartPole-v0](chapter7/project2_vi)
 - [Chương 8 DQN (Hành động liên tục)](chapter8/chapter8_vi)
 - [Chương 8 Bài tập](chapter8/chapter8_questions&keywords_vi)
+- [🧠 Chương 8 Ôn tập (flashcard + quiz)](review/index.html?ch=8 ':ignore :target=_self')
 - [Chương 9 Thuật toán diễn viên-nhà phê bình (Actor-Critic)](chapter9/chapter9_vi)
 - [Chương 9 Bài tập](chapter9/chapter9_questions&keywords_vi)
 - [Chương 10 Phần thưởng thưa](chapter10/chapter10_vi)

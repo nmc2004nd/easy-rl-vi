@@ -1,0 +1,465 @@
+{
+ "chapter": 8,
+ "title": "Chương 8 · DQN cho hành động liên tục",
+ "chapterLink": "../#/chapter8/chapter8_vi",
+ "exerciseLink": "../#/chapter8/chapter8_questions&keywords_vi",
+ "extras": "ch8-extras.js",
+ "cards": [
+  {
+   "id": "c8-dqn-stable",
+   "tag": "Vì sao",
+   "ref": "8 · Bài tập 8-1",
+   "front": "Vì sao DQN thường **ổn định, dễ huấn luyện** hơn gradient chính sách?",
+   "back": "Chỉ cần ước lượng được hàm $Q$ là chắc chắn có chính sách khá tốt (và cải thiện được chính sách).\nƯớc lượng $Q$ là **bài toán hồi quy**: nhìn mất mát hồi quy có giảm hay không là biết mô hình học tốt hay không.\nGradient chính sách tối đa hóa tổng lợi tức, khó có một hàm mất mát rõ ràng để theo dõi: về bản chất là **tìm kiếm chính sách**."
+  },
+  {
+   "id": "c8-history",
+   "tag": "Khái niệm",
+   "ref": "8",
+   "front": "Trước PPO, DeepMind dùng phương pháp nào trong bài báo đầu tiên chơi Atari bằng học tăng cường sâu?",
+   "back": "**Mạng Q sâu (DQN)**. Trước khi có PPO, rất khó làm được gì với gradient chính sách vì nó bất ổn định."
+  },
+  {
+   "id": "c8-continuous",
+   "tag": "Khái niệm",
+   "ref": "8",
+   "front": "Ví dụ về hành động **liên tục**? Vì sao chúng là vectơ?",
+   "back": "Lái xe: vô lăng quay trái/phải bao nhiêu độ. Robot 50 khớp: mỗi hành động là góc của 50 khớp.\nHành động là một **vectơ** số thực, mỗi chiều một giá trị (mỗi khớp một góc), không liệt kê hết được."
+  },
+  {
+   "id": "c8-argmax",
+   "tag": "Vì sao",
+   "ref": "8 · Bài tập 8-2",
+   "front": "Vì sao DQN khó dùng cho hành động liên tục?",
+   "back": "Một bước quan trọng của DQN là giải bài toán tối ưu\n$$a = \\arg\\max_a Q(s, a)$$\nHành động rời rạc (lên, xuống, trái, phải, bắn): thử từng cái. Hành động liên tục: **không vét cạn** được mọi giá trị."
+  },
+  {
+   "id": "c8-sol1",
+   "tag": "Khái niệm",
+   "ref": "8.1",
+   "front": "Phương án 1: lấy mẫu hành động. Làm thế nào? Ưu, nhược?",
+   "back": "Lấy mẫu $N$ hành động $\\{a_1, \\ldots, a_N\\}$, đưa cả vào hàm $Q$ (song song trên GPU), chọn cái có $Q$ lớn nhất.\n**Ưu**: đơn giản, không quá chậm.\n**Nhược**: **không chính xác**, vì không thể lấy mẫu quá nhiều; hành động được chọn chỉ là tốt nhất trong $N$ mẫu."
+  },
+  {
+   "id": "c8-sol1-dim",
+   "tag": "Vì sao",
+   "ref": "8.1 (bổ sung)",
+   "front": "Vì sao lấy mẫu càng kém khi hành động có **nhiều chiều** (ví dụ robot 50 khớp)?",
+   "back": "Muốn có ít nhất một mẫu rơi gần điểm tốt nhất (sai lệch không quá một tỉ lệ $p$ của khoảng mỗi chiều), xác suất mỗi mẫu trúng là $p^d$ với $d$ chiều.\n$p = 0{,}1$, $d = 1$: $10\\%$; $d = 5$: $0{,}001\\%$; $d = 50$: $10^{-50}$. Số mẫu cần tăng theo **hàm mũ** của số chiều: lời nguyền số chiều."
+  },
+  {
+   "id": "c8-sol1-calc",
+   "tag": "Tính tay",
+   "ref": "8.1 (bổ sung)",
+   "front": "Một chiều, mỗi mẫu có xác suất $p = 0{,}05$ rơi vào vùng gần tối ưu. Lấy $N = 20$ mẫu độc lập, xác suất có ít nhất một mẫu trúng?",
+   "back": "$$1 - (1 - p)^N = 1 - 0{,}95^{20} \\approx 1 - 0{,}358 = 0{,}642$$\nChỉ khoảng $64\\%$. Muốn $99\\%$ cần $N \\ge \\frac{\\ln 0{,}01}{\\ln 0{,}95} \\approx 90$ mẫu."
+  },
+  {
+   "id": "c8-sol2",
+   "tag": "Khái niệm",
+   "ref": "8.2",
+   "front": "Phương án 2: gradient ascent theo hành động. Làm thế nào? Hai vấn đề?",
+   "back": "Xem $a$ là biến cần tối ưu, lặp $a \\leftarrow a + \\eta\\nabla_a Q(s, a)$ để tìm $a$ làm $Q$ lớn nhất.\nVấn đề: (1) có thể kẹt ở **cực đại cục bộ**, không chắc tìm được cực đại toàn cục; (2) **tốn tính toán**: mỗi lần chọn hành động lại phải lặp nhiều bước."
+  },
+  {
+   "id": "c8-sol3",
+   "tag": "Công thức",
+   "ref": "8.3 · Hình 8.1",
+   "front": "Phương án 3: thiết kế kiến trúc mạng. Hàm $Q$ có dạng gì?",
+   "back": "Từ $\\boldsymbol s$, mạng đưa ra vectơ $\\boldsymbol{\\mu}(\\boldsymbol s)$, ma trận $\\boldsymbol{\\Sigma}(\\boldsymbol s)$ và số $V(\\boldsymbol s)$; sau đó cho $\\boldsymbol a$ tương tác với chúng:\n$$Q(\\boldsymbol s, \\boldsymbol a) = -\\big(\\boldsymbol a - \\boldsymbol{\\mu}(\\boldsymbol s)\\big)^{\\mathrm T}\\boldsymbol{\\Sigma}(\\boldsymbol s)\\big(\\boldsymbol a - \\boldsymbol{\\mu}(\\boldsymbol s)\\big) + V(\\boldsymbol s)$$"
+  },
+  {
+   "id": "c8-sol3-argmax",
+   "tag": "Vì sao",
+   "ref": "8.3",
+   "front": "Với hàm $Q$ bậc hai ở phương án 3, $\\arg\\max_{\\boldsymbol a} Q(\\boldsymbol s, \\boldsymbol a)$ là gì? Vì sao?",
+   "back": "$$\\arg\\max_{\\boldsymbol a} Q(\\boldsymbol s, \\boldsymbol a) = \\boldsymbol{\\mu}(\\boldsymbol s)$$\n$\\boldsymbol\\Sigma$ xác định dương nên số hạng $(\\boldsymbol a - \\boldsymbol\\mu)^{\\mathrm T}\\boldsymbol\\Sigma(\\boldsymbol a - \\boldsymbol\\mu) \\ge 0$, nhỏ nhất bằng 0 khi $\\boldsymbol a = \\boldsymbol\\mu$. Có dấu trừ phía trước nên khi đó $Q$ lớn nhất, bằng $V(\\boldsymbol s)$."
+  },
+  {
+   "id": "c8-sol3-pd",
+   "tag": "Vì sao",
+   "ref": "8.3",
+   "front": "Vì sao $\\boldsymbol\\Sigma(\\boldsymbol s)$ phải **xác định dương**? Mạng tạo ra nó thế nào?",
+   "back": "Nếu không, $(\\boldsymbol a - \\boldsymbol\\mu)^{\\mathrm T}\\boldsymbol\\Sigma(\\boldsymbol a - \\boldsymbol\\mu)$ có thể âm theo một hướng nào đó, $Q$ tăng mãi theo hướng đó: **không có** cực đại, $\\boldsymbol a = \\boldsymbol\\mu$ thành điểm yên ngựa.\nCách làm: mạng đưa ra ma trận **tam giác dưới** $\\boldsymbol L$, rồi đặt $\\boldsymbol\\Sigma = \\boldsymbol L\\boldsymbol L^{\\mathrm T}$ (xem tab Chứng minh)."
+  },
+  {
+   "id": "c8-pd-def",
+   "tag": "Khái niệm",
+   "ref": "8.3",
+   "front": "Định nghĩa ma trận xác định dương?",
+   "back": "Ma trận đối xứng cấp $n$ $\\boldsymbol A$ là **xác định dương** nếu $\\boldsymbol x^{\\mathrm T}\\boldsymbol A\\boldsymbol x > 0$ với mọi vectơ $n$ chiều khác không $\\boldsymbol x$.\nTương đương: mọi giá trị riêng đều dương."
+  },
+  {
+   "id": "c8-sol3-calc1",
+   "tag": "Tính tay",
+   "ref": "8.3",
+   "front": "Một chiều: $\\mu = 0{,}5$, $\\Sigma = 2$, $V = 3$. Tính $Q$ tại $a = 0{,}5$, $a = 1$, $a = -0{,}5$. Hành động tốt nhất?",
+   "back": "$Q(a) = -2(a - 0{,}5)^2 + 3$.\n$Q(0{,}5) = 3$; $Q(1) = -2\\cdot 0{,}25 + 3 = 2{,}5$; $Q(-0{,}5) = -2\\cdot 1 + 3 = 1$.\nTốt nhất: $a = \\mu = 0{,}5$, không cần tìm kiếm."
+  },
+  {
+   "id": "c8-sol3-calc2",
+   "tag": "Tính tay",
+   "ref": "8.3",
+   "front": "Hai chiều: $\\boldsymbol\\mu = (1;\\ 0)$, $\\boldsymbol\\Sigma = \\begin{pmatrix}2 & 0\\\\0 & 1\\end{pmatrix}$, $V = 5$. Tính $Q$ tại $\\boldsymbol a = (2;\\ 1)$.",
+   "back": "$\\boldsymbol a - \\boldsymbol\\mu = (1;\\ 1)$.\n$$(\\boldsymbol a - \\boldsymbol\\mu)^{\\mathrm T}\\boldsymbol\\Sigma(\\boldsymbol a - \\boldsymbol\\mu) = 2\\cdot 1^2 + 1\\cdot 1^2 = 3$$\n$Q = -3 + 5 = 2$. Tại $\\boldsymbol a = \\boldsymbol\\mu$ thì $Q = 5$."
+  },
+  {
+   "id": "c8-sol3-limit",
+   "tag": "Vì sao",
+   "ref": "8.3 · Bài tập 8-2",
+   "front": "Hạn chế của phương án 3?",
+   "back": "Hàm $Q$ **không thể thiết lập tùy ý**: theo $\\boldsymbol a$ nó luôn là một \\\"quả đồi\\\" bậc hai với **đúng một** đỉnh.\nNếu $Q$ thật theo hành động có nhiều đỉnh (ví dụ né vật cản sang trái hoặc sang phải đều tốt) thì dạng này không biểu diễn được."
+  },
+  {
+   "id": "c8-naf",
+   "tag": "Khái niệm",
+   "ref": "8.3 (bổ sung)",
+   "front": "Phương án 3 trong các bài báo gọi là gì?",
+   "back": "**NAF** (normalized advantage functions, Gu và cộng sự, 2016). Số hạng $-(\\boldsymbol a - \\boldsymbol\\mu)^{\\mathrm T}\\boldsymbol\\Sigma(\\boldsymbol a - \\boldsymbol\\mu)$ chính là **hàm lợi thế** $A(\\boldsymbol s, \\boldsymbol a)$ (luôn $\\le 0$), giống ý tưởng $Q = V + A$ của DQN đối đầu (chương 7)."
+  },
+  {
+   "id": "c8-sol4",
+   "tag": "Khái niệm",
+   "ref": "8.4 · Hình 8.2",
+   "front": "Phương án 4 là gì?",
+   "back": "**Không dùng DQN** cho hành động liên tục. Kết hợp phương pháp dựa trên chính sách (PPO) với phương pháp dựa trên giá trị (DQN) thành phương pháp **diễn viên-nhà phê bình** (actor-critic, chương 9).\nDiễn viên đưa ra hành động liên tục trực tiếp, không cần giải $\\arg\\max$."
+  },
+  {
+   "id": "c8-sol4-ddpg",
+   "tag": "Khái niệm",
+   "ref": "8.4 (bổ sung)",
+   "front": "Ví dụ cụ thể của phương án 4 cho hành động liên tục là thuật toán nào (các chương sau)?",
+   "back": "**DDPG** (chương 12): mạng diễn viên $\\mu_\\theta(s)$ đưa thẳng ra hành động, nhà phê bình $Q_\\phi(s, a)$ chấm điểm; diễn viên được cập nhật theo $\\nabla_a Q$.\nCó thể xem như phương án 2 nhưng **học** một mạng làm luôn việc tìm $\\arg\\max$, thay vì lặp gradient ascent mỗi lần chọn hành động."
+  },
+  {
+   "id": "c8-compare",
+   "tag": "So sánh",
+   "ref": "8 · Bài tập 8-2",
+   "front": "So sánh nhanh bốn phương án về độ chính xác và chi phí.",
+   "back": "1. **Lấy mẫu**: rẻ, song song được, nhưng không chính xác (càng nhiều chiều càng tệ).\n2. **Gradient ascent**: chính xác hơn nhưng tốn nhiều bước lặp mỗi lần chọn, dễ kẹt cực đại cục bộ.\n3. **Kiến trúc đặc biệt**: $\\arg\\max$ chính xác và tức thì ($= \\boldsymbol\\mu$), nhưng $Q$ bị ép dạng bậc hai.\n4. **Diễn viên-nhà phê bình**: bỏ $\\arg\\max$, diễn viên ra hành động trực tiếp."
+  },
+  {
+   "id": "c8-policy-search",
+   "tag": "Khái niệm",
+   "ref": "Bài tập 8-1",
+   "front": "Vì sao nói gradient chính sách về bản chất là bài toán **tìm kiếm chính sách**?",
+   "back": "Mục tiêu là tối đa hóa tổng lợi tức kỳ vọng trực tiếp trên không gian chính sách, không có \\\"nhãn\\\" để hồi quy. Khó có một hàm mất mát rõ ràng mà nhìn vào biết mô hình đang tốt lên.\nNgược lại DQN có mất mát hồi quy $\\big(y - Q(s, a)\\big)^2$."
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Vì sao ước lượng hàm $Q$ được xem là khá dễ?",
+   "options": [
+    "Nó là bài toán hồi quy, theo dõi được mất mát",
+    "Vì hàm $Q$ luôn tuyến tính",
+    "Vì không cần dữ liệu",
+    "Vì không cần mạng nơ-ron"
+   ],
+   "answer": 0,
+   "explain": "Nhìn mất mát hồi quy có giảm là biết mô hình có học tốt không.",
+   "ref": "8 · Bài tập 8-1"
+  },
+  {
+   "q": "Bước nào của DQN gặp khó khi hành động liên tục?",
+   "options": [
+    "Giải $\\arg\\max_a Q(s, a)$",
+    "Tính phần thưởng",
+    "Lưu vào bộ đệm phát lại",
+    "Sao chép mạng mục tiêu"
+   ],
+   "answer": 0,
+   "explain": "Không vét cạn được mọi hành động liên tục.",
+   "ref": "8"
+  },
+  {
+   "q": "Nhược điểm chính của phương án lấy mẫu $N$ hành động:",
+   "options": [
+    "Không chính xác vì không lấy mẫu được quá nhiều",
+    "Không chạy song song được",
+    "Chắc chắn kẹt cực đại cục bộ",
+    "Ép $Q$ thành dạng bậc hai"
+   ],
+   "answer": 0,
+   "explain": "Chỉ chọn được hành động tốt nhất trong $N$ mẫu.",
+   "ref": "8.1"
+  },
+  {
+   "q": "Hành động 10 chiều, mỗi mẫu trúng vùng gần tối ưu với xác suất $0{,}1$ ở **mỗi chiều** (độc lập). Xác suất một mẫu trúng cả 10 chiều:",
+   "options": [
+    "$10^{-10}$",
+    "$0{,}1$",
+    "$1$",
+    "$0{,}01$"
+   ],
+   "answer": 0,
+   "explain": "$0{,}1^{10}$: số mẫu cần tăng theo hàm mũ của số chiều.",
+   "ref": "8.1 (bổ sung)"
+  },
+  {
+   "q": "Hai vấn đề của phương án gradient ascent theo hành động:",
+   "options": [
+    "Có thể kẹt cực đại cục bộ và tốn nhiều bước lặp mỗi lần chọn hành động",
+    "Không chính xác và không song song được",
+    "Cần ma trận xác định dương",
+    "Không dùng được với mạng nơ-ron"
+   ],
+   "answer": 0,
+   "explain": "Mỗi quyết định lại phải chạy một vòng tối ưu.",
+   "ref": "8.2"
+  },
+  {
+   "q": "Với $Q(\\boldsymbol s, \\boldsymbol a) = -\\big(\\boldsymbol a - \\boldsymbol{\\mu}(\\boldsymbol s)\\big)^{\\mathrm T}\\boldsymbol{\\Sigma}(\\boldsymbol s)\\big(\\boldsymbol a - \\boldsymbol{\\mu}(\\boldsymbol s)\\big) + V(\\boldsymbol s)$ và $\\boldsymbol\\Sigma$ xác định dương, $\\arg\\max_{\\boldsymbol a} Q$ bằng:",
+   "options": [
+    "$\\boldsymbol\\mu(\\boldsymbol s)$",
+    "$V(\\boldsymbol s)$",
+    "$\\boldsymbol 0$",
+    "$\\boldsymbol\\Sigma^{-1}\\boldsymbol\\mu$"
+   ],
+   "answer": 0,
+   "explain": "Số hạng bậc hai bằng 0 khi $\\boldsymbol a = \\boldsymbol\\mu$.",
+   "ref": "8.3"
+  },
+  {
+   "q": "Giá trị lớn nhất của $Q$ ở câu trên là:",
+   "options": [
+    "$V(\\boldsymbol s)$",
+    "$0$",
+    "$\\boldsymbol\\mu^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol\\mu$",
+    "$-V(\\boldsymbol s)$"
+   ],
+   "answer": 0,
+   "explain": "Tại $\\boldsymbol a = \\boldsymbol\\mu$ số hạng bậc hai triệt tiêu.",
+   "ref": "8.3"
+  },
+  {
+   "q": "Vì sao đặt $\\boldsymbol\\Sigma = \\boldsymbol L\\boldsymbol L^{\\mathrm T}$ với $\\boldsymbol L$ tam giác dưới?",
+   "options": [
+    "Bảo đảm $\\boldsymbol\\Sigma$ đối xứng và (nửa) xác định dương",
+    "Để $\\boldsymbol\\Sigma$ là ma trận đơn vị",
+    "Để giảm số chiều hành động",
+    "Để $\\boldsymbol\\mu = 0$"
+   ],
+   "answer": 0,
+   "explain": "$\\boldsymbol x^{\\mathrm T}\\boldsymbol L\\boldsymbol L^{\\mathrm T}\\boldsymbol x = \\|\\boldsymbol L^{\\mathrm T}\\boldsymbol x\\|^2 \\ge 0$.",
+   "ref": "8.3"
+  },
+  {
+   "q": "Nếu $\\boldsymbol\\Sigma$ có một giá trị riêng âm thì hàm $Q$ bậc hai:",
+   "options": [
+    "Không có cực đại (tăng mãi theo một hướng)",
+    "Có cực đại tại $\\boldsymbol\\mu$",
+    "Bằng $V$ mọi nơi",
+    "Có hai cực đại"
+   ],
+   "answer": 0,
+   "explain": "$\\boldsymbol a = \\boldsymbol\\mu$ thành điểm yên ngựa.",
+   "ref": "8.3"
+  },
+  {
+   "q": "Một chiều: $\\mu = 0{,}5$, $\\Sigma = 2$, $V = 3$. $Q(1)$ bằng:",
+   "options": [
+    "$2{,}5$",
+    "$3$",
+    "$1$",
+    "$3{,}5$"
+   ],
+   "answer": 0,
+   "explain": "$-2\\cdot 0{,}5^2 + 3 = 2{,}5$.",
+   "ref": "8.3"
+  },
+  {
+   "q": "Hạn chế của phương án thiết kế kiến trúc mạng:",
+   "options": [
+    "$Q$ theo hành động luôn là một quả đồi bậc hai một đỉnh",
+    "Không tính được $\\arg\\max$",
+    "Chỉ dùng được cho hành động rời rạc",
+    "Cần lấy mẫu rất nhiều"
+   ],
+   "answer": 0,
+   "explain": "Không biểu diễn được $Q$ nhiều đỉnh.",
+   "ref": "8.3"
+  },
+  {
+   "q": "Phương án 4 trong chương này dẫn tới phương pháp nào?",
+   "options": [
+    "Diễn viên-nhà phê bình (kết hợp PPO và DQN)",
+    "Q-learning dạng bảng",
+    "Lặp giá trị",
+    "Monte Carlo"
+   ],
+   "answer": 0,
+   "explain": "Diễn viên ra hành động liên tục trực tiếp, nhà phê bình đánh giá.",
+   "ref": "8.4"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p8-argmax",
+   "ref": "8.3",
+   "title": "$\\arg\\max$ của hàm Q bậc hai là $\\boldsymbol\\mu$",
+   "start": "$Q(\\boldsymbol s, \\boldsymbol a) = -\\big(\\boldsymbol a - \\boldsymbol{\\mu}(\\boldsymbol s)\\big)^{\\mathrm T}\\boldsymbol{\\Sigma}(\\boldsymbol s)\\big(\\boldsymbol a - \\boldsymbol{\\mu}(\\boldsymbol s)\\big) + V(\\boldsymbol s)$, $\\boldsymbol\\Sigma$ xác định dương: $\\boldsymbol x^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol x > 0$ với mọi $\\boldsymbol x \\ne \\boldsymbol 0$.",
+   "goal": "$$Q(\\boldsymbol s, \\boldsymbol a) \\le V(\\boldsymbol s),\\ \\text{dấu bằng chỉ khi } \\boldsymbol a = \\boldsymbol{\\mu}(\\boldsymbol s)$$",
+   "steps": [
+    {
+     "tex": "\\text{Đặt } \\boldsymbol x = \\boldsymbol a - \\boldsymbol\\mu:\\quad Q = -\\boldsymbol x^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol x + V"
+    },
+    {
+     "tex": "\\boldsymbol x \\ne \\boldsymbol 0 \\Rightarrow \\boldsymbol x^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol x > 0 \\Rightarrow Q < V",
+     "why": {
+      "options": [
+       "Định nghĩa xác định dương, rồi đổi dấu do dấu trừ",
+       "Bất đẳng thức tam giác",
+       "Luật số lớn",
+       "Vì $V > 0$"
+      ],
+      "answer": 0,
+      "explain": "Trừ đi một số dương thì nhỏ hơn $V$."
+     }
+    },
+    {
+     "tex": "\\boldsymbol x = \\boldsymbol 0 \\ (\\boldsymbol a = \\boldsymbol\\mu) \\Rightarrow Q = V",
+     "why": {
+      "options": [
+       "Số hạng bậc hai bằng 0",
+       "Vì $\\boldsymbol\\Sigma = \\boldsymbol 0$",
+       "Vì $V = 0$",
+       "Do chuẩn hóa"
+      ],
+      "answer": 0,
+      "explain": "$\\boldsymbol 0^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol 0 = 0$."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ \\arg\\max_{\\boldsymbol a} Q(\\boldsymbol s, \\boldsymbol a) = \\boldsymbol\\mu(\\boldsymbol s),\\quad \\max_{\\boldsymbol a} Q = V(\\boldsymbol s)",
+     "why": {
+      "options": [
+       "Mọi điểm khác cho giá trị nhỏ hơn, điểm $\\boldsymbol\\mu$ đạt đúng $V$",
+       "Đạo hàm bậc hai dương",
+       "Vì $Q$ tuyến tính",
+       "Vì $\\boldsymbol\\mu$ ngẫu nhiên"
+      ],
+      "answer": 0,
+      "explain": "Cực đại toàn cục, duy nhất, không cần tìm kiếm."
+     }
+    }
+   ],
+   "hints": [
+    "Đổi biến $\\boldsymbol x = \\boldsymbol a - \\boldsymbol\\mu$.",
+    "Dấu của $\\boldsymbol x^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol x$ khi $\\boldsymbol x \\ne \\boldsymbol 0$?"
+   ],
+   "note": "Hệ quả thú vị: $V(\\boldsymbol s) = \\max_{\\boldsymbol a}Q(\\boldsymbol s, \\boldsymbol a)$ đúng như định nghĩa giá trị trạng thái của chính sách tham lam, và $A = Q - V \\le 0$: đó là lý do gọi là normalized advantage functions."
+  },
+  {
+   "id": "p8-llt",
+   "ref": "8.3 (bổ sung)",
+   "title": "$\\boldsymbol L\\boldsymbol L^{\\mathrm T}$ là ma trận xác định dương",
+   "start": "Bổ sung của người dịch. $\\boldsymbol L$ là ma trận tam giác dưới với các phần tử đường chéo **khác 0** (mạng thường dùng $e^{(\\cdot)}$ cho đường chéo để luôn dương). $\\boldsymbol\\Sigma = \\boldsymbol L\\boldsymbol L^{\\mathrm T}$.",
+   "goal": "$$\\boldsymbol x^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol x > 0\\quad\\text{với mọi } \\boldsymbol x \\ne \\boldsymbol 0$$",
+   "steps": [
+    {
+     "tex": "\\boldsymbol x^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol x = \\boldsymbol x^{\\mathrm T}\\boldsymbol L\\boldsymbol L^{\\mathrm T}\\boldsymbol x"
+    },
+    {
+     "tex": "= \\big(\\boldsymbol L^{\\mathrm T}\\boldsymbol x\\big)^{\\mathrm T}\\big(\\boldsymbol L^{\\mathrm T}\\boldsymbol x\\big) = \\big\\|\\boldsymbol L^{\\mathrm T}\\boldsymbol x\\big\\|^2",
+     "why": {
+      "options": [
+       "$(\\boldsymbol A\\boldsymbol B)^{\\mathrm T} = \\boldsymbol B^{\\mathrm T}\\boldsymbol A^{\\mathrm T}$ nên $\\boldsymbol x^{\\mathrm T}\\boldsymbol L = (\\boldsymbol L^{\\mathrm T}\\boldsymbol x)^{\\mathrm T}$",
+       "Vì $\\boldsymbol L$ đối xứng",
+       "Vì $\\boldsymbol L = \\boldsymbol I$",
+       "Khai triển Taylor"
+      ],
+      "answer": 0,
+      "explain": "Tích vô hướng của một vectơ với chính nó là bình phương độ dài."
+     }
+    },
+    {
+     "tex": "\\ge 0",
+     "why": {
+      "options": [
+       "Bình phương độ dài không âm",
+       "Vì mọi phần tử của $\\boldsymbol L$ dương",
+       "Vì $\\boldsymbol x$ dương",
+       "Định nghĩa vết"
+      ],
+      "answer": 0,
+      "explain": "Vậy $\\boldsymbol\\Sigma$ luôn ít nhất là nửa xác định dương; $\\boldsymbol\\Sigma$ cũng đối xứng vì $(\\boldsymbol L\\boldsymbol L^{\\mathrm T})^{\\mathrm T} = \\boldsymbol L\\boldsymbol L^{\\mathrm T}$."
+     }
+    },
+    {
+     "tex": "\\boldsymbol x \\ne \\boldsymbol 0 \\Rightarrow \\boldsymbol L^{\\mathrm T}\\boldsymbol x \\ne \\boldsymbol 0 \\Rightarrow \\big\\|\\boldsymbol L^{\\mathrm T}\\boldsymbol x\\big\\|^2 > 0",
+     "why": {
+      "options": [
+       "$\\boldsymbol L$ tam giác với đường chéo khác 0 nên khả nghịch ($\\det = \\prod L_{ii} \\ne 0$)",
+       "Vì $\\boldsymbol x$ có chuẩn bằng 1",
+       "Vì tổng các phần tử dương",
+       "Vì $\\boldsymbol L$ trực giao"
+      ],
+      "answer": 0,
+      "explain": "Ma trận khả nghịch không biến vectơ khác 0 thành 0."
+     }
+    }
+   ],
+   "hints": [
+    "Viết $\\boldsymbol x^{\\mathrm T}\\boldsymbol L$ thành chuyển vị của một vectơ.",
+    "Khi nào $\\boldsymbol L^{\\mathrm T}\\boldsymbol x = \\boldsymbol 0$?"
+   ],
+   "note": "Nhờ vậy mạng tự do đưa ra các số bất kỳ cho phần dưới đường chéo của $\\boldsymbol L$ (và số dương cho đường chéo), $\\boldsymbol\\Sigma$ vẫn luôn hợp lệ. Xem tab Sơ đồ: nhập thẳng $\\boldsymbol\\Sigma$ thì có thể ra điểm yên ngựa."
+  },
+  {
+   "id": "p8-grad",
+   "ref": "8.2–8.3 (bổ sung)",
+   "title": "Gradient ascent trên hàm Q bậc hai hội tụ về $\\boldsymbol\\mu$",
+   "start": "Bổ sung của người dịch. $Q(\\boldsymbol a) = -(\\boldsymbol a - \\boldsymbol\\mu)^{\\mathrm T}\\boldsymbol\\Sigma(\\boldsymbol a - \\boldsymbol\\mu) + V$, $\\boldsymbol\\Sigma$ đối xứng xác định dương. Gradient ascent: $\\boldsymbol a \\leftarrow \\boldsymbol a + \\eta\\nabla_{\\boldsymbol a}Q$.",
+   "goal": "$$\\boldsymbol a_{k+1} - \\boldsymbol\\mu = (\\boldsymbol I - 2\\eta\\boldsymbol\\Sigma)(\\boldsymbol a_k - \\boldsymbol\\mu)$$",
+   "steps": [
+    {
+     "tex": "\\nabla_{\\boldsymbol a}\\big[\\boldsymbol x^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol x\\big] = (\\boldsymbol\\Sigma + \\boldsymbol\\Sigma^{\\mathrm T})\\boldsymbol x = 2\\boldsymbol\\Sigma\\boldsymbol x,\\quad \\boldsymbol x = \\boldsymbol a - \\boldsymbol\\mu"
+    },
+    {
+     "tex": "\\Rightarrow\\ \\nabla_{\\boldsymbol a}Q = -2\\boldsymbol\\Sigma(\\boldsymbol a - \\boldsymbol\\mu)",
+     "why": {
+      "options": [
+       "Dấu trừ phía trước; $V$ không phụ thuộc $\\boldsymbol a$",
+       "Vì $\\boldsymbol\\Sigma = \\boldsymbol I$",
+       "Quy tắc thương",
+       "Mẹo đạo hàm logarit"
+      ],
+      "answer": 0,
+      "explain": "Đạo hàm của hằng số $V$ bằng 0."
+     }
+    },
+    {
+     "tex": "\\boldsymbol a_{k+1} = \\boldsymbol a_k - 2\\eta\\boldsymbol\\Sigma(\\boldsymbol a_k - \\boldsymbol\\mu)",
+     "why": {
+      "options": [
+       "Thay gradient vào luật cập nhật",
+       "Chuẩn hóa",
+       "Đổi biến",
+       "Lấy kỳ vọng"
+      ],
+      "answer": 0,
+      "explain": "$\\boldsymbol a + \\eta\\nabla Q$."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ \\boldsymbol a_{k+1} - \\boldsymbol\\mu = (\\boldsymbol I - 2\\eta\\boldsymbol\\Sigma)(\\boldsymbol a_k - \\boldsymbol\\mu)",
+     "why": {
+      "options": [
+       "Trừ $\\boldsymbol\\mu$ hai vế rồi đặt nhân tử chung",
+       "Bất đẳng thức tam giác",
+       "Vì $\\eta = 1$",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Sai lệch so với $\\boldsymbol\\mu$ bị nhân với $\\boldsymbol I - 2\\eta\\boldsymbol\\Sigma$ mỗi bước: hội tụ nếu $0 < \\eta < 1/\\lambda_{\\max}(\\boldsymbol\\Sigma)$."
+     }
+    }
+   ],
+   "hints": [
+    "Gradient của dạng toàn phương $\\boldsymbol x^{\\mathrm T}\\boldsymbol\\Sigma\\boldsymbol x$ với $\\boldsymbol\\Sigma$ đối xứng?",
+    "Gom các số hạng chứa $\\boldsymbol a_k - \\boldsymbol\\mu$."
+   ],
+   "note": "Với hàm bậc hai thì gradient ascent chắc chắn tới $\\boldsymbol\\mu$ (chỉ một đỉnh), nhưng vẫn cần nhiều bước; phương án 3 đọc thẳng ra $\\boldsymbol\\mu$. Với $Q$ tổng quát nhiều đỉnh, gradient ascent có thể kẹt cực đại cục bộ (tab Thí nghiệm)."
+  }
+ ]
+}
