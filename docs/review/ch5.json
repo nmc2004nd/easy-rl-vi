@@ -1,0 +1,738 @@
+{
+ "chapter": 5,
+ "title": "Chương 5 · Thuật toán PPO",
+ "chapterLink": "../#/chapter5/chapter5_vi",
+ "exerciseLink": "../#/chapter5/chapter5_questions&keywords_vi",
+ "extras": "ch5-extras.js",
+ "cards": [
+  {
+   "id": "c5-onoff",
+   "tag": "Khái niệm",
+   "ref": "5.1 · Từ khóa",
+   "front": "On-policy và off-policy khác nhau ở đâu?",
+   "back": "**On-policy**: tác tử cần học **chính là** tác tử tương tác với môi trường.\n**Off-policy**: tác tử cần học và tác tử tương tác với môi trường **không phải là một**.\nCâu hỏi then chốt: chính sách **sinh mẫu** có trùng với chính sách **đang được cập nhật** không."
+  },
+  {
+   "id": "c5-pg-onpolicy",
+   "tag": "Vì sao",
+   "ref": "5.1 · Bài tập 5-1",
+   "front": "Vì sao gradient chính sách là on-policy, và vì sao điều đó **kém hiệu quả**?",
+   "back": "$\\nabla\\bar R_\\theta = \\mathbb{E}_{\\tau\\sim p_\\theta(\\tau)}[R(\\tau)\\nabla\\log p_\\theta(\\tau)]$ là kỳ vọng theo quỹ đạo của **chính** $\\pi_\\theta$.\nCập nhật xong $\\theta \\to \\theta'$ thì dữ liệu cũ không còn là mẫu của $p_{\\theta'}$, phải **lấy mẫu lại**. Mỗi lô dữ liệu chỉ dùng cho **một** lần cập nhật, phần lớn thời gian dành cho lấy mẫu."
+  },
+  {
+   "id": "c5-off-benefit",
+   "tag": "Vì sao",
+   "ref": "5.1 · Bài tập 5-3",
+   "front": "Dùng một diễn viên $\\theta'$ khác để tương tác (\\\"làm mẫu\\\") có lợi gì?",
+   "back": "Dữ liệu do $\\theta'$ lấy mẫu **không phụ thuộc** $\\theta$, nên $\\theta'$ lấy mẫu **một lần** (nhiều một chút) và $\\theta$ được **cập nhật nhiều lần** trên cùng lô dữ liệu đó. Cập nhật đủ rồi mới lấy mẫu lại."
+  },
+  {
+   "id": "c5-mc-est",
+   "tag": "Công thức",
+   "ref": "5.1 · (5.2)",
+   "front": "Ước lượng $\\mathbb{E}_{x\\sim p}[f(x)]$ khi lấy mẫu được từ $p$?",
+   "back": "$$\\mathbb{E}_{x\\sim p}[f(x)] \\approx \\frac{1}{N}\\sum_{i=1}^{N} f(x^i), \\qquad x^i \\sim p$$\nCông thức này **chỉ đúng** khi các $x^i$ được lấy mẫu từ chính $p$."
+  },
+  {
+   "id": "c5-is",
+   "tag": "Công thức",
+   "ref": "5.1 · (5.3)",
+   "front": "Viết công thức lấy mẫu theo trọng số quan trọng (importance sampling). Trọng số quan trọng là gì?",
+   "back": "$$\\mathbb{E}_{x\\sim p}[f(x)] = \\mathbb{E}_{x\\sim q}\\Big[f(x)\\,\\frac{p(x)}{q(x)}\\Big]$$\nLấy mẫu từ $q$, mỗi mẫu nhân **trọng số quan trọng** $\\frac{p(x)}{q(x)}$ để bù chênh lệch giữa hai phân phối.\nVì $\\int f p\\,\\mathrm{d}x = \\int f\\frac{p}{q}\\,q\\,\\mathrm{d}x$."
+  },
+  {
+   "id": "c5-support",
+   "tag": "Vì sao",
+   "ref": "5.1",
+   "front": "Phân phối $q$ trong importance sampling phải thỏa điều kiện gì?",
+   "back": "Không được có chỗ $q(x) = 0$ mà $p(x) \\ne 0$, vì khi đó $\\frac{p(x)}{q(x)}$ **không xác định** (và vùng đó không bao giờ được lấy mẫu).\nNếu $q(x) = 0$ thì $p(x)$ cũng phải bằng 0."
+  },
+  {
+   "id": "c5-is-calc",
+   "tag": "Tính tay",
+   "ref": "5.1 · (5.3)",
+   "front": "$x \\in \\{1, 2\\}$, $p = (0{,}8;\\ 0{,}2)$, $q = (0{,}2;\\ 0{,}8)$, $f(1) = -1$, $f(2) = 2$. Tính $\\mathbb{E}_p[f]$ trực tiếp và bằng importance sampling.",
+   "back": "Trực tiếp: $0{,}8\\cdot(-1) + 0{,}2\\cdot 2 = -0{,}4$.\nTrọng số: $\\frac{p}{q} = (4;\\ 0{,}25)$.\n$$\\mathbb{E}_q\\Big[f\\frac{p}{q}\\Big] = 0{,}2\\cdot(-1)\\cdot 4 + 0{,}8\\cdot 2\\cdot 0{,}25 = -0{,}8 + 0{,}4 = -0{,}4$$\nHai cách cho cùng kết quả."
+  },
+  {
+   "id": "c5-var",
+   "tag": "Công thức",
+   "ref": "5.1",
+   "front": "Phương sai của $f(x)$ dưới $p$ và của $f(x)\\frac{p(x)}{q(x)}$ dưới $q$ khác nhau thế nào?",
+   "back": "$$\\operatorname{Var}_{x\\sim p}[f] = \\mathbb{E}_{x\\sim p}[f^2] - \\big(\\mathbb{E}_{x\\sim p}[f]\\big)^2$$\n$$\\operatorname{Var}_{x\\sim q}\\Big[f\\frac{p}{q}\\Big] = \\mathbb{E}_{x\\sim p}\\Big[f^2\\frac{p}{q}\\Big] - \\big(\\mathbb{E}_{x\\sim p}[f]\\big)^2$$\nKhác ở số hạng đầu: nhân thêm $\\frac{p}{q}$. $p$ và $q$ càng khác nhau, phương sai càng lớn."
+  },
+  {
+   "id": "c5-var-calc",
+   "tag": "Tính tay",
+   "ref": "5.1",
+   "front": "Cùng ví dụ $p = (0{,}8;\\ 0{,}2)$, $q = (0{,}2;\\ 0{,}8)$, $f = (-1;\\ 2)$. So sánh $\\operatorname{Var}_p[f]$ và $\\operatorname{Var}_q[f\\,p/q]$.",
+   "back": "$\\mathbb{E}_p[f^2] = 0{,}8\\cdot 1 + 0{,}2\\cdot 4 = 1{,}6$ nên $\\operatorname{Var}_p[f] = 1{,}6 - 0{,}16 = 1{,}44$.\n$\\mathbb{E}_p[f^2 \\tfrac{p}{q}] = 0{,}8\\cdot 1\\cdot 4 + 0{,}2\\cdot 4\\cdot 0{,}25 = 3{,}4$ nên $\\operatorname{Var}_q = 3{,}4 - 0{,}16 = 3{,}24$.\nCùng trung bình $-0{,}4$ nhưng phương sai **gấp hơn 2 lần**."
+  },
+  {
+   "id": "c5-fig51",
+   "tag": "Ví dụ",
+   "ref": "5.1 · Hình 5.1",
+   "front": "Hình 5.1: $p$ lệch trái, $q$ lệch phải, $f$ âm bên trái và dương bên phải. Lấy **ít** mẫu từ $q$ thì chuyện gì xảy ra?",
+   "back": "$\\mathbb{E}_p[f]$ thật là **âm**. Nhưng mẫu từ $q$ gần như toàn rơi bên phải, $f\\frac{p}{q}$ đều dương, nên ước lượng ra **dương**: sai cả dấu.\nThỉnh thoảng lấy được một điểm bên trái, nơi $p$ lớn còn $q$ nhỏ: trọng số **rất lớn** kéo kết quả về âm. Phải lấy mẫu **đủ nhiều** thì mới đúng.\nĐó là vấn đề khi $p$ và $q$ khác nhau quá nhiều."
+  },
+  {
+   "id": "c5-off-pg",
+   "tag": "Công thức",
+   "ref": "5.1 · (5.4)",
+   "front": "Gradient chính sách khi dữ liệu do $\\theta'$ lấy mẫu?",
+   "back": "$$\\nabla\\bar R_\\theta = \\mathbb{E}_{\\tau\\sim p_{\\theta'}(\\tau)}\\Big[\\frac{p_\\theta(\\tau)}{p_{\\theta'}(\\tau)}\\,R(\\tau)\\,\\nabla\\log p_\\theta(\\tau)\\Big]$$\nThay phân phối lấy mẫu $p_\\theta$ bằng $p_{\\theta'}$ và nhân trọng số quan trọng của **cả quỹ đạo**."
+  },
+  {
+   "id": "c5-sa-form",
+   "tag": "Công thức",
+   "ref": "5.1 · (5.5)",
+   "front": "Dạng theo từng cặp trạng thái-hành động (5.5) của gradient off-policy?",
+   "back": "$$\\mathbb{E}_{(s_t,a_t)\\sim\\pi_{\\theta'}}\\Big[\\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}\\,A^{\\theta'}(s_t, a_t)\\,\\nabla\\log p_\\theta(a_t^n \\mid s_t^n)\\Big]$$\nĐã dùng hai xấp xỉ: $A^\\theta \\approx A^{\\theta'}$ và $p_\\theta(s_t) \\approx p_{\\theta'}(s_t)$."
+  },
+  {
+   "id": "c5-approx",
+   "tag": "Vì sao",
+   "ref": "5.1",
+   "front": "Vì sao được giả sử $p_\\theta(s_t) = p_{\\theta'}(s_t)$?",
+   "back": "1. Trạng thái nhìn thấy thường ít phụ thuộc hành động (các khung hình Atari gần giống nhau).\n2. Lý do trực tiếp hơn: $p_\\theta(s_t)$ **gần như không tính được**; với ảnh, cùng một $s_t$ có khi không bao giờ xuất hiện lần hai.\nCòn $p_\\theta(a_t \\mid s_t)$ thì **dễ tính**: đưa $s_t$ vào mạng chính sách là có."
+  },
+  {
+   "id": "c5-ratio",
+   "tag": "Khái niệm",
+   "ref": "5.1",
+   "front": "Tỉ số $\\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}$ tính bằng cách nào?",
+   "back": "Đưa $s_t$ vào **hai** mạng chính sách $\\theta$ và $\\theta'$, lấy xác suất của hành động $a_t$ ở mỗi mạng rồi chia.\nChỉ cần biết tham số của $\\theta$ và $\\theta'$; không cần mô hình môi trường."
+  },
+  {
+   "id": "c5-objective",
+   "tag": "Công thức",
+   "ref": "5.1",
+   "front": "Hàm mục tiêu $J^{\\theta'}(\\theta)$ của importance sampling là gì? Suy ra từ đâu?",
+   "back": "$$J^{\\theta'}(\\theta) = \\mathbb{E}_{(s_t,a_t)\\sim\\pi_{\\theta'}}\\Big[\\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}\\,A^{\\theta'}(s_t, a_t)\\Big]$$\nSuy ngược từ gradient (5.5) bằng $\\nabla f = f\\nabla\\log f$; khi lấy gradient theo $\\theta$ thì $p_{\\theta'}(a_t \\mid s_t)$ và $A^{\\theta'}$ là **hằng số**."
+  },
+  {
+   "id": "c5-jnotation",
+   "tag": "Khái niệm",
+   "ref": "5.1",
+   "front": "Trong ký hiệu $J^{\\theta'}(\\theta)$, $\\theta$ và $\\theta'$ đóng vai trò gì?",
+   "back": "$\\theta$ (trong ngoặc): tham số **cần tối ưu**.\n$\\theta'$ (chỉ số trên): diễn viên **làm mẫu**, tức thứ thực sự tương tác với môi trường để sinh dữ liệu."
+  },
+  {
+   "id": "c5-ppo-why",
+   "tag": "Vì sao",
+   "ref": "5.2",
+   "front": "PPO ra đời để giải quyết vấn đề gì của importance sampling?",
+   "back": "Nếu $p_\\theta(a_t \\mid s_t)$ và $p_{\\theta'}(a_t \\mid s_t)$ **chênh lệch quá nhiều**, phương sai lớn và kết quả không tốt.\nPPO thêm cơ chế giữ $\\theta$ **gần** $\\theta'$ trong lúc cập nhật nhiều lần."
+  },
+  {
+   "id": "c5-ppo-obj",
+   "tag": "Công thức",
+   "ref": "5.2 · (5.6)",
+   "front": "Hàm mục tiêu của PPO (bản có độ phân kỳ KL)?",
+   "back": "$$J^{\\theta'}_{\\mathrm{PPO}}(\\theta) = J^{\\theta'}(\\theta) - \\beta\\,\\mathrm{KL}(\\theta, \\theta')$$\nSố hạng KL giống **chính quy hóa**: phạt khi $\\theta$ đi xa $\\theta'$."
+  },
+  {
+   "id": "c5-ppo-onpolicy",
+   "tag": "Vì sao",
+   "ref": "5.2",
+   "front": "PPO dùng importance sampling, vậy PPO là on-policy hay off-policy? Vì sao?",
+   "back": "**On-policy**. PPO chỉ dùng dữ liệu của chính sách **vòng trước** $\\theta'$, và ràng buộc KL giữ $\\theta$ rất gần $\\theta'$, nên chính sách hành vi và chính sách mục tiêu có thể coi là **cùng một** chính sách.\nDữ liệu cũ hơn một vòng thì bị bỏ."
+  },
+  {
+   "id": "c5-trpo",
+   "tag": "So sánh",
+   "ref": "5.2 · Câu hỏi 5-3",
+   "front": "TRPO khác PPO ở đâu? Vì sao thường dùng PPO?",
+   "back": "$$J^{\\theta'}_{\\mathrm{TRPO}}(\\theta) = \\mathbb{E}\\Big[\\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}A^{\\theta'}\\Big], \\qquad \\mathrm{KL}(\\theta, \\theta') < \\delta$$\nTRPO đặt KL thành **ràng buộc** riêng, khó xử lý với tối ưu dựa trên gradient. PPO đưa KL **vào hàm mục tiêu** (hoặc dùng cắt), tối ưu bậc một bằng gradient ascent.\nHiệu năng gần như nhau, PPO **dễ cài đặt** hơn nhiều."
+  },
+  {
+   "id": "c5-kl-behavior",
+   "tag": "Vì sao",
+   "ref": "5.2 · Bài tập 5-4",
+   "front": "$\\mathrm{KL}(\\theta, \\theta')$ trong PPO đo khoảng cách gì? Vì sao không dùng chuẩn L1/L2 của tham số?",
+   "back": "Đo **khoảng cách hành vi**: ở cùng trạng thái $s$, so phân phối hành động $p_\\theta(\\cdot \\mid s)$ với $p_{\\theta'}(\\cdot \\mid s)$, rồi lấy **trung bình** theo các trạng thái.\nTham số đổi ít có thể làm hành động đổi nhiều, và ngược lại (ví dụ cộng cùng một số vào mọi logit softmax: tham số đổi, hành vi **không đổi**). Thứ ta quan tâm là hành động."
+  },
+  {
+   "id": "c5-kl-calc",
+   "tag": "Tính tay",
+   "ref": "5.2",
+   "front": "Ở một trạng thái, $p_\\theta = (0{,}5;\\ 0{,}5)$, $p_{\\theta'} = (0{,}8;\\ 0{,}2)$. Tính $\\mathrm{KL}(p_\\theta \\,\\|\\, p_{\\theta'}) = \\sum_a p_\\theta(a)\\log\\frac{p_\\theta(a)}{p_{\\theta'}(a)}$.",
+   "back": "$$0{,}5\\log\\frac{0{,}5}{0{,}8} + 0{,}5\\log\\frac{0{,}5}{0{,}2} = 0{,}5(-0{,}470) + 0{,}5(0{,}916) \\approx 0{,}223$$\nKL $\\ge 0$, bằng 0 khi hai phân phối trùng nhau; nói chung **không đối xứng**."
+  },
+  {
+   "id": "c5-ppo1",
+   "tag": "Khái niệm",
+   "ref": "5.2.1",
+   "front": "Các bước của PPO1 (PPO phạt) trong một vòng lặp?",
+   "back": "1. Dùng $\\theta^k$ (từ vòng trước) tương tác, thu nhiều cặp $(s_t, a_t)$.\n2. Ước lượng $A^{\\theta^k}(s_t, a_t)$.\n3. Cập nhật $\\theta$ **nhiều lần** để tối đa hóa $J^{\\theta^k}_{\\mathrm{PPO}}(\\theta) = J^{\\theta^k}(\\theta) - \\beta\\,\\mathrm{KL}(\\theta, \\theta^k)$.\nNhờ importance sampling, $\\theta$ lệch khỏi $\\theta^k$ một chút vẫn huấn luyện được."
+  },
+  {
+   "id": "c5-adaptive",
+   "tag": "Công thức",
+   "ref": "5.2.1",
+   "front": "Phạt KL thích nghi (adaptive KL penalty) điều chỉnh $\\beta$ thế nào?",
+   "back": "Đặt trước $\\mathrm{KL}_{\\max}$ và $\\mathrm{KL}_{\\min}$. Sau khi tối ưu:\n- $\\mathrm{KL}(\\theta, \\theta^k) > \\mathrm{KL}_{\\max}$: phạt chưa đủ tác dụng → **tăng** $\\beta$.\n- $\\mathrm{KL}(\\theta, \\theta^k) < \\mathrm{KL}_{\\min}$: phạt quá mạnh, $\\theta$ gần như không đổi → **giảm** $\\beta$."
+  },
+  {
+   "id": "c5-ppo2",
+   "tag": "Công thức",
+   "ref": "5.2.2 · (5.8)",
+   "front": "Hàm mục tiêu của PPO2 (PPO cắt)?",
+   "back": "$$J^{\\theta^k}_{\\mathrm{PPO2}}(\\theta) \\approx \\sum_{(s_t,a_t)}\\min\\Big(r_t A^{\\theta^k},\\ \\operatorname{clip}(r_t, 1-\\varepsilon, 1+\\varepsilon)\\,A^{\\theta^k}\\Big)$$\nvới $r_t = \\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta^k}(a_t \\mid s_t)}$. Không có KL; $\\varepsilon$ thường bằng $0{,}1$ hoặc $0{,}2$."
+  },
+  {
+   "id": "c5-clipfn",
+   "tag": "Khái niệm",
+   "ref": "5.2.2 · Hình 5.2",
+   "front": "Hàm $\\operatorname{clip}(r, 1-\\varepsilon, 1+\\varepsilon)$ cho ra gì?",
+   "back": "- $r < 1-\\varepsilon$: ra $1-\\varepsilon$.\n- $r > 1+\\varepsilon$: ra $1+\\varepsilon$.\n- Ở giữa: ra chính $r$.\nVới $\\varepsilon = 0{,}2$: kẹp $r$ vào đoạn $[0{,}8;\\ 1{,}2]$."
+  },
+  {
+   "id": "c5-clip-pos",
+   "tag": "Vì sao",
+   "ref": "5.2.2 · Hình 5.3a",
+   "front": "Khi $A > 0$, mục tiêu PPO2 khuyến khích gì và dừng ở đâu?",
+   "back": "Hành động tốt nên muốn **tăng** $p_\\theta(a_t \\mid s_t)$. Nhưng khi $r_t$ vượt $1+\\varepsilon$, mục tiêu thành hằng số $(1+\\varepsilon)A$: tăng tiếp **không còn lợi**, gradient bằng 0.\nNếu $r_t < 1$ (xác suất đang thấp hơn chính sách cũ) thì không bị cắt: vẫn được kéo lên."
+  },
+  {
+   "id": "c5-clip-neg",
+   "tag": "Vì sao",
+   "ref": "5.2.2 · Hình 5.3b",
+   "front": "Khi $A < 0$, mục tiêu PPO2 khuyến khích gì và dừng ở đâu?",
+   "back": "Hành động tồi nên muốn **giảm** $p_\\theta(a_t \\mid s_t)$, nhưng chỉ tới khi $r_t = 1-\\varepsilon$; giảm tiếp không còn lợi.\nNếu $r_t > 1$ (xác suất đang **cao hơn** chính sách cũ) thì không bị cắt: vẫn được kéo xuống."
+  },
+  {
+   "id": "c5-clip-calc",
+   "tag": "Tính tay",
+   "ref": "5.2.2",
+   "front": "$\\varepsilon = 0{,}2$. Tính số hạng $\\min(rA,\\ \\operatorname{clip}(r)A)$ cho: (a) $r = 1{,}5,\\ A = 2$; (b) $r = 0{,}5,\\ A = 2$; (c) $r = 0{,}5,\\ A = -2$; (d) $r = 1{,}5,\\ A = -2$.",
+   "back": "(a) $\\min(3;\\ 2{,}4) = 2{,}4$: **bị cắt**.\n(b) $\\min(1;\\ 1{,}6) = 1$: không cắt, còn gradient kéo lên.\n(c) $\\min(-1;\\ -1{,}6) = -1{,}6$: **bị cắt**.\n(d) $\\min(-3;\\ -2{,}4) = -3$: không cắt, còn gradient kéo xuống."
+  },
+  {
+   "id": "c5-clip-min",
+   "tag": "Vì sao",
+   "ref": "5.2.2 (bổ sung)",
+   "front": "Vì sao PPO2 lấy $\\min$ của hai số hạng thay vì chỉ dùng số hạng đã cắt?",
+   "back": "$\\min$ cho một **cận dưới bi quan**: chỉ cắt khi $r$ đã đi quá xa theo hướng **có lợi** cho mục tiêu (A>0 và $r$ lớn, hoặc A<0 và $r$ nhỏ).\nNếu $r$ đã đi theo hướng **có hại** (A>0 mà $r$ nhỏ, A<0 mà $r$ lớn) thì giữ số hạng chưa cắt để gradient **sửa lại**. Chỉ dùng số hạng cắt thì những chỗ đó gradient cũng bằng 0, không sửa được."
+  },
+  {
+   "id": "c5-clip-grad",
+   "tag": "Vì sao",
+   "ref": "5.2.2 (bổ sung)",
+   "front": "Khi một mẫu bị cắt, nó đóng góp gì vào gradient?",
+   "back": "**Không gì cả**: số hạng thành hằng số $(1\\pm\\varepsilon)A$, đạo hàm theo $\\theta$ bằng 0.\nVì vậy cập nhật nhiều lần trên cùng lô dữ liệu tự \\\"dừng\\\" với những mẫu đã đi đủ xa, giữ $\\theta$ gần $\\theta^k$ mà không cần tính KL."
+  },
+  {
+   "id": "c5-ppo-perf",
+   "tag": "Ví dụ",
+   "ref": "5.2.2 · Hình 5.4",
+   "front": "Hình 5.4 so sánh PPO với các thuật toán khác thế nào?",
+   "back": "Trên nhiều nhiệm vụ, PPO (đường tím) **thường tốt nhất hoặc tốt nhì**, so với A2C, A2C + vùng tin cậy và các phương pháp khác.\nPPO là thuật toán học tăng cường **mặc định** của OpenAI."
+  },
+  {
+   "id": "c5-sarsa-q",
+   "tag": "So sánh",
+   "ref": "Câu hỏi 5-2",
+   "front": "Theo định nghĩa on/off-policy, Sarsa và Q-learning thuộc loại nào?",
+   "back": "**Sarsa: on-policy**: hành động dùng để cập nhật $a_{t+1}$ chính là hành động sẽ thực hiện theo chính sách hiện tại.\n**Q-learning: off-policy**: cập nhật dùng $\\max_a Q(s_{t+1}, a)$ (chính sách tham lam), trong khi hành động thực hiện có thể là $\\varepsilon$-tham lam."
+  },
+  {
+   "id": "c5-pg-vs-ppo",
+   "tag": "So sánh",
+   "ref": "5.2",
+   "front": "So sánh cách dùng dữ liệu của gradient chính sách thường và PPO.",
+   "back": "**Gradient chính sách**: lấy mẫu → cập nhật **1 lần** → bỏ dữ liệu.\n**PPO**: lấy mẫu bằng $\\theta^k$ → cập nhật **nhiều lần** (nhiều epoch, minibatch) trên cùng lô, có trọng số $r_t$ và cắt/phạt KL → $\\theta^{k+1}$ → lấy mẫu lại.\nHiệu quả dữ liệu cao hơn mà vẫn ổn định."
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Thuật toán nào sau đây là **on-policy**?",
+   "options": [
+    "Sarsa",
+    "Q-learning",
+    "Học từ dữ liệu do người chơi khác ghi lại",
+    "DQN có bộ nhớ kinh nghiệm"
+   ],
+   "answer": 0,
+   "explain": "Sarsa cập nhật bằng chính hành động mà chính sách hiện tại sẽ thực hiện.",
+   "ref": "5.1 · Câu hỏi 5-2"
+  },
+  {
+   "q": "Vì sao gradient chính sách thường chỉ dùng mỗi lô dữ liệu một lần?",
+   "options": [
+    "Gradient là kỳ vọng theo quỹ đạo của chính sách hiện tại; cập nhật xong thì dữ liệu cũ không còn đúng phân phối",
+    "Vì bộ nhớ không đủ",
+    "Vì phần thưởng đã được chiết khấu",
+    "Vì dữ liệu cũ bị nhiễu"
+   ],
+   "answer": 0,
+   "explain": "$\\mathbb{E}_{\\tau\\sim p_\\theta}$ đổi khi $\\theta$ đổi.",
+   "ref": "5.1"
+  },
+  {
+   "q": "Importance sampling: $\\mathbb{E}_{x\\sim p}[f(x)]$ bằng:",
+   "options": [
+    "$\\mathbb{E}_{x\\sim q}\\big[f(x)\\frac{p(x)}{q(x)}\\big]$",
+    "$\\mathbb{E}_{x\\sim q}\\big[f(x)\\frac{q(x)}{p(x)}\\big]$",
+    "$\\mathbb{E}_{x\\sim q}[f(x)]$",
+    "$\\mathbb{E}_{x\\sim p}\\big[f(x)\\frac{p(x)}{q(x)}\\big]$"
+   ],
+   "answer": 0,
+   "explain": "$\\int f p = \\int f\\frac{p}{q}q$.",
+   "ref": "5.1 · (5.3)"
+  },
+  {
+   "q": "Điều kiện bắt buộc với $q$ khi dùng importance sampling:",
+   "options": [
+    "Nếu $q(x) = 0$ thì $p(x)$ cũng phải bằng 0",
+    "$q$ phải bằng $p$",
+    "$q$ phải là phân phối chuẩn",
+    "$q(x) > p(x)$ với mọi $x$"
+   ],
+   "answer": 0,
+   "explain": "Nếu không, trọng số $p/q$ không xác định và vùng đó không bao giờ được lấy mẫu.",
+   "ref": "5.1"
+  },
+  {
+   "q": "$p$ và $q$ có cùng $\\mathbb{E}_p[f] = \\mathbb{E}_q[f p/q]$. Phát biểu nào đúng?",
+   "options": [
+    "Phương sai có thể rất khác; $p, q$ càng khác thì $\\operatorname{Var}_q[f p/q]$ càng lớn",
+    "Phương sai luôn bằng nhau",
+    "Phương sai dưới $q$ luôn nhỏ hơn",
+    "Phương sai không phụ thuộc $q$"
+   ],
+   "answer": 0,
+   "explain": "$\\operatorname{Var}_q[f p/q] = \\mathbb{E}_p[f^2 p/q] - (\\mathbb{E}_p f)^2$.",
+   "ref": "5.1"
+  },
+  {
+   "q": "Hình 5.1: lấy rất ít mẫu từ $q$ (lệch phải). Ước lượng $\\mathbb{E}_q[f p/q]$ có thể...",
+   "options": [
+    "Dương, trong khi giá trị thật âm",
+    "Luôn đúng bằng giá trị thật",
+    "Luôn bằng 0",
+    "Không tính được"
+   ],
+   "answer": 0,
+   "explain": "Mẫu gần như toàn ở bên phải, nơi $f > 0$; các điểm bên trái (trọng số lớn) hiếm khi được lấy.",
+   "ref": "5.1 · Hình 5.1"
+  },
+  {
+   "q": "Khi chuyển sang dạng (5.5), xấp xỉ nào **không** được dùng?",
+   "options": [
+    "$p_\\theta(a_t \\mid s_t) = p_{\\theta'}(a_t \\mid s_t)$",
+    "$p_\\theta(s_t) = p_{\\theta'}(s_t)$",
+    "$A^\\theta \\approx A^{\\theta'}$",
+    "Cả ba đều được dùng"
+   ],
+   "answer": 0,
+   "explain": "Tỉ số $p_\\theta(a_t \\mid s_t)/p_{\\theta'}(a_t \\mid s_t)$ được **giữ lại** vì dễ tính; chỉ bỏ tỉ số của $p(s_t)$.",
+   "ref": "5.1 · (5.5)"
+  },
+  {
+   "q": "Trong $J^{\\theta'}(\\theta)$, khi lấy gradient theo $\\theta$ thì đại lượng nào là hằng số?",
+   "options": [
+    "$p_{\\theta'}(a_t \\mid s_t)$ và $A^{\\theta'}(s_t, a_t)$",
+    "$p_\\theta(a_t \\mid s_t)$",
+    "Cả tỉ số $p_\\theta/p_{\\theta'}$",
+    "Không có"
+   ],
+   "answer": 0,
+   "explain": "Chúng phụ thuộc $\\theta'$ (cố định), không phụ thuộc $\\theta$.",
+   "ref": "5.1"
+  },
+  {
+   "q": "Vì sao PPO được xem là thuật toán **on-policy**?",
+   "options": [
+    "Chỉ dùng dữ liệu của chính sách vòng trước và giữ $\\theta$ rất gần nó",
+    "Vì không dùng importance sampling",
+    "Vì dùng bộ nhớ kinh nghiệm",
+    "Vì dùng $\\max_a Q$"
+   ],
+   "answer": 0,
+   "explain": "Chính sách hành vi và chính sách mục tiêu gần như trùng nhau.",
+   "ref": "5.2"
+  },
+  {
+   "q": "TRPO khác PPO1 chủ yếu ở:",
+   "options": [
+    "TRPO đặt KL thành ràng buộc riêng; PPO đưa KL vào hàm mục tiêu",
+    "TRPO không dùng importance sampling",
+    "PPO không dùng lợi thế $A$",
+    "TRPO là off-policy còn PPO là on-policy"
+   ],
+   "answer": 0,
+   "explain": "Ràng buộc riêng khó xử lý với tối ưu bằng gradient, nên PPO dễ cài đặt hơn.",
+   "ref": "5.2"
+  },
+  {
+   "q": "KL trong PPO là khoảng cách giữa...",
+   "options": [
+    "Phân phối hành động của hai chính sách ở cùng trạng thái (trung bình theo trạng thái)",
+    "Hai vectơ tham số $\\theta$ và $\\theta'$",
+    "Hai hàm giá trị",
+    "Hai quỹ đạo"
+   ],
+   "answer": 0,
+   "explain": "Khoảng cách **hành vi**, không phải khoảng cách tham số.",
+   "ref": "5.2 · Bài tập 5-4"
+  },
+  {
+   "q": "Phạt KL thích nghi: sau khi tối ưu, $\\mathrm{KL}(\\theta, \\theta^k) > \\mathrm{KL}_{\\max}$. Cần làm gì?",
+   "options": [
+    "Tăng $\\beta$",
+    "Giảm $\\beta$",
+    "Giữ nguyên $\\beta$",
+    "Đặt $\\beta = 0$"
+   ],
+   "answer": 0,
+   "explain": "KL quá lớn nghĩa là phạt chưa đủ mạnh.",
+   "ref": "5.2.1"
+  },
+  {
+   "q": "$\\varepsilon = 0{,}2$, $r = 1{,}5$, $A = 2$. Số hạng của PPO2 bằng:",
+   "options": [
+    "$2{,}4$",
+    "$3$",
+    "$1{,}6$",
+    "$2$"
+   ],
+   "answer": 0,
+   "explain": "$\\min(1{,}5\\cdot 2;\\ 1{,}2\\cdot 2) = 2{,}4$.",
+   "ref": "5.2.2"
+  },
+  {
+   "q": "$\\varepsilon = 0{,}2$, $r = 1{,}5$, $A = -2$. Số hạng của PPO2 và gradient của nó?",
+   "options": [
+    "$-3$, vẫn có gradient (không bị cắt)",
+    "$-2{,}4$, gradient bằng 0",
+    "$-1{,}6$, gradient bằng 0",
+    "$3$, có gradient"
+   ],
+   "answer": 0,
+   "explain": "$\\min(-3;\\ -2{,}4) = -3$: $r$ đã đi theo hướng có hại nên không cắt, gradient kéo xác suất xuống.",
+   "ref": "5.2.2 (bổ sung)"
+  },
+  {
+   "q": "Khi $A > 0$ và $r_t > 1+\\varepsilon$, gradient của số hạng PPO2 theo $\\theta$ là:",
+   "options": [
+    "0",
+    "Dương, tiếp tục tăng xác suất",
+    "Âm",
+    "Không xác định"
+   ],
+   "answer": 0,
+   "explain": "Số hạng thành hằng số $(1+\\varepsilon)A$.",
+   "ref": "5.2.2"
+  },
+  {
+   "q": "Lợi ích chính của PPO so với gradient chính sách thường?",
+   "options": [
+    "Cập nhật nhiều lần trên cùng một lô dữ liệu mà vẫn ổn định",
+    "Không cần ước lượng lợi thế",
+    "Không cần mạng chính sách",
+    "Là off-policy hoàn toàn, dùng dữ liệu bất kỳ"
+   ],
+   "answer": 0,
+   "explain": "Importance sampling cho phép dùng lại dữ liệu; cắt hoặc phạt KL giữ $\\theta$ gần $\\theta^k$.",
+   "ref": "5.2"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p5-is",
+   "ref": "5.1 · (5.3)",
+   "title": "Lấy mẫu theo trọng số quan trọng",
+   "start": "$p, q$ là hai mật độ; $q(x) > 0$ ở mọi nơi $p(x) f(x) \\ne 0$.",
+   "goal": "$$\\mathbb{E}_{x\\sim p}[f(x)] = \\mathbb{E}_{x\\sim q}\\Big[f(x)\\frac{p(x)}{q(x)}\\Big]$$",
+   "steps": [
+    {
+     "tex": "\\mathbb{E}_{x\\sim p}[f(x)] = \\int f(x)\\,p(x)\\,\\mathrm{d}x"
+    },
+    {
+     "tex": "= \\int f(x)\\,\\frac{p(x)}{q(x)}\\,q(x)\\,\\mathrm{d}x",
+     "why": {
+      "options": [
+       "Nhân và chia cho $q(x) > 0$",
+       "Vì $p = q$",
+       "Luật số lớn",
+       "Đổi biến"
+      ],
+      "answer": 0,
+      "explain": "Nhân chia cùng một số dương không đổi giá trị; cần $q(x) > 0$ ở những nơi có đóng góp."
+     }
+    },
+    {
+     "tex": "= \\mathbb{E}_{x\\sim q}\\Big[f(x)\\frac{p(x)}{q(x)}\\Big]",
+     "why": {
+      "options": [
+       "Tích phân có trọng số $q(x)$ là kỳ vọng theo $q$",
+       "Tuyến tính của kỳ vọng",
+       "Bất đẳng thức Jensen",
+       "Định nghĩa phương sai"
+      ],
+      "answer": 0,
+      "explain": "$\\int g(x)q(x)\\,\\mathrm{d}x = \\mathbb{E}_{x\\sim q}[g(x)]$ với $g = f\\frac{p}{q}$."
+     }
+    }
+   ],
+   "hints": [
+    "Viết kỳ vọng thành tích phân.",
+    "Làm xuất hiện $q(x)$ bằng cách nhân chia."
+   ],
+   "note": "Rời rạc thì thay tích phân bằng tổng. Áp dụng cho học tăng cường: $p$ là chính sách đang học $\\pi_\\theta$, $q$ là chính sách đã sinh dữ liệu $\\pi_{\\theta'}$."
+  },
+  {
+   "id": "p5-var",
+   "ref": "5.1",
+   "title": "Phương sai của importance sampling",
+   "start": "$X = f(x)\\frac{p(x)}{q(x)}$ với $x \\sim q$. Dùng $\\operatorname{Var}[X] = \\mathbb{E}[X^2] - (\\mathbb{E}[X])^2$.",
+   "goal": "$$\\operatorname{Var}_{x\\sim q}\\Big[f\\frac{p}{q}\\Big] = \\mathbb{E}_{x\\sim p}\\Big[f^2\\frac{p}{q}\\Big] - \\big(\\mathbb{E}_{x\\sim p}[f]\\big)^2$$",
+   "steps": [
+    {
+     "tex": "\\operatorname{Var}_{x\\sim q}\\Big[f\\frac{p}{q}\\Big] = \\mathbb{E}_{x\\sim q}\\Big[\\Big(f\\frac{p}{q}\\Big)^2\\Big] - \\Big(\\mathbb{E}_{x\\sim q}\\Big[f\\frac{p}{q}\\Big]\\Big)^2"
+    },
+    {
+     "tex": "= \\mathbb{E}_{x\\sim q}\\Big[\\Big(f\\frac{p}{q}\\Big)^2\\Big] - \\big(\\mathbb{E}_{x\\sim p}[f]\\big)^2",
+     "why": {
+      "options": [
+       "Importance sampling (5.3) cho số hạng thứ hai",
+       "Bình phương của kỳ vọng bằng kỳ vọng của bình phương",
+       "Luật số lớn",
+       "Vì $p = q$"
+      ],
+      "answer": 0,
+      "explain": "$\\mathbb{E}_q[f\\frac{p}{q}] = \\mathbb{E}_p[f]$."
+     }
+    },
+    {
+     "tex": "= \\int f^2\\frac{p^2}{q^2}\\,q\\,\\mathrm{d}x - \\big(\\mathbb{E}_{x\\sim p}[f]\\big)^2",
+     "why": {
+      "options": [
+       "Viết kỳ vọng theo $q$ thành tích phân",
+       "Đổi biến",
+       "Bất đẳng thức Cauchy–Schwarz",
+       "Tuyến tính"
+      ],
+      "answer": 0,
+      "explain": "$\\mathbb{E}_q[g] = \\int g\\,q\\,\\mathrm{d}x$ với $g = f^2 p^2/q^2$."
+     }
+    },
+    {
+     "tex": "= \\int f^2\\frac{p}{q}\\,p\\,\\mathrm{d}x - \\big(\\mathbb{E}_{x\\sim p}[f]\\big)^2 = \\mathbb{E}_{x\\sim p}\\Big[f^2\\frac{p}{q}\\Big] - \\big(\\mathbb{E}_{x\\sim p}[f]\\big)^2",
+     "why": {
+      "options": [
+       "Rút gọn $\\frac{p^2}{q^2}q = \\frac{p}{q}p$ rồi đọc thành kỳ vọng theo $p$",
+       "Luật số lớn",
+       "Vì $\\frac{p}{q} = 1$",
+       "Bất đẳng thức Jensen"
+      ],
+      "answer": 0,
+      "explain": "Một thừa số $p$ làm trọng số của kỳ vọng theo $p$, còn lại $f^2\\frac{p}{q}$."
+     }
+    }
+   ],
+   "hints": [
+    "Áp dụng định nghĩa phương sai cho $X = f p/q$.",
+    "Số hạng thứ hai đã biết nhờ (5.3).",
+    "Số hạng thứ nhất: viết thành tích phân rồi rút gọn một $q$."
+   ],
+   "note": "So với $\\operatorname{Var}_p[f] = \\mathbb{E}_p[f^2] - (\\mathbb{E}_p f)^2$, chỉ khác thừa số $\\frac{p}{q}$ trong số hạng đầu. Nơi $p$ lớn mà $q$ nhỏ, thừa số này rất lớn: đó là lý do PPO giữ hai chính sách gần nhau."
+  },
+  {
+   "id": "p5-objective",
+   "ref": "5.1",
+   "title": "Từ gradient (5.5) về hàm mục tiêu $J^{\\theta'}(\\theta)$",
+   "start": "$J^{\\theta'}(\\theta) = \\mathbb{E}_{(s_t,a_t)\\sim\\pi_{\\theta'}}\\Big[\\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}A^{\\theta'}(s_t, a_t)\\Big]$. Kỳ vọng lấy theo $\\pi_{\\theta'}$ (không phụ thuộc $\\theta$).",
+   "goal": "$$\\nabla_\\theta J^{\\theta'}(\\theta) = \\mathbb{E}_{(s_t,a_t)\\sim\\pi_{\\theta'}}\\Big[\\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}A^{\\theta'}(s_t, a_t)\\,\\nabla\\log p_\\theta(a_t \\mid s_t)\\Big]$$",
+   "steps": [
+    {
+     "tex": "\\nabla_\\theta J^{\\theta'}(\\theta) = \\mathbb{E}_{(s_t,a_t)\\sim\\pi_{\\theta'}}\\Big[\\nabla_\\theta\\Big(\\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}A^{\\theta'}\\Big)\\Big]"
+    },
+    {
+     "tex": "= \\mathbb{E}_{\\pi_{\\theta'}}\\Big[\\frac{\\nabla_\\theta\\,p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}A^{\\theta'}\\Big]",
+     "why": {
+      "options": [
+       "$p_{\\theta'}(a_t \\mid s_t)$ và $A^{\\theta'}$ là hằng số theo $\\theta$",
+       "Mẹo đạo hàm logarit",
+       "Luật số lớn",
+       "Vì $\\theta = \\theta'$"
+      ],
+      "answer": 0,
+      "explain": "Chỉ tử số $p_\\theta(a_t \\mid s_t)$ phụ thuộc $\\theta$."
+     }
+    },
+    {
+     "tex": "= \\mathbb{E}_{\\pi_{\\theta'}}\\Big[\\frac{p_\\theta(a_t \\mid s_t)\\,\\nabla\\log p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}A^{\\theta'}\\Big]",
+     "why": {
+      "options": [
+       "Mẹo $\\nabla f = f\\,\\nabla\\log f$",
+       "Tuyến tính của kỳ vọng",
+       "Importance sampling",
+       "Quy tắc thương"
+      ],
+      "answer": 0,
+      "explain": "Thay $\\nabla p_\\theta = p_\\theta\\nabla\\log p_\\theta$ (biểu thức 4.1)."
+     }
+    },
+    {
+     "tex": "= \\mathbb{E}_{\\pi_{\\theta'}}\\Big[\\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta'}(a_t \\mid s_t)}A^{\\theta'}\\,\\nabla\\log p_\\theta(a_t \\mid s_t)\\Big]",
+     "why": {
+      "options": [
+       "Sắp xếp lại các thừa số",
+       "Bỏ số hạng môi trường",
+       "Cho tỉ số bằng 1",
+       "Chuẩn hóa xác suất"
+      ],
+      "answer": 0,
+      "explain": "Đây chính là (5.5)."
+     }
+    }
+   ],
+   "hints": [
+    "Kỳ vọng theo $\\pi_{\\theta'}$ nên đưa $\\nabla_\\theta$ vào trong được.",
+    "Thừa số nào phụ thuộc $\\theta$?",
+    "Dùng $\\nabla f = f\\nabla\\log f$."
+   ],
+   "note": "Đi theo chiều ngược lại chính là cách sách \\\"suy ngược từ gradient ra hàm mục tiêu\\\". Thực tế chỉ cần viết $J^{\\theta'}(\\theta)$ rồi để PyTorch tự lấy gradient."
+  },
+  {
+   "id": "p5-local",
+   "ref": "5.2 (bổ sung)",
+   "title": "Tại $\\theta = \\theta^k$, mục tiêu PPO cho đúng gradient chính sách",
+   "start": "Bổ sung của người dịch. $r_t(\\theta) = \\frac{p_\\theta(a_t \\mid s_t)}{p_{\\theta^k}(a_t \\mid s_t)}$; $J^{\\theta^k}(\\theta) = \\mathbb{E}_{\\pi_{\\theta^k}}[r_t(\\theta)A_t]$, $A_t = A^{\\theta^k}(s_t, a_t)$.",
+   "goal": "$$\\nabla_\\theta J^{\\theta^k}(\\theta)\\Big|_{\\theta = \\theta^k} = \\mathbb{E}_{\\pi_{\\theta^k}}\\big[A_t\\,\\nabla\\log p_\\theta(a_t \\mid s_t)\\big]\\Big|_{\\theta=\\theta^k}$$",
+   "steps": [
+    {
+     "tex": "\\nabla_\\theta J^{\\theta^k}(\\theta) = \\mathbb{E}_{\\pi_{\\theta^k}}\\big[r_t(\\theta)\\,A_t\\,\\nabla\\log p_\\theta(a_t \\mid s_t)\\big]"
+    },
+    {
+     "tex": "r_t(\\theta^k) = \\frac{p_{\\theta^k}(a_t \\mid s_t)}{p_{\\theta^k}(a_t \\mid s_t)} = 1",
+     "why": {
+      "options": [
+       "Thay $\\theta = \\theta^k$: tử và mẫu bằng nhau",
+       "Vì $A_t = 1$",
+       "Vì bị cắt",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Ở điểm xuất phát, chính sách mới trùng chính sách cũ."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ \\nabla_\\theta J^{\\theta^k}(\\theta)\\Big|_{\\theta^k} = \\mathbb{E}_{\\pi_{\\theta^k}}\\big[A_t\\,\\nabla\\log p_\\theta(a_t \\mid s_t)\\big]\\Big|_{\\theta^k}",
+     "why": {
+      "options": [
+       "Thay $r_t = 1$ vào công thức gradient",
+       "Bỏ đường cơ sở",
+       "Lấy $\\min$ với số hạng cắt",
+       "Tính chất Markov"
+      ],
+      "answer": 0,
+      "explain": "Đó đúng là gradient chính sách on-policy với lợi thế $A_t$ (chương 4)."
+     }
+    },
+    {
+     "tex": "\\operatorname{clip}(r_t(\\theta^k), 1-\\varepsilon, 1+\\varepsilon) = 1 = r_t(\\theta^k)",
+     "why": {
+      "options": [
+       "$1$ nằm trong $[1-\\varepsilon, 1+\\varepsilon]$ nên không bị cắt",
+       "Vì $\\varepsilon = 0$",
+       "Vì $A_t > 0$",
+       "Vì KL bằng 0"
+      ],
+      "answer": 0,
+      "explain": "Nên bước đầu tiên của PPO2 (và PPO1, vì $\\nabla\\mathrm{KL} = 0$ tại $\\theta^k$) trùng với gradient chính sách."
+     }
+    }
+   ],
+   "hints": [
+    "Dùng kết quả của chứng minh trước.",
+    "Tỉ số bằng bao nhiêu khi $\\theta = \\theta^k$?"
+   ],
+   "note": "Ý nghĩa: mục tiêu thay thế (surrogate) của PPO **khớp bậc một** với mục tiêu thật tại $\\theta^k$. Đi xa khỏi $\\theta^k$ thì xấp xỉ kém dần, nên cần cắt hoặc phạt KL để \\\"ở gần\\\"."
+  },
+  {
+   "id": "p5-clip",
+   "ref": "5.2.2 · Hình 5.3",
+   "title": "Mục tiêu PPO2 khi $A > 0$",
+   "start": "$A > 0$, $\\varepsilon \\in (0, 1)$. $L(r) = \\min\\big(rA,\\ \\operatorname{clip}(r, 1-\\varepsilon, 1+\\varepsilon)A\\big)$.",
+   "goal": "$$L(r) = \\min(r,\\ 1+\\varepsilon)\\,A$$",
+   "steps": [
+    {
+     "tex": "L(r) = \\min\\big(rA,\\ \\operatorname{clip}(r)A\\big)"
+    },
+    {
+     "tex": "= A\\,\\min\\big(r,\\ \\operatorname{clip}(r)\\big)",
+     "why": {
+      "options": [
+       "Đưa $A > 0$ ra ngoài $\\min$ (nhân số dương giữ thứ tự)",
+       "Vì $A < 0$",
+       "Tuyến tính của kỳ vọng",
+       "Vì $\\operatorname{clip}(r) = r$"
+      ],
+      "answer": 0,
+      "explain": "$\\min(Ax, Ay) = A\\min(x, y)$ khi $A > 0$. Nếu $A < 0$ thì $\\min$ đổi thành $\\max$."
+     }
+    },
+    {
+     "tex": "r < 1-\\varepsilon:\\ \\min(r,\\ 1-\\varepsilon) = r",
+     "why": {
+      "options": [
+       "Khi $r < 1-\\varepsilon$, clip ra $1-\\varepsilon > r$",
+       "Vì $r = 1$",
+       "Bị cắt",
+       "Vì $A > 0$"
+      ],
+      "answer": 0,
+      "explain": "Số hạng chưa cắt nhỏ hơn: giữ $r$, gradient vẫn kéo $r$ lên."
+     }
+    },
+    {
+     "tex": "1-\\varepsilon \\le r \\le 1+\\varepsilon:\\ \\min(r,\\ r) = r",
+     "why": {
+      "options": [
+       "Ở giữa đoạn, clip không làm gì",
+       "Vì $\\varepsilon = 0$",
+       "Vì KL nhỏ",
+       "Vì $r > 1+\\varepsilon$"
+      ],
+      "answer": 0,
+      "explain": "$\\operatorname{clip}(r) = r$."
+     }
+    },
+    {
+     "tex": "r > 1+\\varepsilon:\\ \\min(r,\\ 1+\\varepsilon) = 1+\\varepsilon",
+     "why": {
+      "options": [
+       "Clip ra $1+\\varepsilon < r$, $\\min$ chọn nó",
+       "Vì $r < 1$",
+       "Không bị cắt",
+       "Vì $A < 0$"
+      ],
+      "answer": 0,
+      "explain": "Mục tiêu thành hằng số $(1+\\varepsilon)A$: gradient bằng 0."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ L(r) = \\min(r,\\ 1+\\varepsilon)\\,A",
+     "why": {
+      "options": [
+       "Gộp ba trường hợp: chỉ có chặn trên $1+\\varepsilon$",
+       "Gộp lại được $\\max(r, 1-\\varepsilon)A$",
+       "$L(r) = rA$ với mọi $r$",
+       "$L(r) = (1+\\varepsilon)A$ với mọi $r$"
+      ],
+      "answer": 0,
+      "explain": "Chặn dưới $1-\\varepsilon$ không bao giờ có hiệu lực khi $A > 0$. Đây là đường đỏ ở hình 5.3a."
+     }
+    }
+   ],
+   "hints": [
+    "$A > 0$ thì đưa ra ngoài $\\min$ được.",
+    "Xét ba khoảng của $r$ so với $1 \\pm \\varepsilon$."
+   ],
+   "note": "Tương tự, khi $A < 0$: $L(r) = \\max(r,\\ 1-\\varepsilon)\\,A$ (hình 5.3b), chỉ chặn khi $r$ đã giảm dưới $1-\\varepsilon$. Xem tab Thí nghiệm để kéo $r$ và $A$."
+  }
+ ]
+}

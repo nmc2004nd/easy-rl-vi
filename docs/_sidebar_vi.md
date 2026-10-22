@@ -17,6 +17,7 @@
 - [🎬 Chương 4 Mô phỏng thuật toán](viz/index.html#ch4 ':ignore :target=_self')
 - [Chương 5 Thuật toán tối ưu chính sách cận kề (PPO)](chapter5/chapter5_vi)
 - [Chương 5 Bài tập](chapter5/chapter5_questions&keywords_vi)
+- [🧠 Chương 5 Ôn tập (flashcard + quiz)](review/index.html?ch=5 ':ignore :target=_self')
 - [Chương 6 DQN (Khái niệm cơ bản)](chapter6/chapter6_vi)
 - [Chương 6 Bài tập](chapter6/chapter6_questions&keywords_vi)
 - [Chương 7 DQN (Các kỹ thuật nâng cao)](chapter7/chapter7_vi)
