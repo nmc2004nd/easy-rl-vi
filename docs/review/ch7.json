@@ -1,0 +1,606 @@
+{
+ "chapter": 7,
+ "title": "Chương 7 · Các kỹ thuật nâng cao của DQN",
+ "chapterLink": "../#/chapter7/chapter7_vi",
+ "exerciseLink": "../#/chapter7/chapter7_questions&keywords_vi",
+ "extras": "ch7-extras.js",
+ "cards": [
+  {
+   "id": "c7-overest",
+   "tag": "Khái niệm",
+   "ref": "7.1 · Hình 7.1",
+   "front": "Hình 7.1 cho thấy vấn đề gì của DQN?",
+   "back": "Giá trị $Q$ do DQN **ước lượng** (đường răng cưa đỏ) lớn hơn rất nhiều so với giá trị **thật** (chơi thử thật nhiều lần rồi đo), ở mọi trò chơi: DQN **ước lượng quá cao** (overestimate).\nVới DDQN, ước lượng và giá trị thật gần nhau hơn, và giá trị thật còn **cao hơn** DQN: chính sách học được tốt hơn."
+  },
+  {
+   "id": "c7-overest-why",
+   "tag": "Vì sao",
+   "ref": "7.1 · (7.1) · Hình 7.2 · Bài tập 7-1",
+   "front": "Vì sao mục tiêu $r_t + \\max_a Q(s_{t+1}, a)$ luôn dễ bị **quá cao**?",
+   "back": "Giả sử 4 hành động có giá trị thật gần bằng nhau nhưng ước lượng có **sai số**. $\\max$ luôn chọn hành động **bị ước lượng quá cao nhất** (lần này hành động 1, lần sau hành động 4...), nên mục tiêu thường lớn hơn giá trị thật.\nSai số âm bị $\\max$ bỏ qua, sai số dương thì được giữ lại."
+  },
+  {
+   "id": "c7-overest-calc",
+   "tag": "Tính tay",
+   "ref": "7.1 (bổ sung)",
+   "front": "Giá trị thật của 4 hành động đều là 0. Ước lượng lần này: $(0{,}3;\\ -0{,}2;\\ 0{,}1;\\ -0{,}4)$ (trung bình bằng $-0{,}05$). Mục tiêu dùng $\\max$ là bao nhiêu? Sai lệch bao nhiêu?",
+   "back": "$\\max = 0{,}3$, trong khi $\\max$ giá trị thật là $0$: lệch $+0{,}3$.\nDù trung bình các ước lượng còn hơi âm, phép $\\max$ vẫn cho số dương. Lặp lại nhiều lần thì trung bình của $\\max$ vẫn **dương**: chệch lên (xem tab Chứng minh)."
+  },
+  {
+   "id": "c7-ddqn",
+   "tag": "Công thức",
+   "ref": "7.1 · (7.2)",
+   "front": "Mục tiêu của DQN kép (double DQN) là gì?",
+   "back": "$$Q(s_t, a_t) \\longleftrightarrow r_t + Q'\\big(s_{t+1},\\ \\arg\\max_a Q(s_{t+1}, a)\\big)$$\n$Q$ **chọn** hành động, $Q'$ **tính giá trị** của hành động đó."
+  },
+  {
+   "id": "c7-ddqn-why",
+   "tag": "Vì sao",
+   "ref": "7.1 · Bài tập 7-2",
+   "front": "Vì sao tách \\\"chọn\\\" và \\\"tính giá trị\\\" giảm ước lượng quá cao?",
+   "back": "Nếu $Q$ ước lượng quá cao hành động $a$ và chọn nó, chỉ cần $Q'$ **không** ước lượng quá cao $a$ thì giá trị vẫn bình thường.\nNếu $Q'$ ước lượng quá cao một hành động khác, cũng không sao, vì $Q$ không chọn hành động đó.\nHai bên phải **cùng** sai lệch lên ở cùng một hành động thì mới bị quá cao."
+  },
+  {
+   "id": "c7-ddqn-impl",
+   "tag": "Khái niệm",
+   "ref": "7.1 · Bài tập 7-3",
+   "front": "Khi cài đặt, hai mạng $Q$ và $Q'$ của DDQN là gì? Tốn thêm gì?",
+   "back": "$Q$: mạng **đang được cập nhật** (dùng để chọn $\\arg\\max$). $Q'$: **mạng mục tiêu** (cố định, dùng để tính giá trị).\nGần như **không tốn thêm** gì: DQN vốn đã có hai mạng. Chỉ đổi mạng dùng để tìm $\\arg\\max$. Nếu chỉ chọn một kỹ thuật, thường chọn DDQN."
+  },
+  {
+   "id": "c7-ddqn-calc",
+   "tag": "Tính tay",
+   "ref": "7.1",
+   "front": "$r = 1$, $\\gamma = 0{,}9$. Mạng đang học: $Q(s', \\cdot) = (2, 5, 3)$; mạng mục tiêu: $\\hat Q(s', \\cdot) = (4, 3, 6)$. Tính mục tiêu của DQN và của DDQN.",
+   "back": "**DQN**: $y = 1 + 0{,}9\\cdot\\max(4, 3, 6) = 1 + 5{,}4 = 6{,}4$.\n**DDQN**: $\\arg\\max_a Q(s', a) = a_2$ (giá trị 5), rồi $y = 1 + 0{,}9\\cdot\\hat Q(s', a_2) = 1 + 0{,}9\\cdot 3 = 3{,}7$.\nHai mạng không đồng ý hành động nào tốt nhất, nên mục tiêu DDQN thận trọng hơn."
+  },
+  {
+   "id": "c7-dueling",
+   "tag": "Công thức",
+   "ref": "7.2 · Hình 7.3",
+   "front": "Kiến trúc DQN đối đầu (dueling DQN) khác DQN ở đâu?",
+   "back": "Chỉ đổi **kiến trúc mạng**: hai nhánh, một nhánh ra số vô hướng $V(s)$, một nhánh ra vectơ $A(s, a)$, rồi cộng lại:\n$$Q(s, a) = V(s) + A(s, a)$$"
+  },
+  {
+   "id": "c7-dueling-table",
+   "tag": "Tính tay",
+   "ref": "7.2 · Hình 7.4",
+   "front": "Một trạng thái có $V(s) = 2$, $A(s, \\cdot) = (1;\\ -1;\\ 0)$. Tính $Q(s, \\cdot)$. Nếu học làm $V(s)$ tăng thêm 1 thì sao?",
+   "back": "$Q(s, \\cdot) = (2+1;\\ 2-1;\\ 2+0) = (3;\\ 1;\\ 2)$.\n$V(s) \\to 3$ thì $Q(s, \\cdot) = (4;\\ 2;\\ 3)$: **cả ba** hành động cùng tăng 1, kể cả hành động chưa được lấy mẫu lần nào."
+  },
+  {
+   "id": "c7-dueling-why",
+   "tag": "Vì sao",
+   "ref": "7.2 · Bài tập 7-4",
+   "front": "Lợi ích dữ liệu của DQN đối đầu là gì?",
+   "back": "Nhiều khi việc học chỉ cần sửa $V(s)$, và sửa $V(s)$ thì $Q$ của **mọi** hành động ở trạng thái đó cùng đổi.\nNên không cần lấy mẫu hết mọi cặp trạng thái-hành động vẫn ước lượng được $Q$ khá hiệu quả."
+  },
+  {
+   "id": "c7-dueling-constraint",
+   "tag": "Vì sao",
+   "ref": "7.2",
+   "front": "Vì sao phải đặt ràng buộc lên $A(s, a)$?",
+   "back": "Không ràng buộc thì mạng có thể học $V(s) = 0$, $A = Q$: y hệt DQN, không còn lợi ích gì.\nRàng buộc (ví dụ tổng các $A$ ở mỗi trạng thái bằng 0) làm việc sửa $A$ \\\"phiền\\\": không thể cộng 1 vào mọi $A$ của một trạng thái, nên mạng buộc phải sửa $V(s)$."
+  },
+  {
+   "id": "c7-dueling-norm",
+   "tag": "Tính tay",
+   "ref": "7.2 · Hình 7.5",
+   "front": "Nhánh $A$ đưa ra $(7;\\ 3;\\ 2)$, $V(s) = 1$. Chuẩn hóa về trung bình 0 rồi tính $Q$.",
+   "back": "Trung bình $(7 + 3 + 2)/3 = 4$, nên $A$ sau chuẩn hóa là $(3;\\ -1;\\ -2)$ (tổng bằng 0).\n$Q = V + A = (4;\\ 0;\\ -1)$.\nBước chuẩn hóa là một phép toán **không có tham số**, nằm trong mạng, lan truyền ngược bình thường."
+  },
+  {
+   "id": "c7-dueling-v",
+   "tag": "Vì sao",
+   "ref": "7.2 (bổ sung)",
+   "front": "Với ràng buộc trung bình 0, $V(s)$ mang ý nghĩa gì?",
+   "back": "$V(s) = \\frac{1}{|A|}\\sum_a Q(s, a)$: **trung bình** $Q$ của các hành động ở trạng thái đó; $A(s, a)$ là độ chênh của từng hành động so với trung bình (xem tab Chứng minh).\nSách có viết: tổng mỗi cột $A$ bằng 0 thì $V$ là trung bình của cột $Q$."
+  },
+  {
+   "id": "c7-per",
+   "tag": "Khái niệm",
+   "ref": "7.3 · Hình 7.6",
+   "front": "Phát lại kinh nghiệm ưu tiên (PER) là gì?",
+   "back": "Thay vì lấy mẫu **đều** từ bộ đệm, cho mẫu có **sai số TD lớn** (khó học, mạng dự đoán sai nhiều) xác suất được lấy cao hơn, tức **quyền ưu tiên** (priority).\nPER không chỉ đổi **phân phối lấy mẫu** mà còn phải đổi **cách cập nhật tham số** cho phù hợp."
+  },
+  {
+   "id": "c7-per-formula",
+   "tag": "Công thức",
+   "ref": "7.3 (bổ sung)",
+   "front": "Công thức thường dùng cho xác suất lấy mẫu và trọng số trong PER (bài báo gốc)?",
+   "back": "Ưu tiên $p_i = |\\delta_i| + \\epsilon$; xác suất lấy mẫu\n$$P(i) = \\frac{p_i^{\\alpha}}{\\sum_k p_k^{\\alpha}}$$\n$\\alpha = 0$: lấy đều; $\\alpha = 1$: tỉ lệ đúng với $p_i$.\nTrọng số importance sampling bù độ lệch: $w_i = \\big(\\frac{1}{N\\,P(i)}\\big)^{\\beta}$, tăng $\\beta$ dần về 1. Đây là chỗ \\\"đổi cách cập nhật\\\" mà sách nhắc."
+  },
+  {
+   "id": "c7-per-calc",
+   "tag": "Tính tay",
+   "ref": "7.3 (bổ sung)",
+   "front": "Bộ đệm 3 mẫu, sai số TD $|\\delta| = (2;\\ 1;\\ 1)$, bỏ qua $\\epsilon$, $\\alpha = 1$. Xác suất lấy mẫu từng mẫu? Còn $\\alpha = 0$?",
+   "back": "$\\alpha = 1$: $P = \\frac{(2;\\ 1;\\ 1)}{4} = (0{,}5;\\ 0{,}25;\\ 0{,}25)$.\n$\\alpha = 0$: mọi $p_i^0 = 1$, nên $P = (\\tfrac13;\\ \\tfrac13;\\ \\tfrac13)$, lấy đều như DQN thường."
+  },
+  {
+   "id": "c7-nstep",
+   "tag": "Công thức",
+   "ref": "7.4 · Hình 7.7",
+   "front": "Phương pháp nhiều bước (multi-step) dùng mục tiêu gì?",
+   "back": "Lưu $N$ bước kinh nghiệm thay vì một bước; mục tiêu là tổng phần thưởng thật từ $t$ tới $t+N$ cộng giá trị ước lượng sau đó:\n$$Q(s_t, a_t) \\longleftrightarrow \\sum_{t'=t}^{t+N} r_{t'} + \\hat Q\\big(s_{t+N+1}, a_{t+N+1}\\big)$$\n(có chiết khấu thì nhân $\\gamma^{t'-t}$ và $\\gamma^{N+1}$; xem tab Chứng minh)."
+  },
+  {
+   "id": "c7-nstep-pro",
+   "tag": "So sánh",
+   "ref": "7.4 · Bài tập 7-5",
+   "front": "Ưu và nhược của phương pháp nhiều bước?",
+   "back": "**Ưu**: nhiều phần thưởng **thật** hơn, phần do $\\hat Q$ ước lượng ít ảnh hưởng hơn (bớt chệch).\n**Nhược**: cộng nhiều $r$ ngẫu nhiên nên **phương sai lớn** hơn (giống Monte Carlo).\n$N$ là **siêu tham số**, chỉnh để cân bằng phương sai và độ chính xác của $Q$."
+  },
+  {
+   "id": "c7-nstep-calc",
+   "tag": "Tính tay",
+   "ref": "7.4",
+   "front": "$N = 2$: ba phần thưởng $r_t, r_{t+1}, r_{t+2} = (1;\\ 0;\\ 2)$, $\\max_a\\hat Q(s_{t+3}, a) = 5$. Tính mục tiêu không chiết khấu và với $\\gamma = 0{,}9$.",
+   "back": "Không chiết khấu: $1 + 0 + 2 + 5 = 8$.\n$\\gamma = 0{,}9$: $1 + 0{,}9\\cdot 0 + 0{,}81\\cdot 2 + 0{,}729\\cdot 5 = 1 + 1{,}62 + 3{,}645 = 6{,}265$."
+  },
+  {
+   "id": "c7-noisy",
+   "tag": "Khái niệm",
+   "ref": "7.5",
+   "front": "Mạng nhiễu (noisy net) khám phá thế nào? Khác $\\varepsilon$-tham lam ở đâu?",
+   "back": "Đầu mỗi tập, cộng **nhiễu Gauss vào các tham số** của mạng $Q$ được $\\tilde Q$; cả tập hành động theo $a = \\arg\\max_a\\tilde Q(s, a)$; hết tập mới lấy mẫu nhiễu mới.\n$\\varepsilon$-tham lam thêm nhiễu vào **không gian hành động**; mạng nhiễu thêm nhiễu vào **không gian tham số**."
+  },
+  {
+   "id": "c7-noisy-fixed",
+   "tag": "Vì sao",
+   "ref": "7.5",
+   "front": "Vì sao nhiễu phải **cố định trong cả tập**? Gọi là khám phá gì?",
+   "back": "Để cùng (hoặc gần giống) trạng thái thì phản ứng **như nhau** trong một tập, giống một chính sách thật. $\\varepsilon$-tham lam ở cùng trạng thái lúc làm theo $Q$, lúc ngẫu nhiên: hành vi bất thường.\nGọi là **khám phá phụ thuộc trạng thái** (state-dependent exploration): khám phá **có hệ thống**, ví dụ tập này ở trạng thái đó thử đi trái, tập sau thử đi phải."
+  },
+  {
+   "id": "c7-noisy-two",
+   "tag": "So sánh",
+   "ref": "7.5",
+   "front": "Hai cách thêm nhiễu của OpenAI và DeepMind (ICLR 2018) khác nhau thế nào?",
+   "back": "**OpenAI**: cộng thẳng nhiễu Gauss vào mỗi trọng số.\n**DeepMind**: nhiễu được điều khiển bởi **một bộ tham số**, mạng tự học nên thêm nhiễu lớn hay nhỏ.\nÝ tưởng chung giống nhau: tham số có nhiễu nhưng cố định trong một tập."
+  },
+  {
+   "id": "c7-dist",
+   "tag": "Khái niệm",
+   "ref": "7.6 · Hình 7.8",
+   "front": "Vì sao cần hàm Q phân phối (distributional Q-function)?",
+   "back": "$Q(s, a)$ chỉ là **kỳ vọng** của phần thưởng tích lũy, mà phần thưởng tích lũy là một **phân phối**. Nhiều phân phối khác nhau có **cùng** trung bình; chỉ giữ trung bình thì mất thông tin."
+  },
+  {
+   "id": "c7-dist-how",
+   "tag": "Khái niệm",
+   "ref": "7.6 · Hình 7.9",
+   "front": "Hàm Q phân phối được cài đặt thế nào? Chọn hành động ra sao?",
+   "back": "Chia khoảng giá trị (ví dụ $[-10, 10]$) thành các **cột** (bin). Với mỗi hành động, mạng đưa ra xác suất phần thưởng rơi vào từng cột (tổng bằng 1).\nKhi chạy thử, chọn hành động có **trung bình** lớn nhất; cũng có thể tránh hành động có **phương sai lớn** (rủi ro cao) khi trung bình gần như nhau."
+  },
+  {
+   "id": "c7-dist-calc",
+   "tag": "Tính tay",
+   "ref": "7.6 (bổ sung)",
+   "front": "Cột $(-10, -5, 0, 5, 10)$. Hành động 1: xác suất $(0{,}1;\\ 0{,}1;\\ 0{,}6;\\ 0{,}1;\\ 0{,}1)$. Hành động 2: $(0;\\ 0{,}3;\\ 0{,}4;\\ 0{,}3;\\ 0)$. So sánh trung bình và độ phân tán.",
+   "back": "Cả hai đối xứng quanh 0 nên **trung bình đều bằng 0**: DQN thường không phân biệt được.\nPhương sai: hành động 1 là $0{,}2\\cdot 100 + 0{,}2\\cdot 25 = 25$; hành động 2 là $0{,}6\\cdot 25 = 15$. Muốn ít rủi ro thì chọn hành động 2."
+  },
+  {
+   "id": "c7-rainbow",
+   "tag": "Khái niệm",
+   "ref": "7.7 · Hình 7.10",
+   "front": "Rainbow gồm những gì? Vì sao đồ thị dùng **trung vị** điểm?",
+   "back": "Kết hợp các kỹ thuật: DQN, DDQN, PER, dueling, nhiều bước (có trong A3C), phân phối, mạng nhiễu: 7 \\\"màu\\\". Các kỹ thuật không xung đột nhau.\nDùng trung vị vì điểm các trò chơi Atari chênh nhau rất lớn; lấy trung bình thì vài trò chơi sẽ chi phối kết quả."
+  },
+  {
+   "id": "c7-ablation",
+   "tag": "Ví dụ",
+   "ref": "7.7 · Hình 7.11",
+   "front": "Thí nghiệm bỏ từng thành phần khỏi Rainbow (hình 7.11) cho thấy gì?",
+   "back": "Bỏ **nhiều bước**: tụt mạnh nhất. Bỏ **PER** hoặc **phân phối**: cũng tụt (bỏ phân phối thì lúc đầu học nhanh như thường nhưng hội tụ ở mức kém hơn).\nBỏ mạng nhiễu hoặc dueling: kém đi một chút. Bỏ **DDQN**: gần như **không** khác."
+  },
+  {
+   "id": "c7-ablation-ddqn",
+   "tag": "Vì sao",
+   "ref": "7.7",
+   "front": "Vì sao trong Rainbow, bỏ DDQN gần như không ảnh hưởng?",
+   "back": "Rainbow đã dùng **Q phân phối**, mà khoảng giá trị bị giới hạn (ví dụ $[-10, 10]$): phần thưởng cực lớn (100) bị **bỏ ra ngoài**, nên phân phối có xu hướng ước lượng **quá thấp** chứ không quá cao.\nDDQN vốn để chống ước lượng quá cao, nên ở đây thừa."
+  },
+  {
+   "id": "c7-variants",
+   "tag": "So sánh",
+   "ref": "Câu hỏi 7-1",
+   "front": "Ba biến thể kinh điển của DQN và mỗi cái giải quyết gì?",
+   "back": "**DDQN**: tách chọn hành động và tính giá trị → chống ước lượng quá cao.\n**Dueling DQN**: tách $Q = V + A$ → dùng dữ liệu hiệu quả hơn.\n**PER** (DDQN ưu tiên): lấy mẫu kinh nghiệm theo độ ưu tiên (sai số TD)."
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Theo hình 7.1, giá trị $Q$ mà DQN ước lượng so với giá trị thật:",
+   "options": [
+    "Lớn hơn nhiều (ước lượng quá cao)",
+    "Nhỏ hơn nhiều",
+    "Gần như bằng",
+    "Lúc lớn lúc nhỏ ngẫu nhiên"
+   ],
+   "answer": 0,
+   "explain": "Ở mọi trò chơi trong hình, ước lượng của DQN cao hơn giá trị thật.",
+   "ref": "7.1"
+  },
+  {
+   "q": "Nguyên nhân chính của ước lượng quá cao trong DQN:",
+   "options": [
+    "Phép $\\max$ trong mục tiêu luôn chọn hành động có sai số dương lớn nhất",
+    "Hệ số chiết khấu quá lớn",
+    "Bộ đệm phát lại quá nhỏ",
+    "Mạng mục tiêu được sao chép quá thường xuyên"
+   ],
+   "answer": 0,
+   "explain": "$\\mathbb{E}[\\max] \\ge \\max\\mathbb{E}$.",
+   "ref": "7.1 · (7.1)"
+  },
+  {
+   "q": "Trong DDQN, mạng nào chọn hành động ở $s_{t+1}$ và mạng nào tính giá trị?",
+   "options": [
+    "Mạng đang cập nhật chọn; mạng mục tiêu tính giá trị",
+    "Mạng mục tiêu chọn; mạng đang cập nhật tính giá trị",
+    "Mạng mục tiêu làm cả hai",
+    "Cần thêm một mạng thứ ba"
+   ],
+   "answer": 0,
+   "explain": "Mục tiêu $r + Q'(s', \\arg\\max_a Q(s', a))$.",
+   "ref": "7.1 · Bài tập 7-3"
+  },
+  {
+   "q": "$Q(s', \\cdot) = (2, 5, 3)$, $\\hat Q(s', \\cdot) = (4, 3, 6)$, $r = 0$, $\\gamma = 1$. Mục tiêu DDQN:",
+   "options": [
+    "$3$",
+    "$6$",
+    "$5$",
+    "$4$"
+   ],
+   "answer": 0,
+   "explain": "$\\arg\\max Q = a_2$, $\\hat Q(s', a_2) = 3$.",
+   "ref": "7.1"
+  },
+  {
+   "q": "DQN đối đầu thay đổi phần nào so với DQN?",
+   "options": [
+    "Kiến trúc mạng: $Q = V + A$",
+    "Cách tính mục tiêu",
+    "Cách lấy mẫu từ bộ đệm",
+    "Cách khám phá"
+   ],
+   "answer": 0,
+   "explain": "Đầu ra tách thành hai nhánh $V(s)$ và $A(s, a)$.",
+   "ref": "7.2"
+  },
+  {
+   "q": "Vì sao DQN đối đầu cần ràng buộc $A(s, a)$ (ví dụ trung bình bằng 0)?",
+   "options": [
+    "Để mạng không học $V = 0$, $A = Q$ mà phải dùng $V$",
+    "Để $Q$ luôn dương",
+    "Để giảm số tham số",
+    "Để chống ước lượng quá cao"
+   ],
+   "answer": 0,
+   "explain": "Ràng buộc làm việc sửa $A$ khó, nên mạng sửa $V$.",
+   "ref": "7.2"
+  },
+  {
+   "q": "Nhánh $A$ ra $(7, 3, 2)$, $V = 1$, chuẩn hóa trung bình 0. $Q$ bằng:",
+   "options": [
+    "$(4, 0, -1)$",
+    "$(8, 4, 3)$",
+    "$(3, -1, -2)$",
+    "$(4, 0, 3)$"
+   ],
+   "answer": 0,
+   "explain": "$A - 4 = (3, -1, -2)$, cộng $V = 1$.",
+   "ref": "7.2 · Hình 7.5"
+  },
+  {
+   "q": "PER cho mẫu nào xác suất được lấy cao hơn?",
+   "options": [
+    "Mẫu có sai số TD lớn",
+    "Mẫu mới nhất",
+    "Mẫu có phần thưởng dương",
+    "Mẫu ở trạng thái đầu tập"
+   ],
+   "answer": 0,
+   "explain": "Sai số TD lớn nghĩa là mạng còn đoán sai nhiều, khó học.",
+   "ref": "7.3"
+  },
+  {
+   "q": "Ngoài việc đổi phân phối lấy mẫu, PER còn phải đổi gì?",
+   "options": [
+    "Cách cập nhật tham số (thêm trọng số bù độ lệch)",
+    "Kiến trúc mạng",
+    "Hệ số chiết khấu",
+    "Không đổi gì thêm"
+   ],
+   "answer": 0,
+   "explain": "Lấy mẫu không đều làm lệch kỳ vọng, cần trọng số importance sampling.",
+   "ref": "7.3"
+  },
+  {
+   "q": "Tăng số bước $N$ trong phương pháp nhiều bước thì:",
+   "options": [
+    "Bớt phụ thuộc vào $\\hat Q$ (bớt chệch) nhưng phương sai tăng",
+    "Phương sai giảm và bớt chệch",
+    "Phương sai giảm nhưng chệch hơn",
+    "Không ảnh hưởng gì"
+   ],
+   "answer": 0,
+   "explain": "Càng nhiều phần thưởng thật, càng giống Monte Carlo.",
+   "ref": "7.4"
+  },
+  {
+   "q": "Mạng nhiễu thêm nhiễu vào đâu, và khi nào lấy mẫu nhiễu mới?",
+   "options": [
+    "Vào tham số của mạng; đầu mỗi tập",
+    "Vào hành động; mỗi bước",
+    "Vào phần thưởng; mỗi bước",
+    "Vào trạng thái; đầu mỗi tập"
+   ],
+   "answer": 0,
+   "explain": "Nhiễu cố định trong cả tập.",
+   "ref": "7.5"
+  },
+  {
+   "q": "\\\"Khám phá phụ thuộc trạng thái\\\" của mạng nhiễu nghĩa là:",
+   "options": [
+    "Trong một tập, cùng trạng thái thì cùng hành động; khám phá có hệ thống",
+    "Trạng thái càng xa thì khám phá càng nhiều",
+    "Chỉ khám phá ở trạng thái mới",
+    "Khám phá ngẫu nhiên ở mỗi bước"
+   ],
+   "answer": 0,
+   "explain": "Khác $\\varepsilon$-tham lam, nơi cùng trạng thái có thể lúc theo $Q$ lúc ngẫu nhiên.",
+   "ref": "7.5"
+  },
+  {
+   "q": "Hàm Q phân phối đưa ra gì cho mỗi hành động?",
+   "options": [
+    "Xác suất phần thưởng tích lũy rơi vào từng cột giá trị",
+    "Một số $Q$ duy nhất",
+    "Phương sai của $Q$",
+    "Xác suất chọn hành động"
+   ],
+   "answer": 0,
+   "explain": "Rồi chọn hành động có trung bình lớn nhất (hoặc xét cả rủi ro).",
+   "ref": "7.6"
+  },
+  {
+   "q": "Theo hình 7.11, bỏ thành phần nào khỏi Rainbow làm hiệu năng tụt **mạnh nhất**?",
+   "options": [
+    "Phương pháp nhiều bước",
+    "DDQN",
+    "Dueling",
+    "Mạng nhiễu"
+   ],
+   "answer": 0,
+   "explain": "Bỏ DDQN gần như không ảnh hưởng.",
+   "ref": "7.7"
+  },
+  {
+   "q": "Vì sao Q phân phối có xu hướng ước lượng **quá thấp**?",
+   "options": [
+    "Khoảng giá trị bị giới hạn nên phần thưởng cực lớn bị bỏ ra ngoài",
+    "Vì dùng $\\min$ thay $\\max$",
+    "Vì chiết khấu mạnh",
+    "Vì lấy mẫu ưu tiên"
+   ],
+   "answer": 0,
+   "explain": "Ví dụ khoảng $[-10, 10]$ thì phần thưởng 100 bị bỏ qua.",
+   "ref": "7.7"
+  },
+  {
+   "q": "Nếu chỉ được chọn **một** kỹ thuật vì dễ cài đặt nhất, sách khuyên chọn:",
+   "options": [
+    "DDQN",
+    "Rainbow",
+    "Q phân phối",
+    "Mạng nhiễu"
+   ],
+   "answer": 0,
+   "explain": "Chỉ đổi mạng dùng để tìm $\\arg\\max$.",
+   "ref": "7.1"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p7-overest",
+   "ref": "7.1 (bổ sung)",
+   "title": "Phép $\\max$ trên ước lượng không chệch thì chệch lên",
+   "start": "Bổ sung của người dịch. $\\hat Q(a) = Q(a) + \\epsilon_a$ với $\\mathbb{E}[\\epsilon_a] = 0$ (từng ước lượng không chệch).",
+   "goal": "$$\\mathbb{E}\\big[\\max_a\\hat Q(a)\\big] \\ge \\max_a Q(a)$$",
+   "steps": [
+    {
+     "tex": "\\max_a\\hat Q(a) \\ge \\hat Q(b)\\quad\\text{với mọi } b"
+    },
+    {
+     "tex": "\\Rightarrow\\ \\mathbb{E}\\big[\\max_a\\hat Q(a)\\big] \\ge \\mathbb{E}\\big[\\hat Q(b)\\big]",
+     "why": {
+      "options": [
+       "Lấy kỳ vọng hai vế giữ chiều bất đẳng thức",
+       "Bất đẳng thức tam giác",
+       "Luật số lớn",
+       "Định nghĩa phương sai"
+      ],
+      "answer": 0,
+      "explain": "Nếu $X \\ge Y$ luôn đúng thì $\\mathbb{E}[X] \\ge \\mathbb{E}[Y]$."
+     }
+    },
+    {
+     "tex": "= Q(b)\\quad\\text{với mọi } b",
+     "why": {
+      "options": [
+       "Ước lượng không chệch: $\\mathbb{E}[\\epsilon_b] = 0$",
+       "Vì $\\hat Q = Q$",
+       "Do chiết khấu",
+       "Vì $b$ là hành động tốt nhất"
+      ],
+      "answer": 0,
+      "explain": "$\\mathbb{E}[Q(b) + \\epsilon_b] = Q(b)$."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ \\mathbb{E}\\big[\\max_a\\hat Q(a)\\big] \\ge \\max_b Q(b)",
+     "why": {
+      "options": [
+       "Đúng với mọi $b$ thì đúng với $b$ cho $Q(b)$ lớn nhất",
+       "Bất đẳng thức Jensen theo chiều ngược",
+       "Lấy trung bình theo $b$",
+       "Vì mọi $Q(b)$ bằng nhau"
+      ],
+      "answer": 0,
+      "explain": "Thường dấu bất đẳng thức là **nghiêm ngặt** khi có nhiễu và nhiều hành động gần nhau: đó là ước lượng quá cao."
+     }
+    }
+   ],
+   "hints": [
+    "$\\max$ không nhỏ hơn bất kỳ phần tử nào.",
+    "Lấy kỳ vọng rồi chọn $b$ tốt nhất."
+   ],
+   "note": "Mục tiêu DQN dùng $\\max_a\\hat Q(s', a)$ nên chệch lên; lỗi này còn được bootstrapping truyền ngược qua các trạng thái trước. Xem tab Thí nghiệm: độ chệch tăng theo số hành động và độ nhiễu."
+  },
+  {
+   "id": "p7-ddqn",
+   "ref": "7.1 (bổ sung)",
+   "title": "Tách chọn và đánh giá thì hết chệch lên",
+   "start": "Bổ sung của người dịch. Hai ước lượng $\\hat Q_1(a) = Q(a) + \\epsilon_a$, $\\hat Q_2(a) = Q(a) + \\eta_a$, sai số $\\eta$ **độc lập** với $\\epsilon$ và $\\mathbb{E}[\\eta_a] = 0$. Chọn $a^* = \\arg\\max_a\\hat Q_1(a)$, đánh giá bằng $\\hat Q_2(a^*)$.",
+   "goal": "$$\\mathbb{E}\\big[\\hat Q_2(a^*)\\big] \\le \\max_a Q(a)$$",
+   "steps": [
+    {
+     "tex": "\\mathbb{E}\\big[\\hat Q_2(a^*)\\big] = \\mathbb{E}\\Big[\\mathbb{E}\\big[\\hat Q_2(a^*) \\mid a^*\\big]\\Big]"
+    },
+    {
+     "tex": "= \\mathbb{E}\\Big[Q(a^*) + \\mathbb{E}\\big[\\eta_{a^*} \\mid a^*\\big]\\Big]",
+     "why": {
+      "options": [
+       "Thay $\\hat Q_2 = Q + \\eta$; khi biết $a^*$ thì $Q(a^*)$ là hằng số",
+       "Bất đẳng thức Jensen",
+       "Luật số lớn",
+       "Vì $a^*$ tất định"
+      ],
+      "answer": 0,
+      "explain": "Tách phần tất định và phần nhiễu."
+     }
+    },
+    {
+     "tex": "= \\mathbb{E}\\big[Q(a^*)\\big]",
+     "why": {
+      "options": [
+       "$a^*$ chỉ phụ thuộc $\\epsilon$, mà $\\eta$ độc lập với $\\epsilon$, nên $\\mathbb{E}[\\eta_{a^*} \\mid a^*] = 0$",
+       "Vì $\\epsilon = 0$",
+       "Vì hai mạng giống nhau",
+       "Vì $Q(a^*)$ là lớn nhất"
+      ],
+      "answer": 0,
+      "explain": "Đây là chỗ cần hai ước lượng **độc lập**. Nếu dùng cùng một mạng ($\\eta = \\epsilon$) thì $\\mathbb{E}[\\epsilon_{a^*}] > 0$."
+     }
+    },
+    {
+     "tex": "\\le \\max_a Q(a)",
+     "why": {
+      "options": [
+       "$Q(a^*)$ là giá trị thật của một hành động nào đó, không vượt quá giá trị thật lớn nhất",
+       "Bất đẳng thức Markov",
+       "Vì $\\eta \\ge 0$",
+       "Chiết khấu"
+      ],
+      "answer": 0,
+      "explain": "Có thể nhỏ hơn (chệch xuống) nếu $\\hat Q_1$ chọn nhầm hành động, nhưng không chệch lên."
+     }
+    }
+   ],
+   "hints": [
+    "Lấy kỳ vọng có điều kiện theo $a^*$.",
+    "$a^*$ phụ thuộc sai số nào? $\\eta$ có liên quan không?"
+   ],
+   "note": "Trong DDQN, mạng đang học và mạng mục tiêu không hoàn toàn độc lập (mạng mục tiêu là bản sao cũ), nên độ chệch lên chỉ **giảm** nhiều chứ không mất hẳn. Đúng như hình 7.1: đường xanh gần đường thật hơn."
+  },
+  {
+   "id": "p7-dueling",
+   "ref": "7.2 (bổ sung)",
+   "title": "Ràng buộc trung bình 0 làm $V(s)$ là trung bình của $Q$",
+   "start": "Bổ sung của người dịch. Mạng đối đầu với chuẩn hóa trung bình 0: $Q(s, a) = V(s) + A(s, a) - \\bar A(s)$, với $\\bar A(s) = \\frac{1}{|\\mathcal A|}\\sum_{a'} A(s, a')$.",
+   "goal": "$$V(s) = \\frac{1}{|\\mathcal A|}\\sum_a Q(s, a)$$",
+   "steps": [
+    {
+     "tex": "\\frac{1}{|\\mathcal A|}\\sum_a Q(s, a) = \\frac{1}{|\\mathcal A|}\\sum_a\\big(V(s) + A(s, a) - \\bar A(s)\\big)"
+    },
+    {
+     "tex": "= V(s) + \\frac{1}{|\\mathcal A|}\\sum_a A(s, a) - \\bar A(s)",
+     "why": {
+      "options": [
+       "$V(s)$ và $\\bar A(s)$ không phụ thuộc $a$: trung bình của hằng số là chính nó",
+       "Bất đẳng thức tam giác",
+       "Đổi biến",
+       "Vì $A = 0$"
+      ],
+      "answer": 0,
+      "explain": "Tách tổng thành ba phần."
+     }
+    },
+    {
+     "tex": "= V(s) + \\bar A(s) - \\bar A(s) = V(s)",
+     "why": {
+      "options": [
+       "Số hạng giữa chính là định nghĩa $\\bar A(s)$",
+       "Vì $V(s) = 0$",
+       "Vì tổng bằng 1",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Phần $A$ sau chuẩn hóa có trung bình 0 nên không đóng góp gì vào trung bình $Q$."
+     }
+    }
+   ],
+   "hints": [
+    "Lấy trung bình hai vế theo $a$.",
+    "Cái gì không phụ thuộc $a$?"
+   ],
+   "note": "Vì vậy mạng không thể \\\"giấu\\\" mức chung của các $Q$ vào nhánh $A$: muốn nâng cả cột $Q$ thì phải sửa $V(s)$, và sửa $V(s)$ là kéo luôn các hành động chưa được lấy mẫu. Đó là lợi ích về dữ liệu của hình 7.4."
+  },
+  {
+   "id": "p7-nstep",
+   "ref": "7.4 (bổ sung)",
+   "title": "Mục tiêu nhiều bước",
+   "start": "Bổ sung của người dịch. $Q(s_t, a_t) = \\mathbb{E}\\big[r_t + \\gamma Q(s_{t+1}, a_{t+1})\\big]$, trong đó $a_{t+1}$ theo chính sách đang xét.",
+   "goal": "$$Q(s_t, a_t) = \\mathbb{E}\\Big[\\sum_{k=0}^{N}\\gamma^k r_{t+k} + \\gamma^{N+1}Q(s_{t+N+1}, a_{t+N+1})\\Big]$$",
+   "steps": [
+    {
+     "tex": "Q(s_t, a_t) = \\mathbb{E}\\big[r_t + \\gamma Q(s_{t+1}, a_{t+1})\\big]"
+    },
+    {
+     "tex": "= \\mathbb{E}\\big[r_t + \\gamma r_{t+1} + \\gamma^2 Q(s_{t+2}, a_{t+2})\\big]",
+     "why": {
+      "options": [
+       "Áp dụng lại chính đẳng thức cho $Q(s_{t+1}, a_{t+1})$",
+       "Bất đẳng thức Jensen",
+       "Luật số lớn",
+       "Vì $r_{t+1} = 0$"
+      ],
+      "answer": 0,
+      "explain": "Thay $Q(s_{t+1}, a_{t+1}) = \\mathbb{E}[r_{t+1} + \\gamma Q(s_{t+2}, a_{t+2})]$; kỳ vọng lồng nhau gộp lại."
+     }
+    },
+    {
+     "tex": "= \\mathbb{E}\\Big[\\sum_{k=0}^{N}\\gamma^k r_{t+k} + \\gamma^{N+1}Q(s_{t+N+1}, a_{t+N+1})\\Big]",
+     "why": {
+      "options": [
+       "Lặp lại tổng cộng $N+1$ lần",
+       "Cho $N \\to \\infty$",
+       "Đổi thứ tự tổng",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Mỗi lần thay thêm một phần thưởng thật và đẩy $Q$ xa thêm một bước."
+     }
+    }
+   ],
+   "hints": [
+    "Đẳng thức Bellman một bước đúng ở mọi bước thời gian.",
+    "Thay lặp đi lặp lại."
+   ],
+   "note": "Sách viết không chiết khấu ($\\gamma = 1$): tổng $N+1$ phần thưởng từ $t$ tới $t+N$ cộng $\\hat Q(s_{t+N+1}, \\cdot)$. $N = 0$ là TD một bước; $N \\to$ hết tập là Monte Carlo. Lưu ý: với dữ liệu off-policy cũ trong bộ đệm, $N$ lớn thì phần thưởng thuộc về chính sách cũ, đó là lý do $N$ thường nhỏ (3–5)."
+  }
+ ]
+}
