@@ -149,6 +149,15 @@ $$
 
 Điểm khác giữa TRPO và PPO là vị trí đặt ràng buộc khác nhau, PPO đặt trực tiếp ràng buộc vào biểu thức cần tối ưu, ta có thể dùng phương pháp gradient ascent để tối đa hóa biểu thức (5.6). Còn TRPO xem độ phân kỳ KL là ràng buộc, nó mong độ phân kỳ KL giữa $\theta$ và $\theta'$ nhỏ hơn $\delta$. Nếu ta dùng tối ưu dựa trên gradient, ràng buộc rất khó xử lý. TRPO rất khó xử lý, vì nó xem ràng buộc độ phân kỳ KL là một ràng buộc bổ sung, không đặt trong mục tiêu (objective), nên rất khó tính. Do đó thông thường ta dùng PPO chứ không dùng TRPO. Hiệu năng của PPO và TRPO gần như nhau, nhưng PPO dễ cài đặt hơn TRPO rất nhiều.
 
+<details class="viz-box">
+<summary>🎬 Mô phỏng mục tiêu thay thế và vùng tin cậy <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: hai bản đồ cạnh nhau, cải thiện thật $\bar R_\theta - \bar R_{\theta^k}$ và mục tiêu thay thế $J^{\theta^k}(\theta)$ dựng từ một lô dữ liệu, cùng đường viền vùng tin cậy $\mathrm{KL}(\theta^k, \theta) = \delta$. Xem bốn cách (không cắt, PPO-clip, PPO-penalty, TRPO) đi từ $\theta^k$ sau $K$ epoch: cách nào ra khỏi vùng tin cậy và bị mục tiêu thay thế “lừa”. [Mở trang riêng](viz/ppo-trust.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/ppo-trust.html?embed" style="height:2341px" title="Mô phỏng mục tiêu thay thế và vùng tin cậy" loading="lazy"></iframe>
+
+</details>
+
 
 Độ phân kỳ KL rốt cuộc là gì? Ở đây ta trực tiếp xem độ phân kỳ KL là một hàm, đầu vào là $\theta$ và $\theta'$, nhưng không phải xem $\theta$ hoặc $\theta'$ là một phân phối rồi tính khoảng cách giữa hai phân phối. Cái gọi là khoảng cách giữa $\theta$ và $\theta'$ không phải khoảng cách về tham số, mà là khoảng cách về hành vi (behavior). Giả sử ta có hai diễn viên — $\theta$ và $\theta'$, khoảng cách về tham số là tính xem hai bộ tham số này giống nhau đến mức nào. Ở đây không nói về khoảng cách tham số, mà là khoảng cách hành vi của chúng. Trước tiên ta đưa vào một trạng thái $s$, nó sẽ đưa ra một phân phối trên không gian hành động. Giả sử ta có 3 hành động, 3 hành động có thể sẽ đưa ra 3 giá trị. Khoảng cách hành vi (behavior distance) là: cho cùng một trạng thái, khoảng cách giữa các hành động đầu ra. Phân phối của hai hành động này đều là phân phối xác suất, vì vậy ta có thể tính độ phân kỳ KL của hai phân phối xác suất này. Trung bình độ phân kỳ KL của hai phân phối đầu ra ở các trạng thái khác nhau chính là độ phân kỳ KL giữa hai diễn viên mà ta nói đến.
 
@@ -235,6 +244,15 @@ Làm thế nào để nó không chênh lệch quá lớn?
 * Nếu $A < 0$, tức là một cặp trạng thái-hành động nào đó là không tốt, thì ta mong giảm $p_{\theta}(a_{t} | s_{t})$. Nếu $p_{\theta}(a_{t} | s_{t})$ còn lớn hơn $p_{\theta^k}(a_{t} | s_{t})$, thì ta cố gắng giảm nó, giảm đến khi $\frac{p_{\theta}\left(a_{t} | s_{t}\right)}{p_{\theta^{k}}\left(a_{t} | s_{t}\right)}$ bằng $1-\varepsilon$ thì dừng, lúc này không cần giảm nhỏ hơn nữa.
 
 Lợi ích của cách làm này là ta sẽ không để $p_{\theta}(a_{t} | s_{t})$ và $p_{\theta^k}(a_{t} | s_{t})$ chênh lệch quá lớn. Cài đặt điều này thực ra rất đơn giản.
+
+<details class="viz-box">
+<summary>🎬 Mô phỏng PPO từng bước <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: PPO-clip và PPO-penalty ($\beta$ thích nghi) trên lưới 4×4: lấy mẫu một lô, tính lợi thế, rồi chạy $K$ epoch trên cùng lô với bảng tỉ số $r_t$ của từng mẫu, đánh dấu mẫu bị cắt. Phần cuối so sánh hiệu quả dữ liệu với REINFORCE và với importance sampling không cắt. [Mở trang riêng](viz/ppo.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/ppo.html?embed" style="height:2623px" title="Mô phỏng PPO từng bước" loading="lazy"></iframe>
+
+</details>
 
 Hình 5.4 là so sánh giữa PPO và các thuật toán khác. Các thuật toán diễn viên-nhà phê bình lợi thế (advantage actor-critic) và diễn viên-nhà phê bình lợi thế + vùng tin cậy (trust region) là các phương pháp dựa trên diễn viên-nhà phê bình (actor-critic). Thuật toán PPO được biểu diễn bằng đường màu tím, mỗi hình con trong hình 5.4 biểu thị một nhiệm vụ học tăng cường nào đó, trong đa số trường hợp, PPO đều khá tốt, dù không phải tốt nhất thì cũng là tốt thứ hai.
 

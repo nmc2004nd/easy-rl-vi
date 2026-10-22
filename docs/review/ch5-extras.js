@@ -530,10 +530,31 @@
     ctx.typeset(root);
   }
 
+  // ======================================================================
+  // TAB "Mô phỏng": liên kết tới các trang docs/viz
+  // ======================================================================
+  var VIZ = [
+    ['ppo.html', 'Mục 5.2', 'PPO từng bước', 'Lấy mẫu một lô, $K$ epoch trên cùng lô với tỉ số $r_t$ và mẫu bị cắt; PPO-clip, PPO-penalty với $\\beta$ thích nghi; so sánh hiệu quả dữ liệu với REINFORCE.'],
+    ['ppo-trust.html', 'Mục 5.2', 'Mục tiêu thay thế và vùng tin cậy', 'Bản đồ cải thiện thật và mục tiêu thay thế; đường viền $\\mathrm{KL} = \\delta$; bốn cách tối ưu đi đâu sau $K$ epoch.']
+  ];
+  function renderViz(root, ctx) {
+    root.innerHTML = '';
+    root.classList.add('rx');
+    var b = h('<section class="blk"><h2>Mô phỏng thuật toán</h2>' +
+      '<p class="lead">Chạy từng bước các thuật toán của chương, kèm phép tính bằng số thật và mã giả tô sáng dòng đang chạy. Mở trong cùng tab; bấm “← Các mô phỏng” để quay lại danh sách.</p>' +
+      '<div class="lanes">' + VIZ.map(function (v) {
+        return '<a class="lane" style="display:block;text-decoration:none;color:inherit" href="../viz/' + v[0] + '"><div class="lt">' + v[2] +
+          ' <span>· ' + v[1] + '</span></div><div class="rxs">' + v[3] + '</div></a>';
+      }).join('') + '</div></section>');
+    root.appendChild(b);
+    ctx.typeset(b);
+  }
+
   window.ReviewExtras = {
     tabs: [
       { id: 'lab', label: 'Thí nghiệm', render: renderLab },
-      { id: 'map', label: 'Sơ đồ', render: renderMap }
+      { id: 'map', label: 'Sơ đồ', render: renderMap },
+      { id: 'viz', label: 'Mô phỏng', render: renderViz }
     ]
   };
 })();

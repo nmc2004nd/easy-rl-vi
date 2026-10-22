@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mục tiêu thay thế và vùng tin cậy · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  :root { --c3: #1f9d6b; --c4: #8b5cf6; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c3: #3cc28d; --c4: #a78bfa; } }
+  :root[data-theme="dark"] { --c3: #3cc28d; --c4: #a78bfa; }
+  .maps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 640px) { .maps { grid-template-columns: minmax(0, 1fr); } }
+  .mcap { text-align: center; font-size: .86rem; font-weight: 600; margin-bottom: 4px; }
+  .mapbox { position: relative; width: 100%; max-width: 380px; margin: 0 auto; aspect-ratio: 1; touch-action: none; }
+  .mapbox canvas, .mapbox svg { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 10px; }
+  .mapbox svg { overflow: hidden; }
+  .mapbox .ax { fill: var(--text); font-size: 12px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+  table.res { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; margin-top: 10px; }
+  table.res th, table.res td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: center; }
+  table.res th:first-child, table.res td:first-child { text-align: left; }
+  table.res td.bad { color: var(--s2); font-weight: 700; }
+  table.res td.good { color: var(--accent-text); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Mục tiêu thay thế và vùng tin cậy</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter5/chapter5_vi?id=_52-tối-ưu-chính-sách-cận-kề">Mục 5.2</a></div>
+    </div>
+    <p class="lead">PPO không tối ưu $\bar R_\theta$ thật mà tối ưu <b>mục tiêu thay thế</b> $J^{\theta^k}(\theta)$ dựng từ một lô dữ liệu do $\theta^k$ sinh ra. Trang này vẽ cạnh nhau hai bản đồ: mức cải thiện <b>thật</b> $\bar R_\theta - \bar R_{\theta^k}$ và mục tiêu thay thế, cùng đường viền vùng tin cậy $\mathrm{KL}(\theta^k, \theta) = \delta$ của TRPO.</p>
+  </div>
+  <div class="only-embed open-full"><a href="ppo-trust.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <p class="note" style="margin:0 0 6px">Chính sách hai tham số như trang <a href="pg-sample.html">Gradient lấy mẫu</a>: hai bước, ở bước $t$ chọn trái với xác suất $\sigma(\theta_t)$; $R$ = 3 nếu (trái, trái), 2 nếu (phải, phải), 0 nếu khác. Lô $N$ quỹ đạo từ $\theta^k$, lợi thế $A^n = R(\tau^n) - \bar R_{\text{lô}}$, tỉ số từng bước $r_t = \pi_\theta(a_t)/\pi_{\theta^k}(a_t)$.</p>
+    <div class="ctrl">
+      <span class="lb">Bản đồ phải vẽ</span>
+      <div class="seg" id="surr"><button type="button" data-v="is" aria-pressed="true">$\sum r_t A$ (không cắt)</button><button type="button" data-v="clip" aria-pressed="false">PPO-clip</button><button type="button" data-v="pen" aria-pressed="false">PPO-penalty</button></div>
+    </div>
+    <div class="ctrl">
+      <span class="lb">$N$</span>
+      <div class="seg" id="nsel"><button type="button" data-v="8" aria-pressed="false">8</button><button type="button" data-v="32" aria-pressed="true">32</button><button type="button" data-v="128" aria-pressed="false">128</button></div>
+      <label for="kk">$K$ epoch</label><input id="kk" type="range" min="5" max="80" step="5" value="40"><span class="val" id="kk-v"></span>
+      <label for="eta">$\eta$</label><input id="eta" type="range" min="0.2" max="3" step="0.2" value="1.2"><span class="val" id="eta-v"></span>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn" id="resample">Lấy lô khác</button>
+      <button type="button" class="btn pri" id="next">Vòng tiếp theo</button>
+      <span class="lb">dùng</span>
+      <div class="seg" id="outer"><button type="button" data-v="is" aria-pressed="false">Không cắt</button><button type="button" data-v="clip" aria-pressed="true">PPO-clip</button><button type="button" data-v="pen" aria-pressed="false">PPO-penalty</button><button type="button" data-v="trpo" aria-pressed="false">TRPO</button></div>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+    </div>
+    <p class="note" style="margin:0">$\varepsilon = 0{,}2$; PPO-penalty $\beta = 2$; vùng tin cậy $\delta = 0{,}05$. Bấm vào bản đồ trái để đặt $\theta^k$.</p>
+    <div class="stats"><span>Vòng $k$ = <b id="kv">0</b></span><span>$\theta^k$ = <b id="thk"></b></span><span>$\bar R_{\theta^k}$ = <b id="jk"></b></span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="maps">
+          <div><div class="mcap">Cải thiện thật $\bar R_\theta - \bar R_{\theta^k}$</div><div class="mapbox"><canvas id="cv1" width="380" height="380"></canvas><svg id="ov1" viewBox="0 0 380 380" role="img" aria-label="Bản đồ cải thiện thật"></svg></div></div>
+          <div><div class="mcap" id="cap2"></div><div class="mapbox"><canvas id="cv2" width="380" height="380"></canvas><svg id="ov2" viewBox="0 0 380 380" role="img" aria-label="Bản đồ mục tiêu thay thế"></svg></div></div>
+        </div>
+        <div class="scale" id="scale"></div>
+        <div class="legend" style="justify-content:center">
+          <span class="li"><span class="sw" style="background:var(--text);height:2px"></span>$\mathrm{KL}(\theta^k, \theta) = \delta$</span>
+          <span class="li"><span class="sw" style="background:var(--s2)"></span>Không cắt</span>
+          <span class="li"><span class="sw" style="background:var(--s1)"></span>PPO-clip</span>
+          <span class="li"><span class="sw" style="background:var(--c3)"></span>PPO-penalty</span>
+          <span class="li"><span class="sw" style="background:var(--c4)"></span>TRPO</span>
+        </div>
+        <table class="res" id="res"></table>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>$\bar R_{\theta^k}$ qua các vòng</h2>
+    <div id="chart"></div>
+    <p class="note">Mỗi vòng: lấy lô mới từ $\theta^k$, chạy $K$ epoch theo phương pháp đã chọn, rồi $\theta^{k+1} \leftarrow$ điểm cuối. Đỉnh cao nhất là $3$.</p>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, LIM = 4, S = 380, EPS = 0.2, BETA = 2, DELTA = 0.05;
+  var M = [[3, 0], [0, 2]], TH0 = [0.4, -0.7];
+  var METH = ['is', 'clip', 'pen', 'trpo'], NAME = { is: 'Không cắt', clip: 'PPO-clip', pen: 'PPO-penalty', trpo: 'TRPO' }, COL = { is: '--s2', clip: '--s1', pen: '--c3', trpo: '--c4' };
+  function sig(x) { return 1 / (1 + Math.exp(-x)); }
+  function nN() { return +V_.$('#nsel [aria-pressed=true]').dataset.v; }
+  function surr() { return V_.$('#surr [aria-pressed=true]').dataset.v; }
+  function outer() { return V_.$('#outer [aria-pressed=true]').dataset.v; }
+  function K() { return +V_.$('#kk').value; }
+  function eta() { return +V_.$('#eta').value; }
+  function J(th) { var p = [sig(th[0]), sig(th[1])], s = 0; for (var a = 0; a < 2; a++) for (var b = 0; b < 2; b++) s += (a ? 1 - p[0] : p[0]) * (b ? 1 - p[1] : p[1]) * M[a][b]; return s; }
+  function klb(p, q) { return p * Math.log(p / q) + (1 - p) * Math.log((1 - p) / (1 - q)); }
+  function KL(thk, th) { return klb(sig(thk[0]), sig(th[0])) + klb(sig(thk[1]), sig(th[1])); }
+
+  // lô dữ liệu từ θ^k: mỗi quỹ đạo (a1, a2), lợi thế A = R − trung bình lô
+  var st, rand = V_.seeded(11);
+  function sampleBatch(thk, n) {
+    var p = [sig(thk[0]), sig(thk[1])], b = [], mean = 0;
+    for (var i = 0; i < n; i++) { var a1 = rand() < p[0] ? 0 : 1, a2 = rand() < p[1] ? 0 : 1; b.push({ a: [a1, a2], R: M[a1][a2] }); mean += M[a1][a2] / n; }
+    b.forEach(function (o) { o.A = o.R - mean; });
+    // gom theo 4 loại quỹ đạo để tính nhanh: trọng số = tổng lợi thế của loại đó / N
+    var W = [[0, 0], [0, 0]]; b.forEach(function (o) { W[o.a[0]][o.a[1]] += o.A / n; });
+    return { list: b, W: W, mean: mean, pk: p };
+  }
+  function pi(th, t, a) { var p = sig(th[t]); return a ? 1 - p : p; }
+  // mục tiêu thay thế
+  function L(th, md, B) {
+    if (md === 'trpo') md = 'is';
+    var s = 0;
+    for (var a1 = 0; a1 < 2; a1++) for (var a2 = 0; a2 < 2; a2++) {
+      var w = B.W[a1][a2]; if (!w) continue;
+      var r1 = pi(th, 0, a1) / (a1 ? 1 - B.pk[0] : B.pk[0]), r2 = pi(th, 1, a2) / (a2 ? 1 - B.pk[1] : B.pk[1]);
+      if (md === 'clip') s += Math.min(r1 * w, Math.min(Math.max(r1, 1 - EPS), 1 + EPS) * w) + Math.min(r2 * w, Math.min(Math.max(r2, 1 - EPS), 1 + EPS) * w);
+      else s += (r1 + r2) * w;
+    }
+    if (md === 'pen') s -= BETA * KL(st.thk, th);
+    return s;
+  }
+  function gradL(th, md, B) { var h = 1e-4, g = []; for (var i = 0; i < 2; i++) { var a = th.slice(), b = th.slice(); a[i] += h; b[i] -= h; g.push((L(a, md, B) - L(b, md, B)) / (2 * h)); } return g; }
+  function clampT(v) { return Math.max(-LIM, Math.min(LIM, v)); }
+  // K epoch đi lên theo gradient; TRPO: sau mỗi bước, nếu KL > δ thì kéo về đường viền (chia đôi theo đoạn thẳng từ θ^k)
+  function runPath(md, B) {
+    var th = st.thk.slice(), path = [th.slice()];
+    for (var e = 0; e < K(); e++) {
+      var g = gradL(th, md, B), nt = [clampT(th[0] + eta() * g[0]), clampT(th[1] + eta() * g[1])];
+      if (md === 'trpo' && KL(st.thk, nt) > DELTA) {
+        var lo = 0, hi = 1, d = [nt[0] - st.thk[0], nt[1] - st.thk[1]];
+        for (var it = 0; it < 30; it++) { var mid = (lo + hi) / 2; if (KL(st.thk, [st.thk[0] + mid * d[0], st.thk[1] + mid * d[1]]) > DELTA) hi = mid; else lo = mid; }
+        nt = [st.thk[0] + lo * d[0], st.thk[1] + lo * d[1]];
+      }
+      th = nt; path.push(th.slice());
+    }
+    return path;
+  }
+
+  function reset() { st = { thk: TH0.slice(), k: 0, trail: [TH0.slice()], hist: [J(TH0)] }; newBatch(); pseudo.hl('init'); }
+  function newBatch() { st.B = sampleBatch(st.thk, nN()); compute(); pseudo.hl(['samp', 'obj', 'ep']); }
+  function compute() { st.paths = {}; METH.forEach(function (m) { st.paths[m] = runPath(m, st.B); }); drawAll(); }
+  function nextRound() {
+    var end = st.paths[outer()]; st.thk = end[end.length - 1].slice(); st.k++; st.trail.push(st.thk.slice()); st.hist.push(J(st.thk));
+    st.B = sampleBatch(st.thk, nN()); compute(); pseudo.hl(['next', 'samp', 'obj', 'ep']);
+  }
+
+  // ---------- vẽ ----------
+  function px(v) { return (v + LIM) / (2 * LIM) * S; }
+  function py(v) { return (LIM - v) / (2 * LIM) * S; }
+  var G = 95;
+  function heat(cv, fn, mx) {
+    var c = cv.getContext('2d'), cell = S / G;
+    for (var i = 0; i < G; i++) for (var j = 0; j < G; j++) {
+      var th = [-LIM + (i + 0.5) / G * 2 * LIM, LIM - (j + 0.5) / G * 2 * LIM], v = fn(th);
+      c.fillStyle = V_.valueColor(Math.max(-mx, Math.min(mx, v)), mx).bg; c.fillRect(i * cell, j * cell, cell + 0.6, cell + 0.6);
+    }
+  }
+  function klContour() {
+    var pts = [];
+    for (var k = 0; k < 120; k++) {
+      var ang = k / 120 * 2 * Math.PI, d = [Math.cos(ang), Math.sin(ang)], lo = 0, hi = 12;
+      for (var it = 0; it < 40; it++) { var mid = (lo + hi) / 2; if (KL(st.thk, [st.thk[0] + mid * d[0], st.thk[1] + mid * d[1]]) > DELTA) hi = mid; else lo = mid; }
+      pts.push(px(st.thk[0] + lo * d[0]).toFixed(1) + ',' + py(st.thk[1] + lo * d[1]).toFixed(1));
+    }
+    return '<polygon points="' + pts.join(' ') + '" fill="none" stroke="' + V_.cssVar('--text') + '" stroke-width="1.6" stroke-dasharray="5 3"/>';
+  }
+  function overlay(svg, withTrail) {
+    var s = '';
+    [-4, -2, 0, 2, 4].forEach(function (v) { s += '<line x1="' + px(v) + '" x2="' + px(v) + '" y1="0" y2="' + S + '" stroke="' + V_.cssVar('--border') + '" stroke-width="' + (v ? 0.5 : 1) + '"/><line y1="' + py(v) + '" y2="' + py(v) + '" x1="0" x2="' + S + '" stroke="' + V_.cssVar('--border') + '" stroke-width="' + (v ? 0.5 : 1) + '"/>'; });
+    s += '<text class="ax" x="' + (S - 6) + '" y="16" text-anchor="end">trái, trái: 3</text><text class="ax" x="6" y="' + (S - 8) + '">phải, phải: 2</text>';
+    s += klContour();
+    if (withTrail && st.trail.length > 1) s += '<polyline points="' + st.trail.map(function (p) { return px(p[0]).toFixed(1) + ',' + py(p[1]).toFixed(1); }).join(' ') + '" fill="none" stroke="' + V_.cssVar('--text') + '" stroke-width="1.5" stroke-opacity=".6"/>';
+    METH.forEach(function (m) {
+      var p = st.paths[m], col = V_.cssVar(COL[m]);
+      s += '<polyline points="' + p.map(function (q) { return px(q[0]).toFixed(1) + ',' + py(q[1]).toFixed(1); }).join(' ') + '" fill="none" stroke="' + col + '" stroke-width="2.4" stroke-linejoin="round"/>';
+      var e = p[p.length - 1]; s += '<circle cx="' + px(e[0]) + '" cy="' + py(e[1]) + '" r="4.5" fill="' + col + '" stroke="' + V_.cssVar('--surface') + '" stroke-width="1.5"/>';
+    });
+    s += '<circle cx="' + px(st.thk[0]) + '" cy="' + py(st.thk[1]) + '" r="6" fill="' + V_.cssVar('--surface') + '" stroke="' + V_.cssVar('--text') + '" stroke-width="2.5"/>';
+    svg.innerHTML = s;
+  }
+  function drawAll() {
+    var jk = J(st.thk), md = surr(), B = st.B;
+    var mx1 = 0, mx2 = 0;
+    for (var i = 0; i < 20; i++) for (var j = 0; j < 20; j++) { var th = [-LIM + (i + 0.5) / 20 * 2 * LIM, -LIM + (j + 0.5) / 20 * 2 * LIM]; mx1 = Math.max(mx1, Math.abs(J(th) - jk)); mx2 = Math.max(mx2, Math.abs(L(th, md, B))); }
+    var mx = Math.max(0.5, mx1);
+    heat(V_.$('#cv1'), function (th) { return J(th) - jk; }, mx);
+    heat(V_.$('#cv2'), function (th) { return L(th, md, B); }, mx);
+    overlay(V_.$('#ov1'), true); overlay(V_.$('#ov2'), false);
+    V_.tex(V_.$('#cap2'), md === 'is' ? 'J^{\\theta^k}(\\theta) = \\tfrac1N\\textstyle\\sum r_t A' : md === 'clip' ? '\\tfrac1N\\textstyle\\sum\\min(r_t A,\\ \\operatorname{clip}(r_t)A)' : '\\tfrac1N\\textstyle\\sum r_t A - \\beta\\,\\mathrm{KL}(\\theta^k, \\theta)');
+    V_.$('#scale').innerHTML = '<span>' + V_.fmt(-mx, 2) + '</span><span class="bar" style="background:linear-gradient(90deg,' + V_.cssVar('--neg') + ',' + V_.cssVar('--surface-2') + ',' + V_.cssVar('--pos') + ')"></span><span>+' + V_.fmt(mx, 2) + '</span>';
+    V_.$('#kv').textContent = st.k;
+    V_.tex(V_.$('#thk'), '(' + V_.tn(st.thk[0], 2) + ',\\ ' + V_.tn(st.thk[1], 2) + ')');
+    V_.$('#jk').textContent = V_.fmt(jk, 3);
+    // bảng kết quả
+    var rows = METH.map(function (m) {
+      var e = st.paths[m][st.paths[m].length - 1], kl = KL(st.thk, e), tru = J(e) - jk, sv = L(e, m === 'trpo' ? 'is' : m, B);
+      return { m: m, kl: kl, tru: tru, sv: sv };
+    });
+    V_.$('#res').innerHTML = '<thead><tr><th>Sau ' + K() + ' epoch</th><th>Mục tiêu thay thế hứa hẹn</th><th>Cải thiện thật</th><th>$\\mathrm{KL}(\\theta^k, \\theta)$</th></tr></thead><tbody>' +
+      rows.map(function (r) {
+        return '<tr><td><span class="sw" style="background:var(' + COL[r.m] + ');display:inline-block;margin-right:6px"></span>' + NAME[r.m] + '</td><td>' + V_.fmt(r.sv, 3) + '</td><td class="' + (r.tru < -1e-3 ? 'bad' : r.tru > 1e-3 ? 'good' : '') + '">' + (r.tru >= 0 ? '+' : '') + V_.fmt(r.tru, 3) + '</td><td class="' + (r.kl > DELTA * 1.01 ? 'bad' : '') + '">' + V_.fmt(r.kl, 3) + '</td></tr>';
+      }).join('') + '</tbody>';
+    V_.texAll(V_.$('#res'));
+    var is = rows[0], cl = rows[1];
+    var h = 'Đường viền đứt nét là vùng tin cậy $\\mathrm{KL}(\\theta^k, \\theta) = ' + DELTA + '$. Trong vùng này hai bản đồ gần giống nhau: mục tiêu thay thế khớp với thật ở gần $\\theta^k$. ';
+    h += is.sv - is.tru > 0.15 ? '“Không cắt” đi ra xa tới KL = ' + V_.fmt(is.kl, 2) + ': mục tiêu thay thế hứa hẹn ' + V_.fmt(is.sv, 2) + ' nhưng thực tế chỉ được ' + (is.tru >= 0 ? '+' : '') + V_.fmt(is.tru, 2) + '. Ra ngoài vùng tin cậy, bản đồ phải không còn đáng tin. '
+      : '“Không cắt” lần này chưa đi quá xa (KL = ' + V_.fmt(is.kl, 2) + '); tăng $K$ hoặc $\\eta$, hoặc chọn $N = 8$, để thấy nó chạy theo lô. ';
+    h += 'PPO-clip dừng ở KL = ' + V_.fmt(cl.kl, 3) + ' vì khi các tỉ số $r_t$ ra ngoài $[0{,}8;\\ 1{,}2]$ thì mục tiêu phẳng (xem bản đồ phải khi chọn PPO-clip); TRPO đi tới đúng mép vùng tin cậy.';
+    V_.$('#insight').innerHTML = h; V_.texAll(V_.$('#insight'));
+    chart.set([st.hist]);
+    V_.postHeight();
+  }
+
+  // ---------- mã giả ----------
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  var pseudo = V_.Pseudo(V_.$('#pseudo'), { strip: V_.$('#pstrip'), title: 'một vòng PPO / TRPO', lines: [
+    ['init', 0, 'Chọn $\\theta^0$ <span class="cm">(chấm trắng)</span>'],
+    ['loop', 0, KW('lặp') + ' $k = 0, 1, \\ldots$:'],
+    ['samp', 1, '$\\theta^k$ lấy mẫu $N$ quỹ đạo; $A^n \\leftarrow R(\\tau^n) - \\bar R_{\\text{lô}}$'],
+    ['obj', 1, 'dựng mục tiêu thay thế $J^{\\theta^k}(\\theta)$ từ lô <span class="cm">(bản đồ phải)</span>'],
+    ['ep', 1, KW('lặp') + ' $K$ epoch: $\\theta \\leftarrow \\theta + \\eta\\nabla_\\theta J^{\\theta^k}(\\theta)$ <span class="cm">(TRPO: kéo về $\\mathrm{KL} \\le \\delta$)</span>'],
+    ['next', 1, '$\\theta^{k+1} \\leftarrow \\theta$; bỏ lô']
+  ] });
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'R̄θᵏ', color: '--s1' }], xName: 'Vòng', xLabel: 'Vòng', dec: 2, yMin: 0, yMax: 3, aria: 'Giá trị kỳ vọng qua các vòng' });
+
+  function seg(id, cb) {
+    V_.$(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      V_.$$(id + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      cb();
+    });
+  }
+  seg('#surr', drawAll);
+  seg('#nsel', newBatch);
+  seg('#outer', function () {});
+  V_.$('#kk').addEventListener('input', function () { V_.$('#kk-v').textContent = K(); compute(); });
+  V_.$('#eta').addEventListener('input', function () { V_.$('#eta-v').textContent = V_.fmt(eta(), 1); compute(); });
+  V_.$('#resample').addEventListener('click', newBatch);
+  V_.$('#next').addEventListener('click', nextRound);
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#ov1').addEventListener('pointerdown', function (e) {
+    var r = e.currentTarget.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 2 * LIM - LIM, y = LIM - (e.clientY - r.top) / r.height * 2 * LIM;
+    st.thk = [x, y]; st.trail = [[x, y]]; st.hist = [J(st.thk)]; st.k = 0; newBatch();
+  });
+  V_.onTheme(drawAll);
+  V_.$('#kk-v').textContent = K(); V_.$('#eta-v').textContent = V_.fmt(eta(), 1);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

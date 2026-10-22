@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PPO từng bước · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  :root { --c3: #1f9d6b; --c4: #8b5cf6; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c3: #3cc28d; --c4: #a78bfa; } }
+  :root[data-theme="dark"] { --c3: #3cc28d; --c4: #a78bfa; }
+  .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 16px; align-items: start; }
+  .qbox { max-width: 400px; width: 100%; margin: 0 auto; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+  table.tr td.cut { color: var(--s2); font-weight: 700; }
+  table.tr td.neg { color: var(--s2); }
+  table.tr td.pos { color: var(--accent-text); }
+  table.tr tr.clipped td { background: color-mix(in srgb, var(--s2) 10%, transparent); }
+  .tscroll { max-height: 320px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>PPO từng bước</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter5/chapter5_vi?id=_52-tối-ưu-chính-sách-cận-kề">Mục 5.2</a></div>
+    </div>
+    <p class="lead">Cùng lưới 4×4 với trang <a href="reinforce.html">REINFORCE từng bước</a>. Mỗi vòng PPO: chính sách $\theta^k$ <b>lấy mẫu một lô</b> vài tập, tính lợi thế $A_t$, rồi <b>cập nhật $K$ lần trên cùng lô đó</b> với tỉ số $r_t = \pi_\theta(a_t \mid s_t)/\pi_{\theta^k}(a_t \mid s_t)$. Cắt (PPO2) hoặc phạt KL (PPO1) giữ $\theta$ không đi quá xa $\theta^k$.</p>
+  </div>
+  <div class="only-embed open-full"><a href="ppo.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <span class="lb">Thuật toán</span>
+      <div class="seg" id="meth">
+        <button type="button" data-v="clip" aria-pressed="true">PPO-clip (PPO2)</button>
+        <button type="button" data-v="pen" aria-pressed="false">PPO-penalty, $\beta$ thích nghi (PPO1)</button>
+        <button type="button" data-v="is" aria-pressed="false">Không cắt</button>
+        <button type="button" data-v="pg" aria-pressed="false">REINFORCE (1 lần mỗi lô)</button>
+      </div>
+    </div>
+    <div class="ctrl">
+      <label for="kk">$K$ epoch</label><input id="kk" type="range" min="1" max="20" step="1" value="10"><span class="val" id="kk-v"></span>
+      <label for="eps">$\varepsilon$</label><input id="eps" type="range" min="0.1" max="0.4" step="0.05" value="0.2"><span class="val" id="eps-v"></span>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="round">Hết vòng</button>
+      <button type="button" class="btn" id="fast">+10 vòng</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <p class="note" style="margin:4px 0">Mỗi bước $-1$, vào đích $G$ được $0$, rơi hố $-10$; $\gamma = 0{,}9$; mỗi lô $M = 4$ tập; tốc độ học $\alpha = 0{,}1$. Lợi thế $A_t = G_t - V(s_t)$ với $V$ là đường cơ sở dạng bảng, cập nhật sau mỗi vòng. PPO1: $\mathrm{KL}_{\max} = 0{,}015$, $\mathrm{KL}_{\min} = 0{,}005$, $\beta$ giới hạn trong $[0{,}25;\ 2]$ (giới hạn là lựa chọn của người dịch để bước cập nhật không dao động).</p>
+    <div class="stats"><span>Vòng $k$ = <b id="kv">0</b></span><span>Đã lấy mẫu <b id="nep">0</b> tập</span><span id="binfo"></span><span id="phase" class="phase"></span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="two-col">
+          <div>
+            <div class="qbox" id="gbox"></div>
+            <div class="scale" id="scale"></div>
+          </div>
+          <div>
+            <div class="tscroll" id="tbox"><table class="tr"><thead><tr><th>#</th><th>$s_t$</th><th>$a_t$</th><th>$A_t$</th><th>$\pi_{\theta^k}$</th><th>$\pi_\theta$</th><th>$r_t$</th><th></th></tr></thead><tbody id="rows"></tbody></table></div>
+          </div>
+        </div>
+        <div class="calc" id="calc"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="blk">
+      <h2>Trong vòng hiện tại</h2>
+      <div class="legend"><span class="li"><span class="sw" style="background:var(--s1)"></span>$\mathrm{KL}(\pi_{\theta^k}\,\|\,\pi_\theta)$ ×100</span><span class="li"><span class="sw" style="background:var(--s2)"></span>% mẫu bị cắt</span></div>
+      <div id="echart"></div>
+      <p class="note">Trục ngang là epoch trong vòng. Với PPO-clip, càng nhiều epoch thì càng nhiều mẫu “chạm trần” và ngừng đóng góp gradient.</p>
+    </div>
+    <div class="blk">
+      <h2>Tổng thưởng theo số tập đã lấy mẫu</h2>
+      <div id="chart"></div>
+      <p class="note">Mỗi điểm là một tập (làm trơn 8 tập). Tối ưu là $-5$.</p>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>So sánh hiệu quả dữ liệu</h2>
+    <p class="note" style="margin:0 0 6px">Trung bình 30 lần chạy × 240 tập với $K$ và $\varepsilon$ hiện tại (làm trơn 10 tập). Trục ngang là <b>số tập đã lấy mẫu</b>, tức lượng tương tác với môi trường, chứ không phải số lần cập nhật.</p>
+    <div class="ctrl"><button type="button" class="btn" id="cmp">Chạy so sánh</button></div>
+    <div class="legend" id="cmp-legend"></div>
+    <div id="cmp-chart"></div>
+    <div class="insight" id="cmp-ins">Bấm “Chạy so sánh”.</div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, R = 4, C = 4, N = 16, START = 12, GOAL = 3, PIT = 6, CAP = 50, GAMMA = 0.9, LR = 0.1, M = 4, AV = 0.2;
+  var KLMAX = 0.015, KLMIN = 0.005, BMIN = 0.25, BMAX = 2;
+  var DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1], AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'], AW = ['↑', '→', '↓', '←'];
+  function mv(s, a) { var r = Math.floor(s / C) + DR[a], c = s % C + DC[a]; if (r < 0 || c < 0 || r >= R || c >= C) return s; return r * C + c; }
+  function isTerm(s) { return s === GOAL || s === PIT; }
+  function rew(s2) { return s2 === GOAL ? 0 : s2 === PIT ? -10 : -1; }
+  function rc(s) { return '(' + Math.floor(s / C) + ',' + s % C + ')'; }
+  function meth() { return V_.$('#meth [aria-pressed=true]').dataset.v; }
+  function K() { return meth() === 'pg' ? 1 : +V_.$('#kk').value; }
+  function eps() { return +V_.$('#eps').value; }
+  function softmax(t) { var m = Math.max.apply(null, t), e = t.map(function (x) { return Math.exp(x - m); }), s = e.reduce(function (a, b) { return a + b; }, 0); return e.map(function (x) { return x / s; }); }
+  function sample(p, rand) { var u = rand(), a = 0, c = p[0]; while (u > c && a < 3) { a++; c += p[a]; } return a; }
+  function kl(q, p) { var s = 0; for (var i = 0; i < q.length; i++) s += q[i] * Math.log(q[i] / p[i]); return s; }
+  function num(x, d) { return V_.tz(x, d == null ? 3 : d); }
+  function numP(x, d) { return V_.tz(x, d == null ? 3 : d, true); }
+
+  // ---------- thuật toán (dùng chung cho mô phỏng từng bước và phần so sánh) ----------
+  function newAgent(b0) { var th = []; for (var s = 0; s < N; s++) th.push([0, 0, 0, 0]); return { th: th, V: new Array(N).fill(0), beta: b0 == null ? 1 : b0 }; }
+  function sampleEpisode(ag, rand) {
+    var s = START, rows = [];
+    while (!isTerm(s) && rows.length < CAP) { var a = sample(softmax(ag.th[s]), rand), s2 = mv(s, a); rows.push({ s: s, a: a, r: rew(s2), path: s2 }); s = s2; }
+    var G = 0; for (var t = rows.length - 1; t >= 0; t--) { G = rows[t].r + GAMMA * G; rows[t].G = G; }
+    return rows;
+  }
+  // một epoch đi lên theo gradient của mục tiêu trên cả lô; trả về số mẫu bị cắt
+  function epoch(ag, data, pk, md, ep) {
+    var grads = ag.th.map(function () { return [0, 0, 0, 0]; }), ncut = 0;
+    data.forEach(function (x) {
+      var p = softmax(ag.th[x.s]), r = p[x.a] / pk[x.s][x.a], coef = r * x.A;
+      if (md === 'clip') { var cl = Math.min(Math.max(r, 1 - ep), 1 + ep); if (cl * x.A < r * x.A) { coef = 0; ncut++; x.cut = true; } else x.cut = false; } else x.cut = false;
+      for (var k = 0; k < 4; k++) grads[x.s][k] += coef * ((k === x.a ? 1 : 0) - p[k]);
+      if (md === 'pen') { var q = pk[x.s]; for (var k2 = 0; k2 < 4; k2++) grads[x.s][k2] -= ag.beta * (p[k2] - q[k2]); }
+    });
+    for (var s = 0; s < N; s++) for (var k3 = 0; k3 < 4; k3++) ag.th[s][k3] += LR * grads[s][k3] / M;
+    return ncut;
+  }
+  function meanKL(ag, data, pk) { var s = 0; data.forEach(function (x) { s += kl(pk[x.s], softmax(ag.th[x.s])); }); return data.length ? s / data.length : 0; }
+  function finishRound(ag, data, pk, md) {
+    data.forEach(function (x) { ag.V[x.s] += AV * (x.G - ag.V[x.s]); });
+    var info = null;
+    if (md === 'pen') {
+      var k = meanKL(ag, data, pk), b0 = ag.beta;
+      if (k > KLMAX) ag.beta = Math.min(BMAX, ag.beta * 2); else if (k < KLMIN) ag.beta = Math.max(BMIN, ag.beta / 2);
+      info = { kl: k, b0: b0, b1: ag.beta };
+    }
+    return info;
+  }
+
+  // ---------- mô phỏng từng bước ----------
+  var st, view, player;
+  function reset() {
+    player && player.stop(); buildPseudo();
+    st = { ag: newAgent(), k: 0, nep: 0, phase: 'idle', eps: [], data: [], pk: null, e: 0, last: null, hist: [], ekl: [], ecut: [] };
+    render();
+  }
+  function micro() {
+    var md = meth();
+    if (st.phase === 'idle') {
+      st.pk = st.ag.th.map(softmax); st.eps = []; st.data = []; st.phase = 'gen'; st.e = 0; st.ekl = [0]; st.ecut = [0];
+    }
+    if (st.phase === 'gen') {
+      var rows = sampleEpisode(st.ag, Math.random); st.eps.push(rows); st.nep++;
+      st.hist.push(rows.reduce(function (a, r) { return a + r.r; }, 0));
+      st.last = { kind: 'gen', rows: rows, m: st.eps.length };
+      if (st.eps.length >= M) st.phase = 'adv';
+      return;
+    }
+    if (st.phase === 'adv') {
+      st.data = []; st.eps.forEach(function (rows) { rows.forEach(function (x) { x.A = x.G - st.ag.V[x.s]; x.Vs = st.ag.V[x.s]; st.data.push(x); }); });
+      st.last = { kind: 'adv' }; st.phase = 'epoch'; return;
+    }
+    if (st.phase === 'epoch') {
+      var n = epoch(st.ag, st.data, st.pk, md, eps()); st.e++;
+      var k = meanKL(st.ag, st.data, st.pk);
+      st.ekl.push(k); st.ecut.push(n / st.data.length);
+      st.last = { kind: 'epoch', e: st.e, ncut: n, kl: k };
+      if (st.e >= K()) st.phase = 'fin';
+      return;
+    }
+    if (st.phase === 'fin') {
+      var info = finishRound(st.ag, st.data, st.pk, md);
+      st.k++; st.last = { kind: 'fin', info: info }; st.phase = 'idle';
+    }
+  }
+
+  // ---------- mã giả ----------
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  var pseudo, pKey = null;
+  function buildPseudo() {
+    var md = meth(); if (md === pKey) return; pKey = md;
+    var obj = md === 'clip' ? '$J(\\theta) = \\sum_t \\min\\big(r_t A_t,\\ \\operatorname{clip}(r_t, 1-\\varepsilon, 1+\\varepsilon)A_t\\big)$'
+      : md === 'pen' ? '$J(\\theta) = \\sum_t r_t A_t - \\beta\\sum_t \\mathrm{KL}\\big(\\pi_{\\theta^k}(\\cdot \\mid s_t)\\,\\|\\,\\pi_\\theta(\\cdot \\mid s_t)\\big)$'
+      : '$J(\\theta) = \\sum_t r_t A_t$ <span class="cm">(chỉ importance sampling)</span>';
+    var lines = [
+      ['init', 0, 'Khởi tạo $\\theta$ ($\\pi$ đều mọi ô), $V(s) = 0$' + (md === 'pen' ? ', $\\beta = 1$' : '')],
+      ['loop', 0, KW('lặp') + ' $k = 0, 1, 2, \\ldots$:'],
+      ['gen', 1, '$\\theta^k \\leftarrow \\theta$; dùng $\\pi_{\\theta^k}$ lấy mẫu $M$ tập'],
+      ['adv', 1, '$G_t \\leftarrow r_{t+1} + \\gamma G_{t+1}$; $\\;A_t \\leftarrow G_t - V(s_t)$'],
+      ['ep', 1, KW('lặp') + (md === 'pg' ? ' <b>1</b> lần' : ' $K$ epoch') + ' trên <b>cùng</b> lô:'],
+      ['obj', 2, '$r_t = \\pi_\\theta(a_t \\mid s_t) / \\pi_{\\theta^k}(a_t \\mid s_t)$; $\\;' + obj.slice(1)],
+      ['upd', 2, '$\\theta \\leftarrow \\theta + \\alpha\\,\\nabla_\\theta J(\\theta)$' + (md === 'clip' ? ' <span class="cm">(mẫu bị cắt: gradient bằng 0)</span>' : '')],
+      ['v', 1, '$V(s_t) \\leftarrow V(s_t) + \\alpha_V\\big(G_t - V(s_t)\\big)$; bỏ lô dữ liệu']
+    ];
+    if (md === 'pen') lines.push(['beta', 1, KW('nếu') + ' $\\mathrm{KL} > \\mathrm{KL}_{\\max}$: $\\beta \\leftarrow 2\\beta$; ' + KW('nếu') + ' $\\mathrm{KL} < \\mathrm{KL}_{\\min}$: $\\beta \\leftarrow \\beta/2$']);
+    var title = md === 'clip' ? 'PPO2 (PPO-clip)' : md === 'pen' ? 'PPO1 (PPO-penalty, $\\beta$ thích nghi)' : md === 'is' ? 'importance sampling không cắt' : 'REINFORCE có đường cơ sở';
+    var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
+    box.innerHTML = '';
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: title, lines: lines, open: open });
+  }
+  function hlIds() {
+    var L = st.last; if (!L) return 'init';
+    if (L.kind === 'gen') return ['loop', 'gen'];
+    if (L.kind === 'adv') return ['adv'];
+    if (L.kind === 'epoch') return ['ep', 'obj', 'upd'];
+    return meth() === 'pen' ? ['v', 'beta'] : ['v'];
+  }
+
+  // ---------- giao diện ----------
+  function render() {
+    pseudo.hl(hlIds());
+    var L = st.last, md = meth();
+    for (var s = 0; s < N; s++) {
+      var term = isTerm(s);
+      view.set(s, { kind: term ? 'term' : '', q: softmax(st.ag.th[s]), maxAbs: 1, nums: true, dec: 2, arrow: !term,
+        label: s === START ? 'S' : s === GOAL ? 'G' : s === PIT ? '−10' : '', value: s === PIT ? -10 : s === GOAL ? 0 : null, aria: 'ô ' + rc(s) });
+      view.cls(s, 'sel', false);
+    }
+    if (L && L.kind === 'gen') { L.rows.forEach(function (x) { view.cls(x.s, 'sel', true); }); view.agent(L.rows.length ? L.rows[L.rows.length - 1].path : -1); } else view.agent(-1);
+    view.mark(null);
+    V_.$('#scale').innerHTML = '<span>π = 0</span><span class="bar" style="background:linear-gradient(90deg,' + V_.cssVar('--surface-2') + ',' + V_.cssVar('--pos') + ')"></span><span>1</span>';
+    // bảng mẫu
+    var body = V_.$('#rows'), showR = st.phase === 'epoch' || st.phase === 'fin' || (L && (L.kind === 'epoch' || L.kind === 'adv'));
+    if (!st.data.length || (L && L.kind === 'gen')) {
+      var cnt = st.eps.reduce(function (a, r) { return a + r.length; }, 0);
+      body.innerHTML = '<tr><td colspan="8" style="color:var(--muted)">' + (st.eps.length ? 'Đã lấy mẫu ' + st.eps.length + '/' + M + ' tập (' + cnt + ' bước). Bảng hiện khi tính xong lợi thế.' : 'Chưa có lô dữ liệu.') + '</td></tr>';
+    } else {
+      body.innerHTML = st.data.map(function (x, i) {
+        var p = softmax(st.ag.th[x.s])[x.a], q = st.pk[x.s][x.a], r = p / q, cut = md === 'clip' && L && L.kind !== 'adv' && x.cut;
+        return '<tr class="' + (cut ? 'clipped' : '') + '"><td>' + (i + 1) + '</td><td>' + rc(x.s) + '</td><td>' + AW[x.a] + '</td><td class="' + (x.A < 0 ? 'neg' : 'pos') + '">' + V_.fmt(x.A, 2) + '</td><td>' + V_.fmt(q, 2) + '</td><td>' + V_.fmt(p, 2) + '</td><td>' + (showR ? V_.fmt(r, 2) : '') + '</td><td class="cut">' + (cut ? '✂' : '') + '</td></tr>';
+      }).join('');
+    }
+    V_.$('#kv').textContent = st.k; V_.$('#nep').textContent = st.nep;
+    V_.$('#binfo').innerHTML = md === 'pen' ? '$\\beta = ' + num(st.ag.beta, 3) + '$' : md === 'clip' ? '$\\varepsilon = ' + num(eps(), 2) + '$' : '';
+    V_.texAll(V_.$('#binfo'));
+    var ph = V_.$('#phase');
+    ph.className = 'phase ' + (st.phase === 'idle' ? 'ok' : 'on');
+    ph.textContent = st.phase === 'gen' ? '① θᵏ lấy mẫu lô' : st.phase === 'adv' ? '② Tính lợi thế' : st.phase === 'epoch' ? '③ Epoch ' + (st.e + 1) + '/' + K() : st.phase === 'fin' ? '④ Kết thúc vòng' : 'Chờ vòng mới';
+    showCalc(); insight(); drawCharts();
+    V_.postHeight();
+  }
+  function showCalc() {
+    var el = V_.$('#calc'), L = st.last, md = meth();
+    if (!L) { el.innerHTML = '<span class="hint">Bấm “Bước tiếp”: mỗi bước là một tập được lấy mẫu, một lần tính lợi thế, hoặc một epoch.</span>'; return; }
+    if (L.kind === 'gen') {
+      el.innerHTML = '<span class="hint">Tập ' + L.m + '/' + M + ' của vòng ' + st.k + ': ' + L.rows.length + ' bước, tổng thưởng ' + V_.fmt(L.rows.reduce(function (a, r) { return a + r.r; }, 0), 0) + '. Các ô đã đi qua được viền xanh. Dữ liệu này do $\\pi_{\\theta^k}$ sinh ra; trong cả vòng $\\theta^k$ <b>đứng yên</b>.</span>';
+      V_.texAll(el); return;
+    }
+    if (L.kind === 'adv') {
+      var x = st.data[0];
+      V_.tex(el, 'A_t = G_t - V(s_t),\\qquad \\text{ví dụ mẫu 1: } A = ' + num(x.G, 2) + ' - ' + numP(x.Vs, 2) + ' = ' + num(x.A, 2), true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">Lô có ' + st.data.length + ' cặp $(s_t, a_t)$. Lợi thế dương (xanh): làm tốt hơn mức thường thấy ở ô đó; âm (cam): kém hơn.</p>');
+      V_.texAll(el.lastChild); return;
+    }
+    if (L.kind === 'epoch') {
+      // mẫu có |r − 1| lớn nhất để minh họa
+      var best = null, bd = -1;
+      st.data.forEach(function (x) { var r = softmax(st.ag.th[x.s])[x.a] / st.pk[x.s][x.a]; if (Math.abs(r - 1) > bd) { bd = Math.abs(r - 1); best = { x: x, r: r }; } });
+      var e = eps(), r = best.r, A = best.x.A, src;
+      if (md === 'clip') {
+        var cl = Math.min(Math.max(r, 1 - e), 1 + e), cut = cl * A < r * A;
+        src = '\\begin{aligned}&\\text{Mẫu có } |r - 1| \\text{ lớn nhất: } s = ' + rc(best.x.s) + ',\\ a = ' + AN[best.x.a] + ',\\ A = ' + num(A, 2) + '\\\\' +
+          '&r = ' + num(r, 3) + ',\\quad \\min\\big(' + num(r, 3) + '\\cdot' + numP(A, 2) + ',\\ ' + num(cl, 2) + '\\cdot' + numP(A, 2) + '\\big) = ' + num(Math.min(r * A, cl * A), 3) + (cut ? '\\ \\ (\\text{bị cắt, gradient } 0)' : '\\ \\ (\\text{không cắt})') + '\\\\' +
+          '&\\text{Epoch } ' + L.e + ':\\ ' + L.ncut + '/' + st.data.length + '\\text{ mẫu bị cắt},\\quad \\overline{\\mathrm{KL}} = ' + num(L.kl, 4) + '\\end{aligned}';
+      } else {
+        src = '\\begin{aligned}&\\text{Mẫu có } |r - 1| \\text{ lớn nhất: } s = ' + rc(best.x.s) + ',\\ a = ' + AN[best.x.a] + ',\\ A = ' + num(A, 2) + ',\\ r = ' + num(r, 3) + '\\\\' +
+          '&\\text{Epoch } ' + L.e + ':\\ \\overline{\\mathrm{KL}}(\\pi_{\\theta^k}\\,\\|\\,\\pi_\\theta) = ' + num(L.kl, 4) + (md === 'pen' ? ',\\quad \\beta = ' + num(st.ag.beta, 3) : '') + '\\end{aligned}';
+      }
+      V_.tex(el, src, true); return;
+    }
+    var I = L.info;
+    if (md === 'pen' && I) {
+      V_.tex(el, '\\overline{\\mathrm{KL}} = ' + num(I.kl, 4) + (I.kl > KLMAX ? ' > \\mathrm{KL}_{\\max} = ' + KLMAX + '\\ \\Rightarrow\\ \\beta: ' + num(I.b0, 3) + '\\to ' + num(I.b1, 3) : I.kl < KLMIN ? ' < \\mathrm{KL}_{\\min} = ' + KLMIN + '\\ \\Rightarrow\\ \\beta: ' + num(I.b0, 3) + '\\to ' + num(I.b1, 3) : '\\in[\\mathrm{KL}_{\\min}, \\mathrm{KL}_{\\max}]\\ \\Rightarrow\\ \\beta \\text{ giữ nguyên}'), true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">Xong vòng ' + (st.k - 1) + ': cập nhật đường cơ sở $V$, bỏ lô dữ liệu, $\\theta^{k+1} \\leftarrow \\theta$.' + (I.b1 === BMAX || I.b1 === BMIN ? ' ($\\beta$ đang ở giới hạn.)' : '') + '</p>');
+      V_.texAll(el.lastChild); return;
+    }
+    el.innerHTML = '<span class="hint">Xong vòng ' + (st.k - 1) + ': cập nhật đường cơ sở $V$, <b>bỏ</b> lô dữ liệu, $\\theta^{k+1} \\leftarrow \\theta$. Vòng sau lấy mẫu lại bằng chính sách mới.</span>'; V_.texAll(el);
+  }
+  function insight() {
+    var el = V_.$('#insight'), md = meth(), L = st.last, h;
+    if (!L) h = 'Mọi ô bắt đầu với $\\pi$ đều. Trong một vòng: ① lấy mẫu $M = ' + M + '$ tập, ② tính lợi thế, ③ ' + (md === 'pg' ? 'cập nhật <b>một</b> lần' : '$K = ' + K() + '$ epoch') + ', ④ kết thúc vòng.';
+    else if (st.phase === 'epoch' || (L.kind === 'epoch')) h = md === 'clip' ? 'Hàng tô cam (✂) là mẫu <b>bị cắt</b>: $r_t$ đã đi quá $1\\pm\\varepsilon$ theo hướng có lợi nên không đóng góp gradient nữa. Các mẫu còn lại tiếp tục kéo chính sách.' : md === 'pen' ? 'Không có mẫu nào bị cắt; thay vào đó số hạng $-\\beta\\,\\mathrm{KL}$ kéo $\\pi_\\theta$ về $\\pi_{\\theta^k}$ ở mọi ô có trong lô.' : md === 'is' ? 'Không có gì ngăn $r_t$ đi xa: càng nhiều epoch thì chính sách càng “học thuộc” lô nhỏ này, kể cả phần nhiễu.' : 'REINFORCE chỉ cập nhật một lần rồi bỏ lô (khi $\\theta = \\theta^k$ thì $r_t = 1$).';
+    else if (st.hist.length) {
+      var last = st.hist.slice(-12), avg = last.reduce(function (a, b) { return a + b; }, 0) / last.length;
+      h = 'Đã lấy mẫu ' + st.nep + ' tập; trung bình ' + last.length + ' tập gần nhất: <b>' + V_.fmt(avg, 1) + '</b> (tối ưu $-5$). Xem phần so sánh bên dưới để thấy cùng lượng dữ liệu thì PPO học được nhiều hơn REINFORCE.';
+    } else h = '';
+    el.innerHTML = h; V_.texAll(el);
+  }
+  var echart = V_.LineChart(V_.$('#echart'), { series: [{ name: 'KL ×100', color: '--s1' }, { name: '% bị cắt', color: '--s2' }], xName: 'Epoch', xLabel: 'Epoch', dec: 2, yMin: 0, aria: 'KL và tỉ lệ cắt theo epoch' });
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'Tổng thưởng', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 1, yMin: -50, yMax: 0, aria: 'Tổng thưởng mỗi tập' });
+  function smooth(h, w) { return h.map(function (_, i) { var s = 0, n = 0; for (var j = Math.max(0, i - w + 1); j <= i; j++) { s += h[j]; n++; } return s / n; }); }
+  function drawCharts() {
+    echart.set([st.ekl.map(function (v) { return v * 100; }), st.ecut.map(function (v) { return v * 100; })], st.ekl.map(function (_, i) { return i; }));
+    chart.set([smooth(st.hist, 8)]);
+  }
+
+  // ---------- so sánh ----------
+  var CFG = [['pg', 'REINFORCE (1 lần mỗi lô)', '--c4'], ['is', 'Không cắt', '--s2'], ['clip', 'PPO-clip', '--s1'], ['pen', 'PPO-penalty', '--c3']];
+  function runFast(md, kk, ep, total, rand) {
+    var ag = newAgent(), curve = [];
+    while (curve.length < total) {
+      var pk = ag.th.map(softmax), data = [];
+      for (var m = 0; m < M; m++) { var rows = sampleEpisode(ag, rand); rows.forEach(function (x) { x.A = x.G - ag.V[x.s]; data.push(x); }); curve.push(rows.reduce(function (a, r) { return a + r.r; }, 0)); }
+      var E = md === 'pg' ? 1 : kk;
+      for (var e = 0; e < E; e++) epoch(ag, data, pk, md, ep);
+      finishRound(ag, data, pk, md);
+    }
+    return curve.slice(0, total);
+  }
+  var cmpChart = V_.LineChart(V_.$('#cmp-chart'), { series: CFG.map(function (c) { return { name: c[1], color: c[2] }; }), xName: 'Tập', xLabel: 'Số tập đã lấy mẫu', dec: 1, yMin: -50, yMax: 0, aria: 'So sánh hiệu quả dữ liệu' });
+  V_.$('#cmp-legend').innerHTML = CFG.map(function (c) { return '<span class="li"><span class="sw" style="background:var(' + c[2] + ')"></span>' + c[1] + '</span>'; }).join('');
+  V_.$('#cmp').addEventListener('click', function () {
+    var btn = V_.$('#cmp'); btn.disabled = true; btn.textContent = 'Đang chạy…';
+    setTimeout(function () {
+      var RU = 30, T = 240, kk = +V_.$('#kk').value, ep = eps(), out = [];
+      CFG.forEach(function (c) { var acc = new Array(T).fill(0), rand = V_.seeded(7); for (var i = 0; i < RU; i++) runFast(c[0], kk, ep, T, rand).forEach(function (v, j) { acc[j] += v / RU; }); out.push(smooth(acc, 10)); });
+      cmpChart.set(out);
+      var at = function (i, j) { return CFG.map(function (c, k) { return c[1] + ' <b>' + V_.fmt(out[k][j], 1) + '</b>'; }).join(' · '); };
+      V_.$('#cmp-ins').innerHTML = 'Sau 80 tập: ' + at(0, 79) + '.<br>Sau 240 tập: ' + at(0, T - 1) + '.<br>' +
+        'Cùng lượng dữ liệu, PPO dùng mỗi lô ' + kk + ' lần nên học nhanh hơn REINFORCE nhiều. “Không cắt” cũng dùng lô ' + kk + ' lần nhưng không có gì giữ $\\theta$ gần $\\theta^k$, nên chạy theo nhiễu của từng lô và kém ổn định. Cắt hoặc phạt KL là thứ khiến việc dùng lại dữ liệu trở nên an toàn.';
+      V_.texAll(V_.$('#cmp-ins'));
+      btn.disabled = false; btn.textContent = 'Chạy lại so sánh'; V_.postHeight();
+    }, 30);
+  });
+
+  function step() { micro(); render(); return true; }
+  function finishRoundUI() { player.stop(); if (st.phase === 'idle') micro(); var g = 0; while (st.phase !== 'idle' && g++ < 500) micro(); render(); }
+  function fast() { player.stop(); for (var i = 0; i < 10; i++) { if (st.phase === 'idle') micro(); var g = 0; while (st.phase !== 'idle' && g++ < 500) micro(); } render(); }
+  function labels() { V_.$('#kk-v').textContent = V_.$('#kk').value; V_.$('#eps-v').textContent = V_.fmt(eps(), 2); }
+
+  view = V_.QGrid(V_.$('#gbox'), R, C, { aria: 'Chính sách π(a|s) ở mỗi ô' });
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
+  V_.$('#round').addEventListener('click', finishRoundUI);
+  V_.$('#fast').addEventListener('click', fast);
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#meth').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    V_.$$('#meth button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    reset();
+  });
+  ['#kk', '#eps'].forEach(function (id) { V_.$(id).addEventListener('input', labels); });
+  V_.onTheme(render);
+  labels();
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>
