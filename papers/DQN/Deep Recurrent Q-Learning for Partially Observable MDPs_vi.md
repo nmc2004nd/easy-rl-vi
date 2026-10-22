@@ -146,7 +146,7 @@ DQN chuyển quá trình quyết định Markov quan sát được một phần 
 
 ![Mô tả hình ảnh](https://img-blog.csdnimg.cn/bc8e3f4cd3dd4d94800a7513878e24ed.jpeg#pic_center)
 
-**Thiết kế thực nghiệm**: ở mỗi bước thời gian, xác suất khung hình trò chơi hiển thị đầy đủ hoặc bị làm mờ hoàn toàn là **$`p=0.5`$**. Bằng cách này, môi trường trò chơi Flickering Pong có một nửa xác suất khung hình bị làm mờ, khiến quan sát (obs) tác tử nhận được mang tính chất POMDP.
+**Thiết kế thực nghiệm**: ở mỗi bước thời gian, xác suất khung hình trò chơi hiển thị đầy đủ hoặc bị làm mờ hoàn toàn là $`p=0.5`$. Bằng cách này, môi trường trò chơi Flickering Pong có một nửa xác suất khung hình bị làm mờ, khiến quan sát (obs) tác tử nhận được mang tính chất POMDP.
 	Để kiểm chứng:
 	① Tầng tích chập (CNN) trong mô hình mạng nơ-ron DQN có khả năng phát hiện **tốc độ, hướng** di chuyển của vật thể trong khung hình quan sát bị mờ: trong môi trường Flickering Pong, đưa 10 khung hình cuối cùng chứa khung hình quan sát hiện tại vào mô hình, và xác nhận bằng trực quan hóa.
 	② Tầng LSTM trong mô hình mạng nơ-ron DRQN có khả năng phát hiện đặc trưng lịch sử của vật thể trong khung hình quan sát bị mờ: trong môi trường Flickering Pong, chỉ đưa khung hình quan sát hiện tại vào mô hình, và xác nhận bằng trực quan hóa.

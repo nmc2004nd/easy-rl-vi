@@ -89,11 +89,11 @@ L(\theta)=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta '}}[\frac{\pi_\theta(a_t|s_t)}{\
 Sau importance sampling, có thể lấy mẫu từ $`p(x)`$ để tìm kỳ vọng của $`f(x)`$ dưới phân phối $`q(x)`$, như công thức $`(5)`$, vậy có phải giải quyết một lần là xong mãi? Nếu tính phương sai của cả hai sẽ phát hiện:
 
 ```math
-\operatorname{Var}_{x \sim q}[f(X)]=\mathbb{E}_{x \sim q}[f(x)^2]-[\mathbb{E}_{x \sim q}[f(x)]^2 \tag{7.1}
+\mathrm{Var}_{x \sim q}[f(X)]=\mathbb{E}_{x \sim q}[f(x)^2]-[\mathbb{E}_{x \sim q}[f(x)]^2 \tag{7.1}
 ```
 
 ```math
-\operatorname{Var}_{x\sim p}[\frac{q(x)}{p(x)}f(x)]=\mathbb{E}_{x \sim p}[(\frac{q(x)}{p(x)}f(x))^2]-[\mathbb{E}_{x \sim p}[\frac{q(x)}{p(x)}f(x)]^2=\mathbb{E}_{x \sim q}[f(x)^2\frac{q(x)}{p(x)}]-(\mathbb{E}_{x \sim q}[f(x)])^2 \tag{7.2 }
+\mathrm{Var}_{x\sim p}[\frac{q(x)}{p(x)}f(x)]=\mathbb{E}_{x \sim p}[(\frac{q(x)}{p(x)}f(x))^2]-[\mathbb{E}_{x \sim p}[\frac{q(x)}{p(x)}f(x)]^2=\mathbb{E}_{x \sim q}[f(x)^2\frac{q(x)}{p(x)}]-(\mathbb{E}_{x \sim q}[f(x)])^2 \tag{7.2 }
 ```
 
 Phương sai của hai cái không bằng nhau, chênh lệch nằm ở trọng số quan trọng. Nếu trọng số quan trọng quá lớn, sẽ dẫn đến phương sai khá lớn, tiếp đó khiến việc lấy mẫu vẫn thất bại.

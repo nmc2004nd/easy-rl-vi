@@ -160,11 +160,11 @@ Kiến trúc mạng nơ-ron tách biệt này được so sánh với mạng nơ
 **Kiến trúc mạng nơ-ron của hàm chính sách** là:
 <div align=center><img src="https://img-blog.csdnimg.cn/e0781b42c72246deab1eec976ba6862f.png#pic_center" alt="Mô tả hình ảnh" style="zoom:80%;" /></div>
 
-Ở đây bổ sung giải thích về *$`\mu`$* (trung bình) và *$`\sigma`$* (phương sai):  
+Ở đây bổ sung giải thích về $`\mu`$ (trung bình) và $`\sigma`$ (phương sai):  
 Thuật toán tối ưu chính sách cận kề (Proximal policy optimization, PPO) dùng chính sách ngẫu nhiên (Stochastic policy) trong học tăng cường, giả định trước rằng phân phối xác suất hành động tuân theo phân phối chuẩn (Normal distribution), đầu vào là quan sát môi trường, đầu ra là phân phối xác suất của tất cả hành động.  
 <div align=center><img src="https://img-blog.csdnimg.cn/9abf074c803146d4b1f4dbd12c52deb3.png#pic_center" alt="Mô tả hình ảnh" style="zoom: 50%;" /></div>
 
-Với *$`\mu`$* (trung bình) và *$`\sigma`$* (phương sai) do hàm chính sách đưa ra, xây dựng phân phối xác suất hành động thông qua hàm mật độ xác suất (Probability distribution function, PDF), và lấy mẫu ngẫu nhiên hành động từ đó.
+Với $`\mu`$ (trung bình) và $`\sigma`$ (phương sai) do hàm chính sách đưa ra, xây dựng phân phối xác suất hành động thông qua hàm mật độ xác suất (Probability distribution function, PDF), và lấy mẫu ngẫu nhiên hành động từ đó.
 
 > Ghi chú của người dịch: theo quy ước thông thường, $`\sigma`$ là độ lệch chuẩn, còn phương sai là $`\sigma^2`$.
 

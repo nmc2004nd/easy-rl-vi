@@ -74,7 +74,7 @@ Trong đó $`\delta`$ biểu thị TD-error, $`\epsilon`$ là một hằng số 
 - Trong **b) Rank-based Prioritization**, quyết định xác suất lấy mẫu dựa vào **thứ hạng (Rank)** của $`|\delta|`$:
 
 ```math
-p_i=\frac{1}{\operatorname{rank}(i)}
+p_i=\frac{1}{\mathrm{rank}(i)}
 ```
 
 Tác giả so sánh hai phương pháp trong bài:

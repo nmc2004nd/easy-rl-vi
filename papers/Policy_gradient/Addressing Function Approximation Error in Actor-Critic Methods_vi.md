@@ -56,7 +56,7 @@ Bằng cách giảm ước lượng quá cao của target, Double DQN giảm ư�
 
 Averaged-DQN đề xuất một cách khác để giải quyết vấn đề ước lượng quá cao, nó tập trung vào tối thiểu hóa phương sai, bằng cách lấy trung bình các giá trị Q để giảm phương sai xấp xỉ target (TAE), và khác với Ensemble DQN, Averaged-DQN dùng K phiên bản Q Function gần nhất để tính mục tiêu trung bình, bằng cách dùng các target network trong quá khứ để tránh tính toán K-Fold, có được kết quả giảm phương sai tốt hơn, dạng tính Variance như sau:
 ```math
-\operatorname{Var}[Q^A_i(s_0,a)]=\sum^{M-1}_{m=0}D_{K,m}\gamma^{2m}\sigma^2_{s_m}
+\mathrm{Var}[Q^A_i(s_0,a)]=\sum^{M-1}_{m=0}D_{K,m}\gamma^{2m}\sigma^2_{s_m}
 ```
 Công thức tính của Averaged-DQN như sau:
 ```math

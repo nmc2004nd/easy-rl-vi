@@ -46,7 +46,7 @@ Khi ước lượng kỳ vọng $`\mu=\mathbb{E}_\tau[g(s, a)]`$, tìm một hà
 ```math
 \hat{\mu}=\frac{1}{n} \sum_{t=1}^n\left(g\left(s_t, a_t\right)-f\left(s_t, a_t\right)\right),
 ```
-Phương sai là $`\operatorname{var}_\tau(g-f) / n`$, kỳ vọng vẫn không đổi (vì $`\mathbb{E}_\tau[f]=0`$). Vấn đề then chốt ở đây là tìm $`f`$ thỏa yêu cầu. Trong các nghiên cứu trước, thường dùng bộ ước lượng của hàm trạng thái $`V(s)`$ hoặc hằng số làm biến điều khiển, vì loại hàm này không làm thay đổi kỳ vọng của bộ ước lượng khi tính gradient. Bộ ước lượng gradient sau khi đưa vào biến điều khiển như sau:
+Phương sai là $`\mathrm{var}_\tau(g-f) / n`$, kỳ vọng vẫn không đổi (vì $`\mathbb{E}_\tau[f]=0`$). Vấn đề then chốt ở đây là tìm $`f`$ thỏa yêu cầu. Trong các nghiên cứu trước, thường dùng bộ ước lượng của hàm trạng thái $`V(s)`$ hoặc hằng số làm biến điều khiển, vì loại hàm này không làm thay đổi kỳ vọng của bộ ước lượng khi tính gradient. Bộ ước lượng gradient sau khi đưa vào biến điều khiển như sau:
 ```math
 \hat{\nabla}_\theta J(\theta)=\frac{1}{n} \sum_{t=1}^n  \nabla_\theta \log \pi\left(a_t \mid s_t\right) (\hat{Q}^\pi\left(s_t, a_t\right)-\phi(s_t)),
 ```

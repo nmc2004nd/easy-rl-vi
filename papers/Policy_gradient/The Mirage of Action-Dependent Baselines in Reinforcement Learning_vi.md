@@ -17,9 +17,9 @@ Khi phân tách và nghiên cứu số học về phương sai của bộ ước
 Tác giả phân tách phương sai của gradient chính sách thành dạng sau
 ```math
 \begin{aligned}
-\Sigma=& \underbrace{\mathbb{E}_{s, a}\left[\operatorname{Var}_{\tau \mid s, a}(\hat{A}(s, a, \tau) \nabla \log \pi(a \mid s))\right]}_{\Sigma_\tau} \\
-&+\underbrace{\mathbb{E}_s\left[\operatorname{Var}_{a \mid s}((\hat{A}(s, a)-\phi(s, a)) \nabla \log \pi(a \mid s))\right]}_{\Sigma_a} \\
-&+\underbrace{\operatorname{Var}_s\left(\mathbb{E}_{a \mid s}[\hat{A}(s, a) \nabla \log \pi(a \mid s)]\right)}_{\Sigma_s}
+\Sigma=& \underbrace{\mathbb{E}_{s, a}\left[\mathrm{Var}_{\tau \mid s, a}(\hat{A}(s, a, \tau) \nabla \log \pi(a \mid s))\right]}_{\Sigma_\tau} \\
+&+\underbrace{\mathbb{E}_s\left[\mathrm{Var}_{a \mid s}((\hat{A}(s, a)-\phi(s, a)) \nabla \log \pi(a \mid s))\right]}_{\Sigma_a} \\
+&+\underbrace{\mathrm{Var}_s\left(\mathbb{E}_{a \mid s}[\hat{A}(s, a) \nabla \log \pi(a \mid s)]\right)}_{\Sigma_s}
 \end{aligned}
 ```
 Tác giả phân tích nguồn gốc phương sai trong gradient chính sách: đến từ việc ta chỉ thu thập được hữu hạn dữ liệu về trạng thái $`s`$, ở mỗi trạng thái cũng chỉ thực hiện một hành động $`a`$, rồi khi tính toán cũng chỉ dùng một mẫu $`\tau`$. Vì vậy rất trực quan, $`\sum_{\tau}, \sum_{a}, \sum_{s}`$ lần lượt mô tả phương sai đến từ ba hạn chế này. Trong đó, phương sai thứ hai $`\sum_a`$ là phương sai liên quan đến hàm đường cơ sở (baseline), cũng có thể ký hiệu là $`\sum_a^{\phi(s)}`$. Khi $`\phi(s)`$ là tối ưu, $`\sum_a`$ biến mất, chỉ còn lại hai số hạng $`\sum_{\tau} + \sum_{s}`$. Vì vậy khi $`\sum_a`$ rất lớn so với hai số hạng còn lại, việc chọn hàm đường cơ sở tối ưu có thể giảm hiệu quả phương sai, ví dụ trong môi trường Cliffworld, một lựa chọn hành động sai có thể khiến tác tử rơi xuống vách đá và nhận phần thưởng âm rất lớn, vì vậy giảm phương sai do hành động mang lại $`\sum_a`$ có thể cải thiện đáng kể hiệu năng thuật toán.

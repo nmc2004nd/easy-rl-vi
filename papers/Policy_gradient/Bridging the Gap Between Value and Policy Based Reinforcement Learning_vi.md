@@ -26,7 +26,7 @@ Theo hướng suy nghĩ của phương trình Bellman, ta có hàm giá trị t�
 ```math
 \begin{gathered}
 V^{\circ}(s)=\max _\pi O_{\mathrm{ER}}(s, \pi) \\
-\pi^{\circ}=\operatorname{argmax}_\pi O_{\mathrm{ER}}(s, \pi).
+\pi^{\circ}=\arg\max_\pi O_{\mathrm{ER}}(s, \pi).
 \end{gathered}
 ```
 Có thể viết thành dạng lặp như sau:
