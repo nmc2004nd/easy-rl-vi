@@ -208,13 +208,32 @@ details.pseudo > summary { cursor: pointer; padding: 8px 12px; font-weight: 600;
 details.pseudo > summary::-webkit-details-marker { display: none; }
 details.pseudo > summary::before { content: "▸"; display: inline-block; margin-right: 6px; transition: transform .15s; }
 details.pseudo[open] > summary::before { transform: rotate(90deg); }
-.pseudo ol { margin: 0; padding: 0 10px 10px 2.4em; font-size: .9rem; }
-.pseudo li { padding: 3px 8px 3px calc(8px + var(--ind, 0) * 1.5em); border-radius: 6px; line-height: 1.55; overflow-x: auto; overflow-y: hidden; transition: background .2s; }
-.pseudo li::marker { color: var(--muted); font-size: .78em; font-variant-numeric: tabular-nums; }
+.pseudo ol { margin: 0; padding: 0 10px 10px; font-size: .9rem; list-style: none; counter-reset: ln; }
+.pseudo li { position: relative; counter-increment: ln; padding: 3px 8px 3px calc(2.2em + var(--ind, 0) * 1.5em); border-radius: 6px; line-height: 1.55;
+             overflow-x: auto; overflow-y: hidden; transition: background .2s; }
+.pseudo li::before { content: counter(ln); position: absolute; left: 0; top: 4px; width: 1.7em; text-align: right; color: var(--muted); font-size: .75em; font-variant-numeric: tabular-nums; }
 .pseudo li.on { background: var(--hl-soft); box-shadow: inset 3px 0 0 var(--hl); }
 .pseudo .kw { font-weight: 700; }
 .pseudo .cm { color: var(--muted); font-size: .88em; }
 .pseudo .note { margin: 0 12px 10px; }
+/* dải "dòng đang chạy" ngay trên lưới */
+.pstrip { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin: 8px 0 10px; }
+.ps-row { display: flex; gap: 10px; align-items: baseline; width: 100%; text-align: left; font: inherit; color: var(--text); cursor: pointer;
+          background: var(--hl-soft); border: 1px solid var(--border); border-left: 3px solid var(--hl); border-radius: 10px; padding: 6px 10px; min-width: 0; }
+.ps-lab { flex: none; font-size: .75rem; font-weight: 700; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ps-lab::before { content: "▶ "; color: var(--hl); }
+.ps-lines { display: grid; gap: 2px; min-width: 0; font-size: .88rem; }
+.ps-line { position: relative; overflow-x: auto; overflow-y: hidden; white-space: nowrap; scrollbar-width: thin; }
+.ps-line .cm { display: none; }
+@media (max-width: 520px) { .ps-row { flex-direction: column; gap: 2px; } .ps-lines { width: 100%; } }
+/* màn hình rộng: mã giả đứng cạnh lưới và dính khi cuộn */
+@media (min-width: 1000px) {
+  body:has(.withcode) .wrap { max-width: 1240px; }
+  .withcode { display: grid; grid-template-columns: minmax(0, 1fr) minmax(330px, 420px); gap: 18px; align-items: start; }
+  .withcode > .wc-code { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow: auto; }
+  .withcode > .wc-code details.pseudo { margin-top: 0; }
+  .pstrip.has-side { display: none; }
+}
 .pseudo-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 0 12px; }
 
 /* bản đồ |ΔV(s)| và ô quyết định Δ */

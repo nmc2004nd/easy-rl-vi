@@ -189,11 +189,35 @@
     texAll(d);
     d.addEventListener('toggle', postHeight);
     var lis = $$('li', d);
+    // Dải "dòng đang chạy" đặt ngay trên lưới: chép các dòng đang tô sáng lên đó
+    // để vừa nhìn hoạt ảnh vừa đọc được thuật toán. opt.strip: khung chứa dải;
+    // opt.stripKeep: giữ các dải cũ (trang có hai mã giả cạnh nhau).
+    var row = null;
+    if (opt.strip) {
+      if (!opt.stripKeep) opt.strip.innerHTML = '';
+      row = document.createElement('button');
+      row.type = 'button'; row.className = 'ps-row';
+      row.title = 'Xem toàn bộ mã giả';
+      opt.strip.appendChild(row);
+      row.addEventListener('click', function () { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+    }
+    function strip(on) {
+      if (!row) return;
+      var nums = on.map(function (i) { return i + 1; }), lab;
+      if (!nums.length) lab = '';
+      else if (nums[nums.length - 1] - nums[0] === nums.length - 1) lab = nums.length > 1 ? nums[0] + '–' + nums[nums.length - 1] : String(nums[0]);
+      else lab = nums.join(', ');
+      row.innerHTML = '<span class="ps-lab">' + (opt.label ? opt.label + ' · ' : '') + (lab ? 'dòng ' + lab : 'mã giả') + '</span>' +
+        '<span class="ps-lines">' + on.map(function (i) { return '<span class="ps-line">' + lis[i].innerHTML + '</span>'; }).join('') + '</span>';
+    }
+    strip([]);
     return {
       el: d,
       hl: function (ids) {
         ids = ids == null ? [] : [].concat(ids);
-        lis.forEach(function (li) { li.classList.toggle('on', ids.indexOf(li.dataset.id) >= 0); });
+        var on = [];
+        lis.forEach(function (li, i) { var x = ids.indexOf(li.dataset.id) >= 0; li.classList.toggle('on', x); if (x) on.push(i); });
+        strip(on);
       }
     };
   }

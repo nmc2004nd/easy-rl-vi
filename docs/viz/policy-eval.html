@@ -49,9 +49,14 @@
       <label><input type="checkbox" id="arrows" checked> Mũi tên chính sách tham lam theo $V$</label>
     </div>
     <div class="stats"><span>Vòng lặp <b id="k">0</b></span><span>Ô đang tính <b id="cur">–</b></span><span>Thay đổi lớn nhất <b id="delta">–</b></span></div>
-    <div class="gwrap" id="grids"></div>
-    <div class="scale" id="scale"></div>
-    <div id="pseudo"></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="gwrap" id="grids"></div>
+        <div class="scale" id="scale"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
   </div>
 
   <div class="blk">
@@ -268,7 +273,7 @@
     pseudoMode = mode();
     var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
     box.innerHTML = '';
-    pseudo = V_.Pseudo(box, { title: 'đánh giá chính sách ' + (pseudoMode === 'sync' ? 'đồng bộ' : 'tại chỗ') + ' (Sutton & Barto, mục 4.1)', lines: PSEUDO[pseudoMode], open: open });
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: 'đánh giá chính sách ' + (pseudoMode === 'sync' ? 'đồng bộ' : 'tại chỗ') + ' (Sutton & Barto, mục 4.1)', lines: PSEUDO[pseudoMode], open: open });
   }
 
   // Công thức cho ô s. justDone: ô vừa được cập nhật ở bước này (đọc từ bảng trước khi ghi).

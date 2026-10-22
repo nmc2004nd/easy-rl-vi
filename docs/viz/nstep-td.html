@@ -64,13 +64,18 @@
       <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
     </div>
     <div class="stats"><span>Tập thứ <b id="epi">1</b></span><span>Bước $t$ = <b id="tt">0</b></span><span>Ô được cập nhật $\tau$ = <b id="tau">–</b></span><span>Số ô có $V \ne 0$: <b id="nz">0</b></span></div>
-    <div class="legend"><span class="li"><span class="sw box" style="background:var(--s2)"></span>ô được cập nhật $s_\tau$</span><span class="li"><span class="sw box" style="background:var(--s1)"></span>ô bootstrapping $s_{\tau+n}$</span><span class="li"><span class="sw box" style="background:var(--hl)"></span>tác tử $s_t$</span></div>
-    <div class="gwrap"><div class="gbox main"><div class="gholder" id="gbox"></div></div></div>
-    <div class="scale" id="scale"></div>
-    <div class="tline" id="tline"></div>
-    <div class="calc" id="calc"></div>
-    <div class="insight" id="insight"></div>
-    <div id="pseudo"></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="legend"><span class="li"><span class="sw box" style="background:var(--s2)"></span>ô được cập nhật $s_\tau$</span><span class="li"><span class="sw box" style="background:var(--s1)"></span>ô bootstrapping $s_{\tau+n}$</span><span class="li"><span class="sw box" style="background:var(--hl)"></span>tác tử $s_t$</span></div>
+        <div class="gwrap"><div class="gbox main"><div class="gholder" id="gbox"></div></div></div>
+        <div class="scale" id="scale"></div>
+        <div class="tline" id="tline"></div>
+        <div class="calc" id="calc"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
   </div>
 
   <div class="blk">
@@ -114,16 +119,16 @@
 
   var n, V, st, view, epi;
   var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
-  var pseudo = V_.Pseudo(V_.$('#pseudo'), { title: 'TD $n$ bước ước lượng $V$ (Sutton & Barto, mục 7.1)', lines: [
+  var pseudo = V_.Pseudo(V_.$('#pseudo'), { strip: V_.$('#pstrip'), title: 'TD $n$ bước ước lượng $V$ (Sutton & Barto, mục 7.1)', lines: [
     ['init', 0, 'Khởi tạo $V(s)=0$ với mọi $s$; chọn $n$ và $\\alpha$'],
     ['ep', 0, KW('với mỗi tập') + ': $s_0\\leftarrow S$; $\\;T\\leftarrow\\infty$'],
     ['loop', 1, KW('lặp') + ' $t=0,1,2,\\dots$:'],
-    ['act', 2, KW('nếu') + ' $t<T$: đi một bước, nhận $r_{t+1}$ và $s_{t+1}$; nếu $s_{t+1}$ là đích thì $T\\leftarrow t+1$'],
+    ['act', 2, KW('nếu') + ' $t\\lt T$: đi một bước, nhận $r_{t+1}$ và $s_{t+1}$; nếu $s_{t+1}$ là đích thì $T\\leftarrow t+1$'],
     ['tau', 2, '$\\tau\\leftarrow t-n+1$ <span class="cm">(thời điểm của ô được cập nhật, trễ $n$ bước)</span>'],
     ['wait', 2, KW('nếu') + ' $\\tau<0$: chưa đủ $n$ phần thưởng, chưa cập nhật gì'],
     ['if', 2, KW('nếu') + ' $\\tau\\ge 0$:'],
     ['G', 3, '$G\\leftarrow\\sum_{i=\\tau+1}^{\\min(\\tau+n,\\,T)}\\gamma^{\\,i-\\tau-1}\\,r_i$'],
-    ['boot', 3, KW('nếu') + ' $\\tau+n<T$: $\\;G\\leftarrow G+\\gamma^{n}V(s_{\\tau+n})$ <span class="cm">(bootstrapping)</span>'],
+    ['boot', 3, KW('nếu') + ' $\\tau+n\\lt T$: $\\;G\\leftarrow G+\\gamma^{n}V(s_{\\tau+n})$ <span class="cm">(bootstrapping)</span>'],
     ['upd', 3, '$V(s_\\tau)\\leftarrow V(s_\\tau)+\\alpha\\big[G-V(s_\\tau)\\big]$'],
     ['until', 1, KW('cho tới khi') + ' $\\tau=T-1$']
   ] });

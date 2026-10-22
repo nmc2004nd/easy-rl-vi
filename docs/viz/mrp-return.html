@@ -66,6 +66,7 @@
       <button type="button" class="btn" id="reset">Đặt lại</button>
       <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
     </div>
+    <div class="pstrip" id="pstrip1"></div>
     <div class="chain" id="chain"></div>
     <div class="trajbox" id="traj" aria-live="polite"></div>
     <div class="legend" id="legend"></div>
@@ -82,6 +83,7 @@
         <button type="button" class="btn" id="dpreset">Đặt lại</button>
         <span class="stats" style="margin:0"><span>$k$ = <b id="dpk">0</b></span><span>Thay đổi lớn nhất <b id="dpd">–</b></span></span>
       </div>
+      <div class="pstrip" id="pstrip2"></div>
       <div class="calc" id="dpcalc"></div>
       <p class="note">Bấm vào một trạng thái trên chuỗi để đổi ô được giải thích. Ô tô màu trong dòng $\Delta_k$ là trạng thái đổi nhiều nhất.</p>
       <div id="pseudo2"></div>
@@ -265,7 +267,7 @@
     return true;
   }
 
-  var pseudo1 = V_.Pseudo(V_.$('#pseudo1'), { title: 'ước lượng $V(s)$ bằng Monte Carlo (hình 2.6)', lines: [
+  var pseudo1 = V_.Pseudo(V_.$('#pseudo1'), { strip: V_.$('#pstrip1'), title: 'ước lượng $V(s)$ bằng Monte Carlo (hình 2.6)', lines: [
     ['init', 0, 'Khởi tạo $N(s)=0$, $\\text{Tổng}(s)=0$ với mọi $s$'],
     ['ep', 0, '<span class="kw">với mỗi tập</span>: chọn trạng thái đầu $s_0=s$; $\\;G\\leftarrow R(s_0)$; $\\;t\\leftarrow 0$'],
     ['gen', 1, '<span class="kw">lặp</span>: lấy mẫu $s_{t+1}\\sim P(\\cdot\\mid s_t)$; $\\;t\\leftarrow t+1$'],
@@ -273,13 +275,15 @@
     ['until', 1, '<span class="kw">cho tới khi</span> đủ $H$ trạng thái'],
     ['avg', 1, '$N(s)\\leftarrow N(s)+1$; $\\;\\text{Tổng}(s)\\leftarrow\\text{Tổng}(s)+G$; $\\;V(s)\\leftarrow\\text{Tổng}(s)/N(s)$']
   ] });
-  var pseudo2 = V_.Pseudo(V_.$('#pseudo2'), { title: 'quy hoạch động (hình 2.7)', lines: [
+  var pseudo2 = V_.Pseudo(V_.$('#pseudo2'), { strip: V_.$('#pstrip2'), title: 'quy hoạch động (hình 2.7)', lines: [
     ['init', 0, 'Khởi tạo $V_0(s)=0$ với mọi $s$; $k\\leftarrow 0$'],
     ['loop', 0, '<span class="kw">lặp</span> $k=1,2,\\dots$'],
     ['upd', 1, '$V_k(s)\\leftarrow R(s)+\\gamma\\sum_{s\'}P(s\'\\mid s)\\,V_{k-1}(s\')$ với mọi $s$'],
     ['d', 1, '$\\Delta_k\\leftarrow\\max_s\\lvert V_k(s)-V_{k-1}(s)\\rvert$'],
     ['until', 0, '<span class="kw">cho tới khi</span> $\\Delta_k<\\theta$ <span class="cm">(ở đây bạn tự bấm “Vòng tiếp”)</span>']
   ] });
+
+  pseudo1.hl('init');
 
   // khởi tạo điều khiển
   V_.$('#start').innerHTML = '<option value="all">lần lượt s1…s7</option>' + R.map(function (r, s) { return '<option value="' + s + '"' + (s === 3 ? ' selected' : '') + '>s' + (s + 1) + '</option>'; }).join('');

@@ -62,10 +62,15 @@
       <select id="stepr" class="btn"><option value="0">0</option><option value="-0.04">−0.04</option><option value="-0.1">−0.1</option><option value="-0.5">−0.5</option></select>
     </div>
     <div class="stats"><span id="s1"></span><span id="s2"></span><span>Thay đổi lớn nhất <b id="delta">–</b></span></div>
-    <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
-    <div class="scale" id="scale"></div>
-    <div class="insight" id="insight"></div>
-    <div id="pseudo"></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
+        <div class="scale" id="scale"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
   </div>
 
   <div class="blk">
@@ -255,7 +260,7 @@
     pseudoAlgo = algo();
     var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
     box.innerHTML = '';
-    pseudo = V_.Pseudo(box, { title: pseudoAlgo === 'vi' ? 'lặp giá trị' : 'lặp chính sách', lines: PSEUDO[pseudoAlgo], open: open });
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: pseudoAlgo === 'vi' ? 'lặp giá trị' : 'lặp chính sách', lines: PSEUDO[pseudoAlgo], open: open });
   }
   function renderDelta() {
     var el = V_.$('#dcalc'), L = st.dLast;

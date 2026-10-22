@@ -51,6 +51,7 @@
     </div>
     <p class="note" id="envnote" style="margin:4px 0"></p>
     <div class="stats"><span>Tập <b id="epn">1</b></span><span id="epsinfo"></span><span id="phase" class="phase"></span></div>
+    <div class="pstrip" id="pstrip"></div>
     <div class="two-col">
       <div>
         <div class="qbox" id="gbox"></div>
@@ -122,7 +123,7 @@
     pseudoMode = mode();
     var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
     box.innerHTML = '';
-    pseudo = V_.Pseudo(box, { title: pseudoMode === 'es' ? 'Monte Carlo khởi đầu khám phá (Sutton & Barto, mục 5.3)' : 'Monte Carlo $\\varepsilon$-tham lam, mọi lần thăm', lines: PSEUDO[pseudoMode], open: open });
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: pseudoMode === 'es' ? 'Monte Carlo khởi đầu khám phá (Sutton & Barto, mục 5.3)' : 'Monte Carlo $\\varepsilon$-tham lam, mọi lần thăm', lines: PSEUDO[pseudoMode], open: open });
   }
   function hlIds() {
     var L = st.last, es = mode() === 'es';

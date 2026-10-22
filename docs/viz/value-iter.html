@@ -52,10 +52,15 @@
       <label><input type="checkbox" id="tmp"> Hiện chính sách tạm thời $\arg\max_a Q_k(s,a)$ ở mỗi vòng</label>
     </div>
     <div class="stats"><span>Đang hiển thị <b id="k"></b></span><span>Số ô vừa đổi giá trị <b id="nch">–</b></span><span>Thay đổi lớn nhất <b id="delta">–</b></span><span id="status" class="phase"></span></div>
-    <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
-    <div class="scale" id="scale"></div>
-    <div class="insight" id="insight"></div>
-    <div id="pseudo"></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
+        <div class="scale" id="scale"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
   </div>
 
   <div class="blk">
@@ -233,7 +238,7 @@
     }, 380);
   }
 
-  var pseudo = V_.Pseudo(V_.$('#pseudo'), { title: 'lặp giá trị (Sutton & Barto, mục 4.4)', lines: [
+  var pseudo = V_.Pseudo(V_.$('#pseudo'), { strip: V_.$('#pstrip'), title: 'lặp giá trị (Sutton & Barto, mục 4.4)', lines: [
     ['init', 0, 'Khởi tạo $V_0(s)=0$ với mọi $s$; $k\\leftarrow 0$'],
     ['loop', 0, '<span class="kw">lặp</span>'],
     ['for', 1, '<span class="kw">với mỗi</span> $s\\in\\mathcal S$ (trừ đích):'],

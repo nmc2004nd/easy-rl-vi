@@ -60,9 +60,14 @@
       </div>
     </div>
     <div class="stats"><span>Lần cải thiện <b id="it">0</b></span><span>Vòng đánh giá <b id="ev">0</b></span><span>Thay đổi lớn nhất <b id="delta">–</b></span><span id="status" class="phase"></span></div>
-    <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
-    <div class="scale" id="scale"></div>
-    <div id="pseudo"></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
+        <div class="scale" id="scale"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
   </div>
 
   <div class="blk">
@@ -234,7 +239,7 @@
     V_.postHeight();
   }
 
-  var pseudo = V_.Pseudo(V_.$('#pseudo'), { title: 'lặp chính sách (Sutton & Barto, mục 4.3)', lines: [
+  var pseudo = V_.Pseudo(V_.$('#pseudo'), { strip: V_.$('#pstrip'), title: 'lặp chính sách (Sutton & Barto, mục 4.3)', lines: [
     ['init', 0, 'Khởi tạo $V(s)=0$; $\\pi(a\\mid s)=\\tfrac14$ (ngẫu nhiên đều)'],
     ['h1', 0, '<span class="kw">① Đánh giá chính sách</span> — lặp:'],
     ['ev', 1, '$V_{\\text{mới}}(s)\\leftarrow\\sum_a\\pi(a\\mid s)\\big[R(s)+\\gamma V(s\'_a)\\big]$ với mọi $s$'],
