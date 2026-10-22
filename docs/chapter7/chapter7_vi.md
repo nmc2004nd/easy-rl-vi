@@ -44,6 +44,15 @@ Khi ta tự tay cài đặt, có hai mạng Q: mạng Q được cập nhật v�
 
 DDQN là thay đổi ít nhất so với mạng Q sâu ban đầu, nó gần như không tăng thêm khối lượng tính toán nào, cũng không cần mạng mới, vì vốn đã có hai mạng. Ta chỉ cần làm một việc: vốn dùng mạng mục tiêu $Q'$ để tìm $a$ làm giá trị Q lớn nhất, nay đổi thành dùng mạng Q còn lại (mạng được cập nhật) để tìm $a$ làm giá trị Q lớn nhất. Nếu chỉ chọn một kỹ thuật, ta thường chọn DDQN, vì nó rất dễ cài đặt.
 
+<details class="viz-box">
+<summary>🎬 Mô phỏng thiên lệch do max: Q-learning và Q-learning kép <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: phiên bản dạng bảng của hình 7.1–7.2 (Sutton & Barto, ví dụ 6.7). Xem từng bước vì sao $\max_b Q(B, b)$ trên các ước lượng nhiễu làm Q-learning tưởng hành động tồi là tốt, và Q-learning kép (ý tưởng gốc của DDQN) tránh được điều đó. [Mở trang riêng](viz/maxbias.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/maxbias.html?embed" style="height:2523px" title="Mô phỏng thiên lệch do max" loading="lazy"></iframe>
+
+</details>
+
 ## 7.2 Mạng Q sâu đối đầu
 Kỹ thuật thứ hai là **mạng Q sâu đối đầu (dueling DQN)**, so với mạng Q sâu ban đầu, điểm khác duy nhất của nó là thay đổi kiến trúc mạng. Mạng Q nhận đầu vào là trạng thái, đầu ra là giá trị Q của mỗi hành động. Như hình 7.3, mạng Q sâu ban đầu đưa ra trực tiếp giá trị Q, mạng Q sâu đối đầu không đưa ra trực tiếp giá trị Q, mà chia thành hai nhánh tính toán. Nhánh thứ nhất đưa ra một số vô hướng $V(\boldsymbol{s})$, vì nó liên quan đến đầu vào $\boldsymbol{s}$, nên được gọi là $V(\boldsymbol{s})$. Nhánh thứ hai đưa ra một vectơ $\boldsymbol{A}(\boldsymbol{s},\boldsymbol{a})$, mỗi hành động của nó đều có một giá trị. Ta cộng $V(\boldsymbol{s})$ và $\boldsymbol{A}(\boldsymbol{s},\boldsymbol{a})$ lại là được giá trị Q $\boldsymbol{Q}(\boldsymbol{s},\boldsymbol{a})$.
 
@@ -182,3 +191,12 @@ Tại sao mạng Q sâu phân phối không ước lượng quá cao phần thư
 <img width="550" src="../img/ch7/7.14.png"/>
 </div>
 <div align=center>Hình 7.11 Rainbow: bỏ đi một trong các phương pháp</div>
+
+<details class="viz-box">
+<summary>🎬 Mô phỏng Rainbow thu nhỏ trên CartPole <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: bật/tắt DQN kép, đối đầu, phát lại ưu tiên, nhiều bước trên CartPole; đồ thị ước lượng $Q$ so với giá trị thật như hình 7.1, và kết quả bỏ từng thành phần như hình 7.11 (tính sẵn nhiều lần chạy). [Mở trang riêng](viz/rainbow-mini.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/rainbow-mini.html?embed" style="height:2658px" title="Mô phỏng Rainbow thu nhỏ" loading="lazy"></iframe>
+
+</details>

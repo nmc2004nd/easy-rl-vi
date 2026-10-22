@@ -81,6 +81,35 @@
     return loss;
   };
 
+  // một bước Adam với gradient theo đầu ra cho sẵn: batch [{ x, g }], g[k] = ∂L/∂out_k (đã chia cỡ lô nếu cần)
+  MLP.prototype.trainGrad = function (batch, lr) {
+    var L = this.W.length, gW = this.W.map(function (w) { return new Float64Array(w.length); }), gb = this.b.map(function (b) { return new Float64Array(b.length); }), self = this;
+    batch.forEach(function (sm) {
+      var acts = self.forwardAll(sm.x), d = Float64Array.from(sm.g);
+      for (var l = L - 1; l >= 0; l--) {
+        var a = acts[l], nIn = self.sizes[l], nOut = self.sizes[l + 1], w = self.W[l], dPrev = new Float64Array(nIn);
+        for (var j = 0; j < nOut; j++) {
+          var dj = d[j]; if (dj === 0) continue;
+          gb[l][j] += dj;
+          for (var i = 0; i < nIn; i++) { gW[l][i * nOut + j] += a[i] * dj; dPrev[i] += w[i * nOut + j] * dj; }
+        }
+        if (l > 0) for (var i2 = 0; i2 < nIn; i2++) if (a[i2] <= 0) dPrev[i2] = 0;
+        d = dPrev;
+      }
+    });
+    this.t++;
+    var b1 = 0.9, b2 = 0.999, eps = 1e-8, c1 = 1 - Math.pow(b1, this.t), c2 = 1 - Math.pow(b2, this.t);
+    for (var l = 0; l < L; l++) {
+      [[this.W[l], gW[l], this.mW[l], this.vW[l]], [this.b[l], gb[l], this.mb[l], this.vb[l]]].forEach(function (q) {
+        var p = q[0], g = q[1], m = q[2], v = q[3];
+        for (var k = 0; k < p.length; k++) {
+          m[k] = b1 * m[k] + (1 - b1) * g[k]; v[k] = b2 * v[k] + (1 - b2) * g[k] * g[k];
+          p[k] -= lr * (m[k] / c1) / (Math.sqrt(v[k] / c2) + eps);
+        }
+      });
+    }
+  };
+
   var NN = { MLP: MLP, seeded: seeded };
   if (typeof module !== 'undefined' && module.exports) module.exports = NN; else root.NN = NN;
 })(this);

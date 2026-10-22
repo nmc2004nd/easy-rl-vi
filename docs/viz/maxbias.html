@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thiên lệch do max · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  @media (max-width: 760px) { .panels { grid-template-columns: minmax(0, 1fr); } }
+  .panel { border: 1px solid var(--border); border-radius: 12px; padding: 10px; min-width: 0; }
+  .panel h3 { margin: 0 0 4px; font-size: .98rem; }
+  .panel svg { display: block; width: 100%; height: auto; }
+  .panel svg text { font-family: inherit; font-size: 12px; fill: var(--text); }
+  .panel svg .mut { fill: var(--muted); font-size: 11px; }
+  .panel .calc { font-size: .85rem; }
+  .panel .rxs { font-size: .84rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Thiên lệch do max</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter7/chapter7_vi?id=_71-mạng-q-sâu-kép">Mục 7.1</a></div>
+    </div>
+    <p class="lead">Phiên bản dạng bảng của hình 7.1–7.2 (Sutton &amp; Barto, ví dụ 6.7). Từ trạng thái $A$: đi <b>phải</b> thì kết thúc ngay, phần thưởng 0; đi <b>trái</b> sang $B$ (phần thưởng 0). Ở $B$ có nhiều hành động, hành động nào cũng kết thúc với phần thưởng ngẫu nhiên trung bình $-0{,}1$. Vậy đi trái <b>tệ hơn</b> đi phải. Nhưng $Q(A, \text{trái})$ được cập nhật bằng $\max_b Q(B, b)$, mà $\max$ trên các ước lượng nhiễu thì lớn hơn $-0{,}1$.</p>
+  </div>
+  <div class="only-embed open-full"><a href="maxbias.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <label for="nb">Số hành động ở $B$</label><input id="nb" type="range" min="1" max="20" step="1" value="10"><span class="val" id="nb-v"></span>
+      <label for="sd">Độ lệch chuẩn phần thưởng</label><input id="sd" type="range" min="0.2" max="2" step="0.1" value="1"><span class="val" id="sd-v"></span>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="fast">+20 tập</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <p class="note" style="margin:4px 0">$\varepsilon = 0{,}1$, $\alpha = 0{,}1$, $\gamma = 1$, mọi $Q$ khởi tạo bằng 0. Hai tác tử chạy song song, mỗi “bước” là một chuyển tiếp của mỗi tác tử. Với $\varepsilon = 0{,}1$, chính sách tối ưu vẫn chọn trái $5\%$ số lần (do khám phá).</p>
+    <div class="stats"><span>Tập <b id="ev">1</b></span><span>Q-learning chọn trái <b id="lq">–</b></span><span>Q-learning kép chọn trái <b id="ld">–</b></span></div>
+    <div class="pstrip" id="pstrip"></div>
+    <div class="panels">
+      <div class="panel"><h3>Q-learning</h3><div id="svq"></div><div class="calc" id="cq"></div></div>
+      <div class="panel"><h3>Q-learning kép (ý tưởng của DDQN)</h3><div id="svd"></div><div class="calc" id="cd"></div></div>
+    </div>
+    <div class="insight" id="insight"></div>
+    <div class="pseudo-two" id="pseudo"></div>
+  </div>
+
+  <div class="blk">
+    <h2>Trung bình 1000 lần chạy × 300 tập (như hình 6.5 của Sutton &amp; Barto)</h2>
+    <div class="ctrl"><button type="button" class="btn" id="cmp">Chạy (dùng số hành động và độ nhiễu hiện tại)</button></div>
+    <div class="layout">
+      <div><div class="legend"><span class="li"><span class="sw" style="background:var(--s2)"></span>Q-learning</span><span class="li"><span class="sw" style="background:var(--s1)"></span>Q-learning kép</span></div><div id="c1"></div><p class="note">% số lần chọn <b>trái</b> ở $A$ theo tập. Đường đứt nét: $5\%$ (tối ưu với $\varepsilon = 0{,}1$).</p></div>
+      <div><div class="legend"><span class="li"><span class="sw" style="background:var(--s2)"></span>Q-learning</span><span class="li"><span class="sw" style="background:var(--s1)"></span>Q-learning kép</span></div><div id="c2"></div><p class="note">Ước lượng $Q(A, \text{trái})$ (với bản kép: trung bình $Q_1, Q_2$). Đường đứt nét: giá trị thật $-0{,}1$.</p></div>
+    </div>
+    <div class="insight" id="cmp-ins">Bấm “Chạy”.</div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, EPS = 0.1, ALPHA = 0.1, MU = -0.1;
+  function nB() { return +V_.$('#nb').value; }
+  function SD() { return +V_.$('#sd').value; }
+  function gauss(r) { var u = r() || 1e-12, v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  function argmax(q, r) { var m = Math.max.apply(null, q), b = []; q.forEach(function (v, i) { if (v === m) b.push(i); }); return b[Math.floor(r() * b.length)]; }
+  function egreedy(q, r) { return r() < EPS ? Math.floor(r() * q.length) : argmax(q, r); }
+
+  // ---------- hai tác tử ----------
+  function newQ(n) { return { A: [0, 0], B: new Array(n).fill(0) }; }     // A: [trái, phải]
+  function newLearners(n) { return { q: { Q: newQ(n), s: 'A', left: 0, ep: 0, last: null }, d: { Q1: newQ(n), Q2: newQ(n), s: 'A', left: 0, ep: 0, last: null } }; }
+  // một chuyển tiếp của Q-learning
+  function stepQ(L, r) {
+    var Q = L.Q, rec;
+    if (L.s === 'A') {
+      var a = egreedy(Q.A, r);
+      if (a === 1) { var old = Q.A[1]; Q.A[1] += ALPHA * (0 - Q.A[1]); rec = { s: 'A', a: 1, r: 0, old: old, nw: Q.A[1], target: 0, end: true }; L.ep++; }
+      else { var mx = Math.max.apply(null, Q.B), ib = Q.B.indexOf(mx), old2 = Q.A[0]; Q.A[0] += ALPHA * (0 + mx - Q.A[0]); rec = { s: 'A', a: 0, r: 0, old: old2, nw: Q.A[0], target: mx, imax: ib }; L.left++; L.s = 'B'; }
+    } else {
+      var b = egreedy(Q.B, r), rw = MU + SD() * gauss(r), old3 = Q.B[b]; Q.B[b] += ALPHA * (rw - Q.B[b]); rec = { s: 'B', a: b, r: rw, old: old3, nw: Q.B[b], target: rw, end: true }; L.s = 'A'; L.ep++;
+    }
+    L.last = rec; return rec;
+  }
+  // một chuyển tiếp của Q-learning kép
+  function stepD(L, r) {
+    var Q1 = L.Q1, Q2 = L.Q2, coin = r() < 0.5, U = coin ? Q1 : Q2, E = coin ? Q2 : Q1, rec;
+    if (L.s === 'A') {
+      var sum = [Q1.A[0] + Q2.A[0], Q1.A[1] + Q2.A[1]], a = egreedy(sum, r);
+      if (a === 1) { var old = U.A[1]; U.A[1] += ALPHA * (0 - U.A[1]); rec = { s: 'A', a: 1, coin: coin, old: old, nw: U.A[1], target: 0, end: true }; L.ep++; }
+      else { var bs = argmax(U.B, r), val = E.B[bs], old2 = U.A[0]; U.A[0] += ALPHA * (0 + val - U.A[0]); rec = { s: 'A', a: 0, coin: coin, old: old2, nw: U.A[0], target: val, isel: bs }; L.left++; L.s = 'B'; }
+    } else {
+      var sumB = Q1.B.map(function (v, i) { return v + Q2.B[i]; }), b = egreedy(sumB, r), rw = MU + SD() * gauss(r), old3 = U.B[b];
+      U.B[b] += ALPHA * (rw - U.B[b]); rec = { s: 'B', a: b, coin: coin, r: rw, old: old3, nw: U.B[b], target: rw, end: true }; L.s = 'A'; L.ep++;
+    }
+    L.last = rec; return rec;
+  }
+
+  // ---------- giao diện từng bước ----------
+  var st, rand = V_.seeded(4), player;
+  function reset() { player && player.stop(); st = newLearners(nB()); pq.hl('init'); pd.hl('init'); render(); }
+  function step() {
+    var rq = stepQ(st.q, rand), rd = stepD(st.d, rand);
+    pq.hl(rq.end ? ['act', 'upd', 'until'] : ['act', 'upd']);
+    var ud = rd.coin ? 'u1' : 'u2'; pd.hl(rd.end ? ['act', 'coin', ud, 'until'] : ['act', 'coin', ud]);
+    render(); return true;
+  }
+  function fmt(v) { return V_.fmt(v, 2); }
+  function diagram(box, Qs, cur, hl) {
+    // Qs: [{ A, B, color }]; cur: trạng thái hiện tại; hl: { s, a }
+    var n = Qs[0].B.length, W = 420, H = 220, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Sơ đồ trạng thái A, B và giá trị Q">';
+    var ax = 230, ay = 50, bx = 80, by = 50;
+    s += '<rect x="' + (W - 70) + '" y="' + (ay - 18) + '" width="56" height="36" rx="8" fill="var(--surface-2)" stroke="var(--border)"/><text x="' + (W - 42) + '" y="' + (ay + 4) + '" text-anchor="middle" class="mut">kết thúc</text>';
+    var la = hl && hl.s === 'A', on = function (c) { return c ? 'var(--hl)' : 'var(--muted)'; };
+    s += '<line x1="' + (ax + 22) + '" y1="' + ay + '" x2="' + (W - 72) + '" y2="' + ay + '" stroke="' + on(la && hl.a === 1) + '" stroke-width="' + (la && hl.a === 1 ? 3.5 : 1.5) + '" marker-end="url(#ar)"/>';
+    s += '<line x1="' + (ax - 22) + '" y1="' + ay + '" x2="' + (bx + 24) + '" y2="' + by + '" stroke="' + on(la && hl.a === 0) + '" stroke-width="' + (la && hl.a === 0 ? 3.5 : 1.5) + '" marker-end="url(#ar)"/>';
+    s += '<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/></marker></defs>';
+    [['A', ax, ay], ['B', bx, by]].forEach(function (c) { s += '<circle cx="' + c[1] + '" cy="' + c[2] + '" r="20" fill="' + (cur === c[0] ? 'var(--hl-soft)' : 'var(--surface)') + '" stroke="' + (cur === c[0] ? 'var(--hl)' : 'var(--text)') + '" stroke-width="2"/><text x="' + c[1] + '" y="' + (c[2] + 5) + '" text-anchor="middle" style="font-weight:700">' + c[0] + '</text>'; });
+    var qa = Qs.map(function (q) { return q.lbl + ': trái ' + fmt(q.A[0]) + ' · phải ' + fmt(q.A[1]); });
+    qa.forEach(function (t, i) { s += '<text x="' + (ax + 30) + '" y="' + (ay + 32 + i * 15) + '" class="mut">' + t + '</text>'; });
+    s += '<text x="' + ((ax + bx) / 2) + '" y="' + (ay - 10) + '" text-anchor="middle" class="mut">trái, r = 0</text><text x="' + ((ax + W - 70) / 2 + 10) + '" y="' + (ay - 10) + '" text-anchor="middle" class="mut">phải, r = 0</text>';
+    // cột Q(B, ·)
+    var x0 = 20, y0 = 165, bw = (W - 40) / n, sc = 40, m = Qs.length;
+    s += '<line x1="' + x0 + '" x2="' + (W - 20) + '" y1="' + y0 + '" y2="' + y0 + '" stroke="var(--border)"/><text x="' + x0 + '" y="' + (y0 - 48) + '" class="mut">Q(B, ·) · cột đậm: dùng cho mục tiêu · đứt nét: −0.1</text>';
+    s += '<line x1="' + x0 + '" x2="' + (W - 20) + '" y1="' + (y0 + 0.1 * sc) + '" y2="' + (y0 + 0.1 * sc) + '" stroke="var(--muted)" stroke-dasharray="3 3"/>';
+    Qs.forEach(function (q, j) {
+      q.B.forEach(function (v, i) {
+        var w = bw * 0.8 / m, x = x0 + i * bw + bw * 0.1 + j * w, yv = y0 - Math.max(-1.2, Math.min(1.2, v)) * sc, pick = q.pick === i;
+        s += '<rect x="' + x.toFixed(1) + '" y="' + Math.min(y0, yv).toFixed(1) + '" width="' + Math.max(1, w - 1).toFixed(1) + '" height="' + Math.abs(yv - y0).toFixed(1) + '" fill="' + q.color + '" fill-opacity="' + (pick ? 1 : 0.35) + '"/>';
+      });
+    });
+    if (hl && hl.s === 'B') { var xb = x0 + hl.a * bw + bw / 2; s += '<text x="' + xb + '" y="' + (y0 + 52) + '" text-anchor="middle" style="fill:var(--hl);font-weight:700">▲</text>'; }
+    box.innerHTML = s + '</svg>';
+  }
+  function render() {
+    var q = st.q, d = st.d, Lq = q.last, Ld = d.last;
+    diagram(V_.$('#svq'), [{ A: q.Q.A, B: q.Q.B, color: 'var(--s2)', lbl: 'Q', pick: Lq && Lq.s === 'A' && Lq.a === 0 ? Lq.imax : null }], q.s, Lq);
+    diagram(V_.$('#svd'), [{ A: d.Q1.A, B: d.Q1.B, color: 'var(--s1)', lbl: 'Q₁', pick: Ld && Ld.s === 'A' && Ld.a === 0 ? (Ld.coin ? Ld.isel : null) : null },
+                           { A: d.Q2.A, B: d.Q2.B, color: 'var(--c3, #1f9d6b)', lbl: 'Q₂', pick: Ld && Ld.s === 'A' && Ld.a === 0 ? (!Ld.coin ? Ld.isel : null) : null }], d.s, Ld);
+    var pc = function (L) { var n = L.ep + (L.s === 'B' ? 1 : 0); return n ? V_.fmt(100 * L.left / n, 0) + '%' : '–'; };
+    V_.$('#ev').textContent = Math.max(q.ep, d.ep) + 1; V_.$('#lq').textContent = pc(q); V_.$('#ld').textContent = pc(d);
+    var t = function (x) { return V_.tz(x, 3, true); };
+    if (!Lq) V_.$('#cq').innerHTML = '<span class="rxs">Bấm “Bước tiếp”.</span>';
+    else if (Lq.s === 'A' && Lq.a === 0) V_.tex(V_.$('#cq'), '\\begin{aligned}&Q(A, \\text{trái}) \\leftarrow Q + \\alpha\\big[0 + \\max_b Q(B, b) - Q\\big]\\\\&= ' + V_.tz(Lq.old, 3) + ' + 0.1\\,[0 + ' + t(Lq.target) + ' - ' + t(Lq.old) + '] = ' + V_.tz(Lq.nw, 3) + '\\end{aligned}', true);
+    else if (Lq.s === 'A') V_.tex(V_.$('#cq'), 'Q(A, \\text{phải}) \\leftarrow ' + V_.tz(Lq.old, 3) + ' + 0.1\\,[0 - ' + t(Lq.old) + '] = ' + V_.tz(Lq.nw, 3), true);
+    else V_.tex(V_.$('#cq'), 'Q(B, b_{' + (Lq.a + 1) + '}) \\leftarrow ' + V_.tz(Lq.old, 3) + ' + 0.1\\,[' + t(Lq.r) + ' - ' + t(Lq.old) + '] = ' + V_.tz(Lq.nw, 3), true);
+    var U = Ld && (Ld.coin ? '1' : '2'), Ev = Ld && (Ld.coin ? '2' : '1');
+    if (!Ld) V_.$('#cd').innerHTML = '<span class="rxs">Bấm “Bước tiếp”.</span>';
+    else if (Ld.s === 'A' && Ld.a === 0) V_.tex(V_.$('#cd'), '\\begin{aligned}&\\text{cập nhật } Q_' + U + ':\\ b^* = \\arg\\max_b Q_' + U + '(B, b) = b_{' + (Ld.isel + 1) + '}\\\\&Q_' + U + '(A, \\text{trái}) \\leftarrow ' + V_.tz(Ld.old, 3) + ' + 0.1\\,[0 + Q_' + Ev + '(B, b^*) - ' + t(Ld.old) + ']\\\\&= ' + V_.tz(Ld.old, 3) + ' + 0.1\\,[0 + ' + t(Ld.target) + ' - ' + t(Ld.old) + '] = ' + V_.tz(Ld.nw, 3) + '\\end{aligned}', true);
+    else if (Ld.s === 'A') V_.tex(V_.$('#cd'), 'Q_' + U + '(A, \\text{phải}) \\leftarrow ' + V_.tz(Ld.old, 3) + ' + 0.1\\,[0 - ' + t(Ld.old) + '] = ' + V_.tz(Ld.nw, 3), true);
+    else V_.tex(V_.$('#cd'), 'Q_' + U + '(B, b_{' + (Ld.a + 1) + '}) \\leftarrow ' + V_.tz(Ld.old, 3) + ' + 0.1\\,[' + t(Ld.r) + ' - ' + t(Ld.old) + '] = ' + V_.tz(Ld.nw, 3), true);
+    var ins;
+    if (!Lq) ins = 'Mọi $Q$ bằng 0. Lúc đầu $Q(A, \\text{trái}) = Q(A, \\text{phải})$ nên hai bên được chọn như nhau.';
+    else if (Lq.s === 'A' && Lq.a === 0) ins = 'Q-learning dùng $\\max_b Q(B, b) = ' + V_.tz(Lq.target, 3) + '$: sau vài lần thử ở $B$, chỉ cần <b>một</b> hành động tình cờ được phần thưởng dương là $\\max$ dương, kéo $Q(A, \\text{trái})$ lên trên 0, nên trái “trông” tốt hơn phải. Q-learning kép chọn $b^*$ bằng một bảng nhưng lấy giá trị ở bảng kia, nơi $b^*$ không được ưu ái, nên giá trị dùng để cập nhật không bị đẩy lên.';
+    else ins = 'Ở $B$, mỗi hành động được cập nhật về phần thưởng ngẫu nhiên của chính nó; ước lượng dao động quanh $-0{,}1$, có hành động trên, có hành động dưới.';
+    V_.$('#insight').innerHTML = ins; V_.texAll(V_.$('#insight'));
+    V_.postHeight();
+  }
+
+  // ---------- mã giả ----------
+  var KW = function (x) { return '<span class="kw">' + x + '</span>'; };
+  var box = V_.$('#pseudo');
+  var pq = V_.Pseudo(box, { strip: V_.$('#pstrip'), label: 'Q-learning', title: 'Q-learning', lines: [
+    ['init', 0, 'Khởi tạo $Q(s, a) = 0$'],
+    ['ep', 0, KW('với mỗi tập') + ': $s \\leftarrow A$'],
+    ['act', 1, 'chọn $a$ $\\varepsilon$-tham lam theo $Q$; nhận $r$, $s\'$'],
+    ['upd', 1, '$Q(s, a) \\leftarrow Q(s, a) + \\alpha\\big[r + \\gamma\\max_{a\'}Q(s\', a\') - Q(s, a)\\big]$'],
+    ['until', 1, '$s \\leftarrow s\'$, ' + KW('cho tới khi') + ' kết thúc']
+  ] });
+  var pd = V_.Pseudo(box, { strip: V_.$('#pstrip'), stripKeep: true, label: 'Q-learning kép', title: 'Q-learning kép (Sutton & Barto, mục 6.7)', lines: [
+    ['init', 0, 'Khởi tạo $Q_1(s, a) = Q_2(s, a) = 0$'],
+    ['ep', 0, KW('với mỗi tập') + ': $s \\leftarrow A$'],
+    ['act', 1, 'chọn $a$ $\\varepsilon$-tham lam theo $Q_1 + Q_2$; nhận $r$, $s\'$'],
+    ['coin', 1, 'tung đồng xu:'],
+    ['u1', 2, '$Q_1(s, a) \\leftarrow Q_1 + \\alpha\\big[r + \\gamma Q_2\\big(s\', \\arg\\max_{a\'}Q_1(s\', a\')\\big) - Q_1\\big]$'],
+    ['u2', 2, KW('hoặc') + ' $Q_2(s, a) \\leftarrow Q_2 + \\alpha\\big[r + \\gamma Q_1\\big(s\', \\arg\\max_{a\'}Q_2(s\', a\')\\big) - Q_2\\big]$'],
+    ['until', 1, '$s \\leftarrow s\'$, ' + KW('cho tới khi') + ' kết thúc']
+  ] });
+
+  // ---------- so sánh nhiều lần chạy ----------
+  var c1 = V_.LineChart(V_.$('#c1'), { series: [{ name: 'Q-learning', color: '--s2' }, { name: 'Q-learning kép', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 1, yMin: 0, yMax: 100, refs: [{ y: 5, label: '5%' }], aria: 'Phần trăm chọn trái theo tập' });
+  var c2 = V_.LineChart(V_.$('#c2'), { series: [{ name: 'Q-learning', color: '--s2' }, { name: 'Q-learning kép', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 3, refs: [{ y: -0.1, label: 'thật = −0.1' }], aria: 'Ước lượng Q(A, trái) theo tập' });
+  V_.$('#cmp').addEventListener('click', function () {
+    var btn = this; btn.disabled = true;
+    setTimeout(function () {
+      var RU = 1000, E = 300, n = nB(), r = V_.seeded(9), lq = new Array(E).fill(0), ld = new Array(E).fill(0), vq = new Array(E).fill(0), vd = new Array(E).fill(0);
+      for (var i = 0; i < RU; i++) {
+        var L = newLearners(n);
+        for (var e = 0; e < E; e++) {
+          var l0 = L.q.left; do { stepQ(L.q, r); } while (L.q.s !== 'A'); lq[e] += (L.q.left - l0) * 100 / RU; vq[e] += L.q.Q.A[0] / RU;
+          var l1 = L.d.left; do { stepD(L.d, r); } while (L.d.s !== 'A'); ld[e] += (L.d.left - l1) * 100 / RU; vd[e] += (L.d.Q1.A[0] + L.d.Q2.A[0]) / 2 / RU;
+        }
+      }
+      c1.set([lq, ld]); c2.set([vq, vd]);
+      var pk = Math.max.apply(null, lq), pe = lq.indexOf(pk) + 1;
+      V_.$('#cmp-ins').innerHTML = 'Với ' + n + ' hành động ở $B$: Q-learning chọn trái nhiều nhất <b>' + V_.fmt(pk, 0) + '%</b> (ở tập ' + pe + '), và $Q(A, \\text{trái})$ ước lượng vượt lên trên giá trị thật $-0{,}1$, tới ' + V_.fmt(Math.max.apply(null, vq), 3) + '. Q-learning kép bắt đầu ở $50\\%$ (hai bên bằng nhau) rồi giảm nhanh về quanh mức tối ưu $5\\%$: từ tập 20 trở đi cao nhất chỉ ' + V_.fmt(Math.max.apply(null, ld.slice(19)), 0) + '%, so với ' + V_.fmt(Math.max.apply(null, lq.slice(19)), 0) + '% của Q-learning. Thử giảm số hành động ở $B$ xuống 1: không còn phép $\\max$ trên nhiều ước lượng nhiễu, thiên lệch biến mất. Thử tăng độ nhiễu: thiên lệch lớn hơn. Đúng như phân tích ở hình 7.2.';
+      V_.texAll(V_.$('#cmp-ins'));
+      btn.disabled = false; V_.postHeight();
+    }, 30);
+  });
+
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
+  V_.$('#fast').addEventListener('click', function () {
+    player.stop(); var target = st.q.ep + 20, g = 0;
+    while (st.q.ep < target && g++ < 1000) { stepQ(st.q, rand); stepD(st.d, rand); }
+    pq.hl(null); pd.hl(null); render();
+  });
+  V_.$('#reset').addEventListener('click', reset);
+  ['#nb', '#sd'].forEach(function (id) { V_.$(id).addEventListener('input', function () { V_.$('#nb-v').textContent = nB(); V_.$('#sd-v').textContent = V_.fmt(SD(), 1); reset(); }); });
+  V_.onTheme(render);
+  V_.$('#nb-v').textContent = nB(); V_.$('#sd-v').textContent = V_.fmt(SD(), 1);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

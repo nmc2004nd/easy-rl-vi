@@ -26,6 +26,7 @@
 - [Chương 7 DQN (Các kỹ thuật nâng cao)](chapter7/chapter7_vi)
 - [Chương 7 Bài tập](chapter7/chapter7_questions&keywords_vi)
 - [🧠 Chương 7 Ôn tập (flashcard + quiz)](review/index.html?ch=7 ':ignore :target=_self')
+- [🎬 Chương 7 Mô phỏng thuật toán](viz/index.html#ch7 ':ignore :target=_self')
 - [Dự án 2 Dùng DQN giải CartPole-v0](chapter7/project2_vi)
 - [Chương 8 DQN (Hành động liên tục)](chapter8/chapter8_vi)
 - [Chương 8 Bài tập](chapter8/chapter8_questions&keywords_vi)
