@@ -1,0 +1,700 @@
+{
+ "chapter": 6,
+ "title": "Chương 6 · Mạng Q sâu",
+ "chapterLink": "../#/chapter6/chapter6_vi",
+ "exerciseLink": "../#/chapter6/chapter6_questions&keywords_vi",
+ "extras": "ch6-extras.js",
+ "cards": [
+  {
+   "id": "c6-vfa",
+   "tag": "Khái niệm",
+   "ref": "6 · Bài tập 6-1",
+   "front": "Vì sao cần **xấp xỉ hàm giá trị** thay cho bảng $Q(s, a)$?",
+   "back": "Trạng thái trong thực tế thường **rất nhiều hoặc liên tục** (ảnh Atari): bảng không chứa nổi, gặp **lời nguyền số chiều**, và không có giá trị cho trạng thái chưa gặp.\nDùng hàm có tham số $Q_\\phi(\\boldsymbol s, \\boldsymbol a) \\approx Q_\\pi(\\boldsymbol s, \\boldsymbol a)$ (ví dụ mạng nơ-ron): ít bộ nhớ, **tổng quát hóa** sang trạng thái mới."
+  },
+  {
+   "id": "c6-dqn",
+   "tag": "Khái niệm",
+   "ref": "6 · Câu hỏi 6-1",
+   "front": "Mạng Q sâu (DQN) là gì? Hai mẹo then chốt?",
+   "back": "Q-learning dựa trên học sâu: dùng **mạng nơ-ron** xấp xỉ $Q(s, a)$.\nHai mẹo then chốt: **mạng mục tiêu** (target network) và **phát lại kinh nghiệm** (experience replay). Ngoài ra cần **khám phá** ($\\varepsilon$-tham lam, Boltzmann)."
+  },
+  {
+   "id": "c6-critic",
+   "tag": "Khái niệm",
+   "ref": "6.1",
+   "front": "Trong phương pháp dựa trên giá trị, thứ được học là gì? Nó làm nhiệm vụ gì?",
+   "back": "Học một **nhà phê bình** (critic), không phải chính sách.\nNhà phê bình **đánh giá** chính sách $\\pi$ của diễn viên tốt hay xấu (đánh giá chính sách), ví dụ hàm giá trị trạng thái $V_\\pi(s)$."
+  },
+  {
+   "id": "c6-critic-dep",
+   "tag": "Vì sao",
+   "ref": "6.1 · Bài tập 6-2",
+   "front": "Đầu ra của nhà phê bình phụ thuộc vào những gì?",
+   "back": "Vào **trạng thái** và **diễn viên**. Cùng một trạng thái, chính sách giỏi có thể diệt nhiều quái vật (giá trị cao), chính sách yếu đứng yên rồi chết (giá trị thấp).\nNhà phê bình đo một **diễn viên** tốt hay xấu, không đo trạng thái một cách vô căn cứ. Diễn viên đổi thì $V_\\pi$ đổi."
+  },
+  {
+   "id": "c6-v-def",
+   "tag": "Khái niệm",
+   "ref": "6.1 · Hình 6.1",
+   "front": "$V_\\pi(s)$ là gì? Ví dụ Space Invaders?",
+   "back": "Phần thưởng tích lũy **kỳ vọng** từ trạng thái $s$ đến khi trò chơi kết thúc, nếu tiếp tục chơi theo $\\pi$. Đầu vào: trạng thái; đầu ra: một số vô hướng.\nCòn nhiều quái vật và khiên: $V_\\pi(s)$ lớn. Ít quái vật, mất khiên, sắp chết: $V_\\pi(s)$ nhỏ."
+  },
+  {
+   "id": "c6-mc-reg",
+   "tag": "Khái niệm",
+   "ref": "6.1 · Hình 6.2 · Bài tập 6-4",
+   "front": "Ước lượng $V_\\pi$ bằng Monte Carlo với mạng nơ-ron là bài toán học máy loại gì?",
+   "back": "**Hồi quy**: đầu vào $s_a$ thì đầu ra nên gần $G_a$ (phần thưởng tích lũy thật từ $s_a$ tới hết trò chơi), đầu vào $s_b$ thì gần $G_b$.\nMạng cho được giá trị cả với trạng thái **chưa từng thấy**. Nhược điểm: phải chơi **hết** trò chơi mới có $G$."
+  },
+  {
+   "id": "c6-td-net",
+   "tag": "Công thức",
+   "ref": "6.1 · (6.1) · Bài tập 6-5",
+   "front": "Ước lượng $V_\\pi$ bằng sai phân thời gian: dựa trên đẳng thức nào, huấn luyện thế nào?",
+   "back": "$$V_\\pi(s_t) = V_\\pi(s_{t+1}) + r_t$$\nĐưa $s_t$ và $s_{t+1}$ vào mạng, muốn $V_\\pi(s_t) - V_\\pi(s_{t+1})$ **càng gần** $r_t$ càng tốt. Chỉ cần một bước $(s_t, a_t, r_t, s_{t+1})$, không phải chơi hết trò chơi."
+  },
+  {
+   "id": "c6-mc-td-var",
+   "tag": "So sánh",
+   "ref": "6.1 · Hình 6.4 · Bài tập 6-3",
+   "front": "Ưu nhược của Monte Carlo và sai phân thời gian khi ước lượng $V_\\pi$?",
+   "back": "**Monte Carlo**: $G_a$ là tổng của **rất nhiều** phần thưởng ngẫu nhiên → **phương sai lớn**, nhưng không dựa vào ước lượng nào (không chệch).\n**Sai phân thời gian**: mục tiêu $r + V_\\pi(s_{t+1})$ chỉ có **một** $r$ ngẫu nhiên → **phương sai nhỏ**, nhưng $V_\\pi(s_{t+1})$ có thể **sai** → kết quả có thể không chính xác (chệch).\nThực tế sai phân thời gian được dùng phổ biến hơn."
+  },
+  {
+   "id": "c6-var-kx",
+   "tag": "Công thức",
+   "ref": "6.1 · (6.2)",
+   "front": "Biểu thức (6.2) $\\operatorname{Var}[kX] = k^2\\operatorname{Var}[X]$ được dùng để nói gì? Chính xác hơn thì sao?",
+   "back": "Để nói phương sai của $G_a$ (gộp nhiều bước) **lớn** so với phương sai của phần thưởng một bước.\nChính xác hơn (bổ sung): nếu các phần thưởng **độc lập**, phương sai mỗi bước $\\sigma^2$, thì $\\operatorname{Var}\\big[\\sum_{k=1}^T r_k\\big] = T\\sigma^2$: tăng **tuyến tính** theo độ dài. Nếu chúng **hoàn toàn tương quan** thì mới là $T^2\\sigma^2$ như (6.2) với $k = T$."
+  },
+  {
+   "id": "c6-fig65",
+   "tag": "Tính tay",
+   "ref": "6.1 · Hình 6.5",
+   "front": "8 tập: một tập $s_a \\xrightarrow{r=0} s_b \\xrightarrow{r=0}$ kết thúc; 6 tập $s_b \\xrightarrow{r=1}$ kết thúc; 1 tập $s_b \\xrightarrow{r=0}$ kết thúc. Tính $V(s_b)$, rồi $V(s_a)$ theo MC và theo TD.",
+   "back": "$s_b$ xuất hiện trong cả 8 tập: $V(s_b) = \\frac{6\\cdot 1 + 2\\cdot 0}{8} = \\frac34$.\n**MC**: $s_a$ chỉ xuất hiện một lần, lợi tức sau đó là 0, nên $V(s_a) = 0$.\n**TD**: $V(s_a) = r + V(s_b) = 0 + \\frac34 = \\frac34$."
+  },
+  {
+   "id": "c6-fig65-why",
+   "tag": "Vì sao",
+   "ref": "6.1 · Hình 6.5",
+   "front": "Ở hình 6.5, MC cho $V(s_a) = 0$, TD cho $\\frac34$. Đáp án nào đúng?",
+   "back": "**Cả hai** đều có thể đúng, tùy giả định:\n- MC: $s_a$ là **dấu hiệu**, thấy $s_a$ thì $s_b$ sau đó sẽ không có thưởng ($s_a$ ảnh hưởng tới $s_b$).\n- TD: phần thưởng 0 ở $s_b$ sau $s_a$ chỉ là **trùng hợp**; $s_b$ bình thường có giá trị $\\frac34$, không liên quan $s_a$ (giả định Markov)."
+  },
+  {
+   "id": "c6-q-def",
+   "tag": "Khái niệm",
+   "ref": "6.2",
+   "front": "Hàm Q $Q_\\pi(s, a)$ định nghĩa thế nào? Điểm cần chú ý?",
+   "back": "Ở trạng thái $s$ **bắt buộc** làm hành động $a$, **sau đó** chơi tiếp theo $\\pi$: phần thưởng tích lũy kỳ vọng.\nChú ý: $\\pi$ ở $s$ **chưa chắc** chọn $a$; chỉ bước đầu bị ép, các bước sau mới \\\"chuyển sang tự động\\\" theo $\\pi$."
+  },
+  {
+   "id": "c6-q-forms",
+   "tag": "So sánh",
+   "ref": "6.2 · Hình 6.6 · Bài tập 6-7",
+   "front": "Hai cách viết hàm Q và phạm vi áp dụng?",
+   "back": "(a) Đầu vào $(s, a)$, đầu ra **một số**: dùng được cho hành động **liên tục** lẫn rời rạc.\n(b) Đầu vào $s$, đầu ra **nhiều số** (mỗi hành động một số): chỉ cho hành động **rời rạc**. DQN cho Atari dùng cách này: một lần chạy mạng có đủ $Q$ của mọi hành động."
+  },
+  {
+   "id": "c6-pong",
+   "tag": "Ví dụ",
+   "ref": "6.2 · Hình 6.7",
+   "front": "Ví dụ bóng bàn (hình 6.7): khi nào $Q$ của các hành động gần như nhau, khi nào khác hẳn?",
+   "back": "Bóng còn xa hoặc vừa bị đánh trả: làm gì cũng gần như nhau, $Q$ xấp xỉ bằng nhau.\nBóng sắp tới mép, gần vợt: phải **đi lên** mới đỡ được; đứng yên hay đi xuống sẽ mất điểm, $Q$ âm."
+  },
+  {
+   "id": "c6-improve",
+   "tag": "Công thức",
+   "ref": "6.2 · (6.4) · Bài tập 6-8",
+   "front": "Có $Q_\\pi$ rồi, tìm chính sách tốt hơn thế nào? \\\"Tốt hơn\\\" nghĩa là gì?",
+   "back": "$$\\pi'(s) = \\arg\\max_a Q_\\pi(s, a)$$\n\\\"Tốt hơn\\\": $V_{\\pi'}(s) \\ge V_\\pi(s)$ với **mọi** trạng thái $s$.\nLặp: $\\pi$ thu dữ liệu → học $Q_\\pi$ → $\\pi' = \\arg\\max Q_\\pi$ → thay $\\pi$ bằng $\\pi'$ → ... (hình 6.8)."
+  },
+  {
+   "id": "c6-argmax-cont",
+   "tag": "Vì sao",
+   "ref": "6.2",
+   "front": "Hạn chế của $\\pi'(s) = \\arg\\max_a Q_\\pi(s, a)$ là gì?",
+   "back": "Với hành động **rời rạc** (vài lựa chọn): thử từng hành động, dễ.\nVới hành động **liên tục**: không vét cạn được, giải $\\arg\\max$ là **không khả thi** (chương 7 bàn cách xử lý)."
+  },
+  {
+   "id": "c6-improve-proof",
+   "tag": "Vì sao",
+   "ref": "6.2",
+   "front": "Ý chính của chứng minh $V_\\pi(s) \\le V_{\\pi'}(s)$?",
+   "back": "1. $V_\\pi(s) = Q_\\pi(s, \\pi(s)) \\le \\max_a Q_\\pi(s, a) = Q_\\pi(s, \\pi'(s))$: đi **một bước** theo $\\pi'$ rồi theo $\\pi$ đã không tệ hơn.\n2. Lặp lại ý đó ở $s_{t+1}, s_{t+2}, \\ldots$: thay dần mọi bước bằng $\\pi'$, mỗi lần chỉ có thể tốt hơn, tới cuối tập được $V_{\\pi'}(s)$. Xem tab Chứng minh."
+  },
+  {
+   "id": "c6-target",
+   "tag": "Vì sao",
+   "ref": "6.3 · Hình 6.9",
+   "front": "Vì sao cần **mạng mục tiêu**?",
+   "back": "Hồi quy $Q_\\pi(s_t, a_t) \\leftrightarrow r_t + Q_\\pi(s_{t+1}, \\pi(s_{t+1}))$: **mục tiêu cũng dùng chính mạng $Q$**, nên mỗi lần cập nhật thì mục tiêu cũng dịch chuyển → huấn luyện bất ổn.\nCố định mạng bên phải (mạng mục tiêu $\\hat Q$): mục tiêu đứng yên, việc cập nhật trở thành **bài toán hồi quy** bình thường (tối thiểu sai số bình phương trung bình)."
+  },
+  {
+   "id": "c6-target-copy",
+   "tag": "Khái niệm",
+   "ref": "6.3",
+   "front": "Mạng mục tiêu được cập nhật thế nào? Có cập nhật cùng lúc với $Q$ không?",
+   "back": "**Không** cập nhật cùng lúc. Chỉ cập nhật $Q$ bằng giảm gradient; sau $C$ lần (ví dụ 100) mới **sao chép** tham số $Q$ sang $\\hat Q$.\nMỗi lần sao chép, mục tiêu đổi, ta lại giải một bài toán hồi quy mới."
+  },
+  {
+   "id": "c6-cat-mouse",
+   "tag": "Ví dụ",
+   "ref": "6.3 · Hình 6.10",
+   "front": "Ví dụ mèo đuổi chuột (hình 6.10) nói gì?",
+   "back": "Mèo = ước lượng $Q$, chuột = mục tiêu $Q$. Nếu chuột chạy **mỗi bước** cùng mèo, cả hai chạy lung tung, quỹ đạo tối ưu kỳ lạ, bất ổn.\nCho chuột **đứng yên vài bước** (mạng mục tiêu cố định), mèo có thời gian tiến lại gần; khoảng cách nhỏ dần rồi khớp nhau."
+  },
+  {
+   "id": "c6-explore-why",
+   "tag": "Vì sao",
+   "ref": "6.4 · Hình 6.11",
+   "front": "Vì sao DQN cần **khám phá**? Ví dụ trong sách?",
+   "back": "Chọn $\\arg\\max_a Q(s, a)$ thì hành động **cố định**. Ban đầu mọi $Q = 0$; thử $a_2$ được thưởng dương thì $Q(s, a_2)$ lớn nhất, từ đó **chỉ** chọn $a_2$, các hành động khác không bao giờ được thử nên không ước lượng được.\nVí dụ: lần nào đến quán cũng gọi gà tiêu cay; rắn slither.io chỉ biết đi lên.\nĐây là **thế lưỡng nan khám phá-khai thác**."
+  },
+  {
+   "id": "c6-eps",
+   "tag": "Công thức",
+   "ref": "6.4 · Bài tập 6-9",
+   "front": "$\\varepsilon$-tham lam là gì? $\\varepsilon$ thường thay đổi thế nào?",
+   "back": "$$a = \\begin{cases}\\arg\\max_a Q(s, a) & \\text{với xác suất } 1-\\varepsilon\\\\ \\text{ngẫu nhiên} & \\text{còn lại}\\end{cases}$$\n$\\varepsilon$ nhỏ (ví dụ $0{,}1$) và **giảm dần** theo thời gian: lúc đầu chưa biết gì nên khám phá nhiều, về sau chủ yếu khai thác."
+  },
+  {
+   "id": "c6-eps-calc",
+   "tag": "Tính tay",
+   "ref": "6.4",
+   "front": "3 hành động, $\\varepsilon = 0{,}1$, hành động ngẫu nhiên chọn đều trong cả 3. Xác suất chọn hành động tham lam là bao nhiêu?",
+   "back": "$$1 - \\varepsilon + \\frac{\\varepsilon}{3} = 0{,}9 + 0{,}0\\overline{3} \\approx 0{,}933$$\nMỗi hành động còn lại: $\\frac{\\varepsilon}{3} \\approx 0{,}033$."
+  },
+  {
+   "id": "c6-boltz",
+   "tag": "Công thức",
+   "ref": "6.4 · Bài tập 6-9",
+   "front": "Khám phá Boltzmann: công thức và vai trò của nhiệt độ $T$?",
+   "back": "$$\\pi(a \\mid s) = \\frac{e^{Q(s, a)/T}}{\\sum_{a'} e^{Q(s, a')/T}}$$\n$T$ lớn: gần như **đều** (khám phá). $T$ nhỏ: ưu tiên $Q$ lớn (khai thác). $T \\to 0$: chỉ chọn hành động tốt nhất.\nGiống gradient chính sách: hành động $Q$ càng lớn thì xác suất càng cao, nhưng hành động khác vẫn có cơ hội."
+  },
+  {
+   "id": "c6-boltz-calc",
+   "tag": "Tính tay",
+   "ref": "6.4",
+   "front": "$Q = (1, 2, 3)$. Tính xác suất Boltzmann với $T = 1$ và $T = 10$.",
+   "back": "$T = 1$: $\\frac{(e^1, e^2, e^3)}{e^1 + e^2 + e^3} \\approx (0{,}090;\\ 0{,}245;\\ 0{,}665)$.\n$T = 10$: $\\frac{(e^{0{,}1}, e^{0{,}2}, e^{0{,}3})}{\\cdots} \\approx (0{,}301;\\ 0{,}332;\\ 0{,}367)$: gần đều."
+  },
+  {
+   "id": "c6-replay",
+   "tag": "Khái niệm",
+   "ref": "6.5 · Hình 6.12",
+   "front": "Phát lại kinh nghiệm hoạt động thế nào?",
+   "back": "Lưu mỗi bước $(s_t, a_t, r_t, s_{t+1})$ vào **bộ đệm phát lại** (ví dụ 50 000 mẫu). Đầy thì bỏ mẫu **cũ nhất**.\nMỗi vòng huấn luyện, lấy **ngẫu nhiên một lô** từ bộ đệm để cập nhật $Q$. Bộ đệm chứa kinh nghiệm của **nhiều** chính sách khác nhau trong quá khứ."
+  },
+  {
+   "id": "c6-replay-why",
+   "tag": "Vì sao",
+   "ref": "6.5 · Bài tập 6-10",
+   "front": "Hai lợi ích của phát lại kinh nghiệm?",
+   "back": "1. **Tiết kiệm tương tác**: tương tác với môi trường mới là phần tốn thời gian; mỗi kinh nghiệm được **dùng lại nhiều lần**.\n2. **Lô đa dạng**: các bước liên tiếp rất giống nhau (tương quan); lấy ngẫu nhiên từ bộ đệm làm lô đa dạng, huấn luyện tốt hơn."
+  },
+  {
+   "id": "c6-replay-off",
+   "tag": "Vì sao",
+   "ref": "6.5 · Bài tập 6-11",
+   "front": "Bộ đệm có kinh nghiệm không phải của $\\pi$ hiện tại. Vẫn ước lượng được $Q_\\pi$ không? Vì sao?",
+   "back": "**Được**. Ta không lấy mẫu cả **quỹ đạo**, chỉ lấy từng **bước** $(s, a, r, s')$. Mục tiêu $r + \\max_{a'}\\hat Q(s', a')$ chỉ cần $s, a, r, s'$; hành động $a$ do ai chọn không quan trọng.\nVì vậy dùng phát lại kinh nghiệm thì thuật toán trở thành **off-policy**."
+  },
+  {
+   "id": "c6-corr",
+   "tag": "Vì sao",
+   "ref": "Câu hỏi 6-5",
+   "front": "Vì sao dữ liệu tương quan làm huấn luyện mạng nơ-ron kém?",
+   "back": "SGD giả định lô là mẫu ngẫu nhiên. Nếu các mẫu tương quan, các lô liên tiếp cũng tương quan, gradient ước lượng bị lệch theo cùng một hướng; trường hợp cực đoan gradient sau triệt tiêu gradient trước, **khó hội tụ**.\nLấy ngẫu nhiên từ bộ đệm phát lại phá vỡ tương quan này."
+  },
+  {
+   "id": "c6-dqn-algo",
+   "tag": "Khái niệm",
+   "ref": "6.6 · Hình 6.14",
+   "front": "Các bước trong một bước thời gian của thuật toán DQN?",
+   "back": "1. Ở $s_t$ chọn $a_t$ theo $Q$ ($\\varepsilon$-tham lam), nhận $r_t$, $s_{t+1}$.\n2. Lưu $(s_t, a_t, r_t, s_{t+1})$ vào bộ đệm.\n3. Lấy ngẫu nhiên một lô $(s_i, a_i, r_i, s_{i+1})$.\n4. Mục tiêu $y = r_i + \\max_a \\hat Q(s_{i+1}, a)$ (dùng **mạng mục tiêu**).\n5. Cập nhật $Q$ để $Q(s_i, a_i)$ gần $y$ (hồi quy).\n6. Sau mỗi $C$ lần cập nhật: $\\hat Q \\leftarrow Q$."
+  },
+  {
+   "id": "c6-y-calc",
+   "tag": "Tính tay",
+   "ref": "6.6",
+   "front": "Mẫu $(s_i, a_i, r_i = -1, s_{i+1})$, $\\hat Q(s_{i+1}, \\cdot) = (2, 5, 3)$, $\\gamma = 0{,}9$. Tính mục tiêu $y$. Nếu $s_{i+1}$ là trạng thái kết thúc thì sao?",
+   "back": "$$y = r_i + \\gamma\\max_a\\hat Q(s_{i+1}, a) = -1 + 0{,}9\\cdot 5 = 3{,}5$$\nNếu $s_{i+1}$ kết thúc: $y = r_i = -1$ (không còn giá trị tương lai).\nHình 6.14 bỏ qua $\\gamma$ (ngầm $\\gamma = 1$)."
+  },
+  {
+   "id": "c6-dqn-vs-q",
+   "tag": "So sánh",
+   "ref": "6.6 · Câu hỏi 6-3",
+   "front": "DQN và Q-learning giống và khác nhau ở đâu?",
+   "back": "**Giống**: mục tiêu $r + \\gamma\\max_a Q(s', a)$ và cách cập nhật về cơ bản như nhau.\n**Khác**: DQN dùng **mạng sâu** xấp xỉ $Q$ (Q-learning dùng bảng); DQN dùng **phát lại kinh nghiệm** (lấy mẫu ngẫu nhiên từ dữ liệu cũ) và **mạng mục tiêu**, còn Q-learning học ngay từ bước vừa đi."
+  },
+  {
+   "id": "c6-stoch-det",
+   "tag": "So sánh",
+   "ref": "Câu hỏi 6-4",
+   "front": "Chính sách ngẫu nhiên và chính sách tất định khác nhau thế nào? Liên hệ với khám phá?",
+   "back": "**Ngẫu nhiên**: phân phối trên hành động ở mỗi trạng thái. **Tất định**: mỗi trạng thái đúng một hành động, entropy bằng 0.\nChính sách ngẫu nhiên tự có khám phá; chính sách tất định ($\\arg\\max Q$) **không**, nên DQN phải thêm $\\varepsilon$-tham lam hoặc Boltzmann."
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Vì sao DQN dùng xấp xỉ hàm giá trị thay cho bảng?",
+   "options": [
+    "Trạng thái quá nhiều hoặc liên tục; mạng còn tổng quát hóa sang trạng thái chưa gặp",
+    "Vì bảng không cập nhật được",
+    "Vì mạng nơ-ron luôn chính xác hơn bảng",
+    "Vì không dùng được phần thưởng"
+   ],
+   "answer": 0,
+   "explain": "Bảng gặp lời nguyền số chiều và không có giá trị cho trạng thái mới.",
+   "ref": "6 · Bài tập 6-1"
+  },
+  {
+   "q": "Đầu ra $V_\\pi(s)$ của nhà phê bình phụ thuộc vào:",
+   "options": [
+    "Trạng thái và chính sách của diễn viên",
+    "Chỉ trạng thái",
+    "Chỉ phần thưởng tức thời",
+    "Chỉ mạng mục tiêu"
+   ],
+   "answer": 0,
+   "explain": "Cùng trạng thái, diễn viên giỏi hay dở cho giá trị khác nhau.",
+   "ref": "6.1 · Bài tập 6-2"
+  },
+  {
+   "q": "Mục tiêu khi huấn luyện $V_\\pi$ bằng sai phân thời gian là:",
+   "options": [
+    "$V_\\pi(s_t) - V_\\pi(s_{t+1})$ gần $r_t$",
+    "$V_\\pi(s_t)$ gần $G_t$",
+    "$V_\\pi(s_{t+1})$ gần $0$",
+    "$V_\\pi(s_t) + V_\\pi(s_{t+1})$ gần $r_t$"
+   ],
+   "answer": 0,
+   "explain": "Từ (6.1): $V_\\pi(s_t) = V_\\pi(s_{t+1}) + r_t$.",
+   "ref": "6.1 · (6.1)"
+  },
+  {
+   "q": "So với sai phân thời gian, ước lượng $V_\\pi$ bằng Monte Carlo có:",
+   "options": [
+    "Phương sai lớn hơn (vì $G$ là tổng nhiều phần thưởng ngẫu nhiên)",
+    "Phương sai nhỏ hơn",
+    "Luôn chệch",
+    "Không cần chơi hết trò chơi"
+   ],
+   "answer": 0,
+   "explain": "TD chỉ có một $r$ ngẫu nhiên nhưng phụ thuộc $V(s_{t+1})$ có thể sai.",
+   "ref": "6.1"
+  },
+  {
+   "q": "Hình 6.5: 8 tập, $s_b$ được thưởng 1 trong 6 tập. $s_a$ xuất hiện một lần: $s_a \\xrightarrow{0} s_b \\xrightarrow{0}$ kết thúc. TD cho $V(s_a)$ bằng:",
+   "options": [
+    "$\\frac34$",
+    "$0$",
+    "$1$",
+    "$\\frac38$"
+   ],
+   "answer": 0,
+   "explain": "$V(s_a) = 0 + V(s_b) = \\frac34$. Monte Carlo cho $0$.",
+   "ref": "6.1 · Hình 6.5"
+  },
+  {
+   "q": "$Q_\\pi(s, a)$ nghĩa là:",
+   "options": [
+    "Ở $s$ bắt buộc làm $a$, sau đó theo $\\pi$; lợi tức kỳ vọng",
+    "Xác suất $\\pi$ chọn $a$ ở $s$",
+    "Phần thưởng tức thời khi làm $a$",
+    "Lợi tức nếu luôn làm $a$"
+   ],
+   "answer": 0,
+   "explain": "Chỉ bước đầu bị ép làm $a$.",
+   "ref": "6.2"
+  },
+  {
+   "q": "Cách viết hàm Q nào chỉ dùng được cho hành động rời rạc?",
+   "options": [
+    "Đầu vào $s$, đầu ra mỗi hành động một giá trị",
+    "Đầu vào $(s, a)$, đầu ra một số",
+    "Cả hai",
+    "Không cách nào"
+   ],
+   "answer": 0,
+   "explain": "Phải liệt kê hết hành động ở tầng đầu ra.",
+   "ref": "6.2 · Hình 6.6"
+  },
+  {
+   "q": "Chính sách $\\pi'(s) = \\arg\\max_a Q_\\pi(s, a)$ thỏa:",
+   "options": [
+    "$V_{\\pi'}(s) \\ge V_\\pi(s)$ với mọi $s$",
+    "$V_{\\pi'}(s) \\le V_\\pi(s)$",
+    "Chỉ tốt hơn ở trạng thái đầu",
+    "$\\pi' = \\pi$"
+   ],
+   "answer": 0,
+   "explain": "Định lý cải thiện chính sách (xem tab Chứng minh).",
+   "ref": "6.2"
+  },
+  {
+   "q": "Mạng mục tiêu giải quyết vấn đề gì?",
+   "options": [
+    "Mục tiêu hồi quy dịch chuyển theo mỗi lần cập nhật $Q$",
+    "Thiếu khám phá",
+    "Dữ liệu tương quan",
+    "Hành động liên tục"
+   ],
+   "answer": 0,
+   "explain": "Cố định $\\hat Q$ trong $C$ bước để mục tiêu đứng yên.",
+   "ref": "6.3"
+  },
+  {
+   "q": "Trong DQN, mạng mục tiêu $\\hat Q$ được cập nhật:",
+   "options": [
+    "Sao chép từ $Q$ sau mỗi $C$ lần cập nhật",
+    "Bằng giảm gradient mỗi bước, cùng lúc với $Q$",
+    "Không bao giờ cập nhật",
+    "Bằng trung bình các phần thưởng"
+   ],
+   "answer": 0,
+   "explain": "Hai mạng không được cập nhật cùng lúc.",
+   "ref": "6.3"
+  },
+  {
+   "q": "Không có khám phá, DQN gặp vấn đề gì?",
+   "options": [
+    "Chỉ chọn mãi một hành động từng được thưởng, không biết các hành động khác",
+    "Không tính được mục tiêu",
+    "Mạng mục tiêu bị sai",
+    "Bộ đệm bị đầy"
+   ],
+   "answer": 0,
+   "explain": "Ví dụ gà tiêu cay, rắn chỉ đi lên.",
+   "ref": "6.4"
+  },
+  {
+   "q": "Khám phá Boltzmann với nhiệt độ $T \\to 0$:",
+   "options": [
+    "Gần như luôn chọn hành động có $Q$ lớn nhất",
+    "Chọn đều mọi hành động",
+    "Chọn hành động có $Q$ nhỏ nhất",
+    "Không xác định"
+   ],
+   "answer": 0,
+   "explain": "$T$ nhỏ: khai thác; $T$ lớn: khám phá.",
+   "ref": "6.4"
+  },
+  {
+   "q": "$\\varepsilon = 0{,}2$, 4 hành động (ngẫu nhiên chọn đều trong cả 4). Xác suất chọn hành động tham lam:",
+   "options": [
+    "$0{,}85$",
+    "$0{,}8$",
+    "$0{,}2$",
+    "$0{,}95$"
+   ],
+   "answer": 0,
+   "explain": "$1 - 0{,}2 + 0{,}2/4 = 0{,}85$.",
+   "ref": "6.4"
+  },
+  {
+   "q": "Lợi ích nào **không** phải của phát lại kinh nghiệm?",
+   "options": [
+    "Bảo đảm dữ liệu chỉ đến từ chính sách hiện tại",
+    "Dùng lại mỗi kinh nghiệm nhiều lần",
+    "Lô đa dạng hơn",
+    "Phá vỡ tương quan giữa các mẫu liên tiếp"
+   ],
+   "answer": 0,
+   "explain": "Ngược lại: bộ đệm chứa dữ liệu của nhiều chính sách cũ, nên thuật toán thành off-policy.",
+   "ref": "6.5"
+  },
+  {
+   "q": "Vì sao dữ liệu từ chính sách cũ trong bộ đệm vẫn dùng được để học $Q$?",
+   "options": [
+    "Ta chỉ lấy mẫu từng bước $(s, a, r, s')$, không lấy mẫu cả quỹ đạo",
+    "Vì chính sách cũ giống hệt chính sách mới",
+    "Vì có importance sampling",
+    "Vì $\\gamma = 1$"
+   ],
+   "answer": 0,
+   "explain": "Mục tiêu chỉ cần $(s, a, r, s')$.",
+   "ref": "6.5 · Bài tập 6-11"
+  },
+  {
+   "q": "$r_i = -1$, $\\hat Q(s_{i+1}, \\cdot) = (2, 5, 3)$, $\\gamma = 0{,}9$, $s_{i+1}$ không kết thúc. Mục tiêu $y$:",
+   "options": [
+    "$3{,}5$",
+    "$4$",
+    "$4{,}5$",
+    "$-1$"
+   ],
+   "answer": 0,
+   "explain": "$y = -1 + 0{,}9 \\cdot 5 = 3{,}5$.",
+   "ref": "6.6"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p6-improve",
+   "ref": "6.2",
+   "title": "Cải thiện chính sách: $V_\\pi(s) \\le V_{\\pi'}(s)$",
+   "start": "$\\pi'(s) = \\arg\\max_a Q_\\pi(s, a)$; $\\pi$ tất định. $Q_\\pi(s, a) = \\mathbb{E}[r_t + V_\\pi(s_{t+1}) \\mid s_t = s, a_t = a]$.",
+   "goal": "$$V_\\pi(s) \\le V_{\\pi'}(s)\\quad\\text{với mọi } s$$",
+   "steps": [
+    {
+     "tex": "V_\\pi(s) = Q_\\pi\\big(s, \\pi(s)\\big)"
+    },
+    {
+     "tex": "\\le \\max_a Q_\\pi(s, a) = Q_\\pi\\big(s, \\pi'(s)\\big)",
+     "why": {
+      "options": [
+       "Giá trị lớn nhất không nhỏ hơn giá trị tại một hành động cụ thể; $\\pi'$ chọn đúng hành động đạt max",
+       "Tính chất Markov",
+       "Luật số lớn",
+       "Vì $\\pi = \\pi'$"
+      ],
+      "answer": 0,
+      "explain": "$\\pi(s)$ chỉ là một trong các hành động."
+     }
+    },
+    {
+     "tex": "= \\mathbb{E}\\big[r_t + V_\\pi(s_{t+1}) \\mid s_t = s, a_t = \\pi'(s_t)\\big]",
+     "why": {
+      "options": [
+       "Định nghĩa $Q_\\pi$: một bước rồi theo $\\pi$",
+       "Phương trình Bellman tối ưu",
+       "Bất đẳng thức Jensen",
+       "Trung bình tăng dần"
+      ],
+      "answer": 0,
+      "explain": "Làm $\\pi'(s)$ ở bước đầu, nhận $r_t$, rồi giá trị từ $s_{t+1}$ theo $\\pi$."
+     }
+    },
+    {
+     "tex": "\\le \\mathbb{E}\\big[r_t + Q_\\pi\\big(s_{t+1}, \\pi'(s_{t+1})\\big) \\mid s_t = s, a_t = \\pi'(s_t)\\big]",
+     "why": {
+      "options": [
+       "Áp dụng lại bước 2 cho $s_{t+1}$: $V_\\pi(s_{t+1}) \\le Q_\\pi(s_{t+1}, \\pi'(s_{t+1}))$",
+       "Tuyến tính của kỳ vọng",
+       "Vì phần thưởng không âm",
+       "Chiết khấu"
+      ],
+      "answer": 0,
+      "explain": "Bất đẳng thức đúng với mọi trạng thái, kể cả $s_{t+1}$; kỳ vọng giữ chiều bất đẳng thức."
+     }
+    },
+    {
+     "tex": "= \\mathbb{E}\\big[r_t + r_{t+1} + V_\\pi(s_{t+2}) \\mid \\cdots\\big]",
+     "why": {
+      "options": [
+       "Khai triển $Q_\\pi(s_{t+1}, \\pi'(s_{t+1}))$ theo định nghĩa $Q_\\pi$",
+       "Luật số lớn",
+       "Đổi biến",
+       "Vì $r_{t+1} = 0$"
+      ],
+      "answer": 0,
+      "explain": "Giờ hai bước đầu theo $\\pi'$, từ $s_{t+2}$ mới theo $\\pi$."
+     }
+    },
+    {
+     "tex": "\\le \\cdots \\le \\mathbb{E}\\big[r_t + r_{t+1} + r_{t+2} + \\cdots \\mid s_t = s, a_t = \\pi'(s_t)\\big] = V_{\\pi'}(s)",
+     "why": {
+      "options": [
+       "Lặp lại tới hết tập: mọi bước đều theo $\\pi'$, đó chính là định nghĩa $V_{\\pi'}(s)$",
+       "Bất đẳng thức tam giác",
+       "Vì $\\pi'$ ngẫu nhiên",
+       "Vì tập vô hạn"
+      ],
+      "answer": 0,
+      "explain": "Mỗi lần thay một bước theo $\\pi$ bằng $\\pi'$ chỉ có thể tăng giá trị."
+     }
+    }
+   ],
+   "hints": [
+    "Bắt đầu: $V_\\pi(s)$ bằng $Q_\\pi$ tại hành động của chính $\\pi$.",
+    "So sánh với $\\max_a$.",
+    "Khai triển $Q_\\pi$ một bước, rồi dùng lại bất đẳng thức ở trạng thái kế tiếp."
+   ],
+   "note": "Đây chính là bước \\\"cải thiện chính sách\\\" của lặp chính sách (chương 2), nay dùng $Q_\\pi$ ước lượng từ dữ liệu. DQN đẩy ý này tới cùng: luôn hành động theo $\\arg\\max Q$."
+  },
+  {
+   "id": "p6-mcvar",
+   "ref": "6.1 · (6.2) (bổ sung)",
+   "title": "Phương sai của mục tiêu Monte Carlo và TD",
+   "start": "Bổ sung của người dịch. Các phần thưởng $r_t, \\ldots, r_{t+T-1}$ **độc lập**, mỗi cái có phương sai $\\sigma^2$. Mục tiêu MC: $G = \\sum_{k=0}^{T-1} r_{t+k}$. Mục tiêu TD: $y = r_t + V(s_{t+1})$ với $V$ là một số cố định.",
+   "goal": "$$\\operatorname{Var}[G] = T\\sigma^2,\\qquad \\operatorname{Var}[y] = \\sigma^2$$",
+   "steps": [
+    {
+     "tex": "\\operatorname{Var}[G] = \\operatorname{Var}\\Big[\\sum_{k=0}^{T-1} r_{t+k}\\Big]"
+    },
+    {
+     "tex": "= \\sum_{k=0}^{T-1}\\operatorname{Var}[r_{t+k}]",
+     "why": {
+      "options": [
+       "Các biến độc lập: phương sai của tổng bằng tổng các phương sai",
+       "$\\operatorname{Var}[kX] = k^2\\operatorname{Var}[X]$",
+       "Tuyến tính của phương sai cho mọi biến",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Hiệp phương sai giữa các biến độc lập bằng 0."
+     }
+    },
+    {
+     "tex": "= T\\sigma^2",
+     "why": {
+      "options": [
+       "Mỗi số hạng bằng $\\sigma^2$, có $T$ số hạng",
+       "Vì $T = 1$",
+       "Vì $\\sigma = 1$",
+       "Chiết khấu"
+      ],
+      "answer": 0,
+      "explain": "Tăng tuyến tính theo độ dài phần còn lại của tập."
+     }
+    },
+    {
+     "tex": "\\operatorname{Var}[y] = \\operatorname{Var}[r_t + V(s_{t+1})] = \\operatorname{Var}[r_t] = \\sigma^2",
+     "why": {
+      "options": [
+       "Cộng một hằng số không đổi phương sai",
+       "Phương sai của tổng là tổng phương sai",
+       "Vì $V(s_{t+1}) = 0$",
+       "Vì $r_t$ tất định"
+      ],
+      "answer": 0,
+      "explain": "Ở đây coi $V(s_{t+1})$ là số cố định (trong thực tế $s_{t+1}$ cũng ngẫu nhiên, thêm một phần phương sai nhỏ)."
+     }
+    }
+   ],
+   "hints": [
+    "Phương sai của tổng các biến độc lập bằng gì?",
+    "Cộng hằng số có làm đổi phương sai không?"
+   ],
+   "note": "(6.2) $\\operatorname{Var}[kX] = k^2\\operatorname{Var}[X]$ ứng với trường hợp các phần thưởng **hoàn toàn tương quan** (như nhau): $\\operatorname{Var}[TX] = T^2\\sigma^2$. Dù trường hợp nào, phương sai của $G$ cũng lớn hơn của $y$; đổi lại $y$ **chệch** nếu $V(s_{t+1})$ sai. Xem tab Thí nghiệm."
+  },
+  {
+   "id": "p6-boltz",
+   "ref": "6.4",
+   "title": "Giới hạn của khám phá Boltzmann",
+   "start": "$\\pi_T(a) = \\dfrac{e^{Q(a)/T}}{\\sum_{a'} e^{Q(a')/T}}$, $Q^* = \\max_a Q(a)$ đạt tại duy nhất $a^*$, $|A|$ hành động.",
+   "goal": "$$T \\to 0:\\ \\pi_T(a^*) \\to 1;\\qquad T \\to \\infty:\\ \\pi_T(a) \\to \\frac{1}{|A|}$$",
+   "steps": [
+    {
+     "tex": "\\pi_T(a) = \\frac{e^{Q(a)/T}}{\\sum_{a'} e^{Q(a')/T}}"
+    },
+    {
+     "tex": "= \\frac{e^{(Q(a) - Q^*)/T}}{\\sum_{a'} e^{(Q(a') - Q^*)/T}}",
+     "why": {
+      "options": [
+       "Chia cả tử và mẫu cho $e^{Q^*/T} > 0$",
+       "Vì $Q^* = 0$",
+       "Lấy log",
+       "Đổi biến"
+      ],
+      "answer": 0,
+      "explain": "Giá trị không đổi; giờ mọi số mũ đều $\\le 0$."
+     }
+    },
+    {
+     "tex": "T \\to 0:\\ e^{(Q(a') - Q^*)/T} \\to \\begin{cases}1 & a' = a^*\\\\ 0 & a' \\ne a^*\\end{cases}",
+     "why": {
+      "options": [
+       "$Q(a') - Q^* < 0$ chia cho $T \\to 0^+$ ra $-\\infty$, mũ về 0",
+       "$e^0 = 0$",
+       "Vì $T$ âm",
+       "Vì mọi $Q$ bằng nhau"
+      ],
+      "answer": 0,
+      "explain": "Riêng $a^*$ có số mũ bằng 0 nên $e^0 = 1$."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ \\pi_T(a^*) \\to \\frac{1}{1} = 1",
+     "why": {
+      "options": [
+       "Tử và mẫu đều về 1 (chỉ còn số hạng của $a^*$)",
+       "Luật số lớn",
+       "Vì $|A| = 1$",
+       "Do chuẩn hóa sai"
+      ],
+      "answer": 0,
+      "explain": "Các hành động khác có xác suất về 0: thuần khai thác."
+     }
+    },
+    {
+     "tex": "T \\to \\infty:\\ e^{(Q(a') - Q^*)/T} \\to e^0 = 1\\ \\ \\forall a' \\ \\Rightarrow\\ \\pi_T(a) \\to \\frac{1}{|A|}",
+     "why": {
+      "options": [
+       "Mọi số mũ $\\frac{Q(a') - Q^*}{T} \\to 0$",
+       "Vì $Q \\to \\infty$",
+       "Vì có hành động tốt nhất",
+       "Do chiết khấu"
+      ],
+      "answer": 0,
+      "explain": "Mọi hành động như nhau: thuần khám phá."
+     }
+    }
+   ],
+   "hints": [
+    "Chia cho $e^{Q^*/T}$ để số mũ không dương.",
+    "Xét dấu của $\\frac{Q(a') - Q^*}{T}$ khi $T$ rất nhỏ và rất lớn."
+   ],
+   "note": "Thực tế $T$ (giống $\\varepsilon$) thường giảm dần trong huấn luyện. Khác $\\varepsilon$-tham lam ở chỗ: hành động có $Q$ \\\"suýt tốt nhất\\\" được thử nhiều hơn hành động rõ ràng tồi."
+  },
+  {
+   "id": "p6-target",
+   "ref": "6.3 (bổ sung)",
+   "title": "Mạng mục tiêu biến bước cập nhật thành hồi quy",
+   "start": "Bổ sung của người dịch. Mất mát trên một mẫu: $\\ell(\\phi) = \\tfrac12\\big(y - Q_\\phi(s, a)\\big)^2$ với $y = r + \\gamma\\max_{a'}Q_{\\phi^-}(s', a')$. Mạng mục tiêu: $\\phi^-$ cố định.",
+   "goal": "$$\\nabla_\\phi\\ell = -\\big(y - Q_\\phi(s, a)\\big)\\nabla_\\phi Q_\\phi(s, a)$$",
+   "steps": [
+    {
+     "tex": "\\nabla_\\phi\\ell = \\big(y - Q_\\phi(s, a)\\big)\\cdot\\nabla_\\phi\\big(y - Q_\\phi(s, a)\\big)"
+    },
+    {
+     "tex": "= \\big(y - Q_\\phi(s, a)\\big)\\big(\\nabla_\\phi y - \\nabla_\\phi Q_\\phi(s, a)\\big)",
+     "why": {
+      "options": [
+       "Gradient của hiệu bằng hiệu các gradient",
+       "Quy tắc thương",
+       "Mẹo đạo hàm logarit",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Tuyến tính của $\\nabla$."
+     }
+    },
+    {
+     "tex": "\\nabla_\\phi y = \\gamma\\,\\nabla_\\phi\\max_{a'}Q_{\\phi^-}(s', a') = 0",
+     "why": {
+      "options": [
+       "$y$ chỉ phụ thuộc $\\phi^-$ (cố định), không phụ thuộc $\\phi$",
+       "Vì $r = 0$",
+       "Vì $\\gamma = 0$",
+       "Vì $\\max$ không khả vi"
+      ],
+      "answer": 0,
+      "explain": "Đó chính là tác dụng của mạng mục tiêu."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ \\nabla_\\phi\\ell = -\\big(y - Q_\\phi(s, a)\\big)\\nabla_\\phi Q_\\phi(s, a)",
+     "why": {
+      "options": [
+       "Thay $\\nabla_\\phi y = 0$",
+       "Bỏ số hạng bình phương",
+       "Chuẩn hóa",
+       "Vì $Q_\\phi = y$"
+      ],
+      "answer": 0,
+      "explain": "Đúng dạng gradient của hồi quy bình phương với nhãn $y$ cố định."
+     }
+    }
+   ],
+   "hints": [
+    "Đạo hàm của $\\frac12 u^2$ là $u\\,\\nabla u$.",
+    "$y$ phụ thuộc tham số nào?"
+   ],
+   "note": "Nếu dùng chính $\\phi$ trong mục tiêu ($\\phi^- = \\phi$) thì $\\nabla_\\phi y \\ne 0$: mỗi bước vừa đẩy $Q(s, a)$ vừa kéo luôn mục tiêu (\\\"chuột chạy cùng mèo\\\"). Thực tế người ta vẫn bỏ số hạng đó (semi-gradient), nhưng mục tiêu vẫn dịch chuyển sau mỗi bước; mạng mục tiêu giữ nó đứng yên trong $C$ bước."
+  }
+ ]
+}
