@@ -224,6 +224,15 @@ $$
 Trong đó, $b$ được gọi là đường cơ sở. Bằng cách này, ta có thể làm số hạng $R(\tau)-b$ có cả dương lẫn âm. Nếu tổng phần thưởng ta nhận được $R(\tau)>b$, thì tăng xác suất của $(s,a)$. Nếu $R(\tau)<b$, dù $R(\tau)$ dương nhưng giá trị nhỏ thì cũng không tốt, ta giảm xác suất của $(s,a)$, giảm điểm của việc thực hiện hành động này ở trạng thái này. Thiết lập $b$ như thế nào? Ta có thể lấy kỳ vọng của giá trị $\tau$, tính trung bình của $\tau$, đặt $b \approx E[R(\tau)]$.
 Vì vậy khi huấn luyện, ta sẽ liên tục ghi lại giá trị $R(\tau)$, liên tục tính trung bình của $R(\tau)$, dùng giá trị trung bình này làm $b$. Như vậy khi huấn luyện, $R(\tau)-b$ có cả dương lẫn âm, đây là mẹo thứ nhất.
 
+<details class="viz-box">
+<summary>🎬 Mô phỏng gradient lấy mẫu: số quỹ đạo và đường cơ sở <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: bản đồ $\bar R_\theta$ của một chính sách hai tham số, đặt cạnh nhau gradient thật và các gradient ước lượng theo (4.4). Tăng $N$ hoặc bật đường cơ sở để thấy các ước lượng co lại quanh hướng đúng; chọn “Cộng thêm 10” để thấy vấn đề phần thưởng luôn dương. [Mở trang riêng](viz/pg-sample.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/pg-sample.html?embed" style="height:1997px" title="Mô phỏng gradient lấy mẫu" loading="lazy"></iframe>
+
+</details>
+
 ### 4.2.2 Mẹo 2: gán điểm phù hợp
 
 Mẹo thứ hai: gán điểm (credit) phù hợp cho mỗi hành động. Như biểu thức (4.7), chỉ cần trong cùng một tập, trong cùng một ván chơi, tất cả các cặp trạng thái-hành động đều được gán trọng số bằng cùng một số hạng phần thưởng.
@@ -386,6 +395,15 @@ Hình 4.20 là sơ đồ thuật toán REINFORCE, trước tiên ta cần một 
 <img width="550" src="../img/ch4/4.28.png"/>
 </div>
 <div align=center>Hình 4.20 Sơ đồ thuật toán REINFORCE</div>
+
+<details class="viz-box">
+<summary>🎬 Mô phỏng REINFORCE từng bước <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: chạy REINFORCE trên lưới 4×4 theo đúng ba pha sample() → tính $G_t$ ngược → learn(), kèm phép tính $e_{a_t} - \pi$ ở từng bước. Có thể đổi trọng số giữa $R(\tau)$, phần thưởng từ bước $t$ trở đi và $G_t$, bật đường cơ sở, rồi so sánh tốc độ học của các cách (mục 4.2). [Mở trang riêng](viz/reinforce.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/reinforce.html?embed" style="height:2184px" title="Mô phỏng REINFORCE từng bước" loading="lazy"></iframe>
+
+</details>
 
 ## Tài liệu tham khảo
 * [Intro to Reinforcement Learning (强化学习纲要 - Đại cương học tăng cường)](https://github.com/zhoubolei/introRL)

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gradient lấy mẫu · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .mapbox { position: relative; width: 100%; max-width: 440px; margin: 0 auto; aspect-ratio: 1; touch-action: none; }
+  .mapbox canvas, .mapbox svg { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 10px; }
+  .mapbox svg { overflow: hidden; cursor: crosshair; }
+  .mapbox .ax { fill: var(--text); font-size: 11px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 3px; stroke-linejoin: round; }
+  .vtab { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; margin-top: 8px; }
+  .vtab th, .vtab td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: center; }
+  .vtab th:first-child, .vtab td:first-child { text-align: left; }
+  .vtab tr.cur td { background: var(--hl-soft); font-weight: 700; }
+  .rtab { border-collapse: collapse; font-size: .88rem; margin: 6px 0; }
+  .rtab th, .rtab td { padding: 4px 10px; border: 1px solid var(--border); text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Gradient lấy mẫu</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter4/chapter4_vi?id=_421-mẹo-1-thêm-đường-cơ-sở">Mục 4.1–4.2.1</a></div>
+    </div>
+    <p class="lead">Biểu thức (4.4) không tính $\nabla\bar R_\theta$ chính xác mà <b>ước lượng</b> từ $N$ quỹ đạo lấy mẫu. Trang này vẽ toàn bộ “địa hình” $\bar R_\theta$ của một chính sách hai tham số, đặt cạnh nhau gradient thật và các gradient ước lượng, để thấy số mẫu $N$ và đường cơ sở $b$ ảnh hưởng thế nào.</p>
+  </div>
+  <div class="only-embed open-full"><a href="pg-sample.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <p class="note" style="margin:0 0 6px">Mỗi tập có hai bước. Ở bước $t = 1, 2$ tác tử chọn <b>trái</b> với xác suất $p_t = \sigma(\theta_t)$, <b>phải</b> với xác suất $1 - p_t$. Phần thưởng $R(\tau)$ của cả tập theo bảng dưới; $\bar R_\theta = \sum_\tau p_\theta(\tau) R(\tau)$ có hai đỉnh. Với chính sách này $\nabla_{\theta_t}\log\pi(a_t) = 1 - p_t$ nếu chọn trái, $-p_t$ nếu chọn phải.</p>
+    <div id="rtab"></div>
+    <div class="ctrl">
+      <span class="lb">Phần thưởng</span>
+      <div class="seg" id="off"><button type="button" data-v="0" aria-pressed="true">Như bảng</button><button type="button" data-v="10" aria-pressed="false">Cộng thêm 10 (luôn dương)</button></div>
+    </div>
+    <div class="ctrl">
+      <span class="lb">Số quỹ đạo $N$</span>
+      <div class="seg" id="nsel"><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="4" aria-pressed="true">4</button><button type="button" data-v="16" aria-pressed="false">16</button><button type="button" data-v="64" aria-pressed="false">64</button></div>
+      <span class="lb">Đường cơ sở</span>
+      <div class="seg" id="base"><button type="button" data-v="0" aria-pressed="true">Không</button><button type="button" data-v="1" aria-pressed="false">$b = \bar R_\theta$</button></div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">1 bước đi lên</button>
+      <button type="button" class="btn" id="resample">Lấy mẫu lại</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="eta">$\eta$</label><input id="eta" type="range" min="0.1" max="2" step="0.1" value="0.5"><span class="val" id="eta-v"></span>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <div class="stats"><span>Bước <b id="kk">0</b></span><span>$\theta$ = <b id="thv"></b></span><span>$\bar R_\theta$ = <b id="jv"></b></span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="mapbox" id="mapbox"><canvas id="cv" width="440" height="440"></canvas><svg id="ov" viewBox="0 0 440 440" role="img" aria-label="Bản đồ giá trị kỳ vọng theo hai tham số, gradient thật và gradient ước lượng"></svg></div>
+        <div class="legend" style="justify-content:center">
+          <span class="li"><span class="sw" style="background:var(--text);height:3px"></span>gradient thật $\nabla\bar R_\theta$</span>
+          <span class="li"><span class="sw" style="background:var(--s2)"></span>40 ước lượng $\hat g$ (mỗi cái từ $N$ quỹ đạo)</span>
+          <span class="li"><span class="sw" style="background:var(--s1)"></span>đường đi của $\theta$</span>
+        </div>
+        <div class="scale" id="scale"></div>
+        <p class="note" style="text-align:center;margin:2px 0 0">Bấm vào bản đồ để đặt $\theta$. Trục ngang $\theta_1$, trục dọc $\theta_2$, từ $-4$ tới $4$. Mũi tên được vẽ ngắn lại cùng một tỉ lệ.</p>
+        <div class="calc" id="calc"></div>
+        <table class="vtab" id="vtab"></table>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>$\bar R_\theta$ theo số bước đi lên</h2>
+    <div id="chart"></div>
+    <p class="note">Đi lên theo gradient với ước lượng $\hat g$ thay vì gradient thật: đường càng răng cưa khi phương sai càng lớn.</p>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, LIM = 4, S = 440, K = 40;
+  var M = [[3, 0], [0, 2]];               // R(a1, a2): 0 = trái, 1 = phải
+  var TH0 = [0.4, -0.7];
+  function off() { return +V_.$('#off [aria-pressed=true]').dataset.v; }
+  function nN() { return +V_.$('#nsel [aria-pressed=true]').dataset.v; }
+  function useB() { return V_.$('#base [aria-pressed=true]').dataset.v === '1'; }
+  function eta() { return +V_.$('#eta').value; }
+  function sig(x) { return 1 / (1 + Math.exp(-x)); }
+  function J(th) {
+    var p = [sig(th[0]), sig(th[1])], P = [[p[0], 1 - p[0]], [p[1], 1 - p[1]]], s = 0;
+    for (var a = 0; a < 2; a++) for (var b = 0; b < 2; b++) s += P[0][a] * P[1][b] * M[a][b];
+    return s + off();
+  }
+  function grad(th) {
+    var p1 = sig(th[0]), p2 = sig(th[1]);
+    var r1L = p2 * M[0][0] + (1 - p2) * M[0][1], r1R = p2 * M[1][0] + (1 - p2) * M[1][1];
+    var r2L = p1 * M[0][0] + (1 - p1) * M[1][0], r2R = p1 * M[0][1] + (1 - p1) * M[1][1];
+    return [p1 * (1 - p1) * (r1L - r1R), p2 * (1 - p2) * (r2L - r2R)];
+  }
+  // một ước lượng từ N quỹ đạo: ĝ = (1/N) Σ (R − b) Σ_t ∇log π(a_t)
+  function estimate(th, n, ub, rand, keep) {
+    var p = [sig(th[0]), sig(th[1])], b = ub ? J(th) : 0, g = [0, 0], log = [];
+    for (var i = 0; i < n; i++) {
+      var a1 = rand() < p[0] ? 0 : 1, a2 = rand() < p[1] ? 0 : 1, R = M[a1][a2] + off();
+      var gl = [a1 === 0 ? 1 - p[0] : -p[0], a2 === 0 ? 1 - p[1] : -p[1]];
+      g[0] += (R - b) * gl[0] / n; g[1] += (R - b) * gl[1] / n;
+      if (keep) log.push({ a: [a1, a2], R: R, gl: gl });
+    }
+    return { g: g, b: b, log: log, p: p };
+  }
+  // sai số bình phương trung bình E‖ĝ − ∇R̄‖² (tính đúng bằng cách liệt kê 4 quỹ đạo), chia N
+  function mse(th, n, ub) {
+    var p = [sig(th[0]), sig(th[1])], b = ub ? J(th) : 0, gt = grad(th), e = 0;
+    for (var a1 = 0; a1 < 2; a1++) for (var a2 = 0; a2 < 2; a2++) {
+      var pr = (a1 === 0 ? p[0] : 1 - p[0]) * (a2 === 0 ? p[1] : 1 - p[1]), R = M[a1][a2] + off();
+      var g0 = (R - b) * (a1 === 0 ? 1 - p[0] : -p[0]) - gt[0], g1 = (R - b) * (a2 === 0 ? 1 - p[1] : -p[1]) - gt[1];
+      e += pr * (g0 * g0 + g1 * g1);
+    }
+    return e / n;
+  }
+
+  var st, rand = V_.seeded(3);
+  function reset() { player && player.stop(); st = { th: TH0.slice(), path: [TH0.slice()], k: 0, hist: [J(TH0)], est: null, last: null }; resample(); pseudo.hl('init'); }
+  function resample() {
+    st.est = []; for (var i = 0; i < K; i++) st.est.push(estimate(st.th, nN(), useB(), rand, false).g);
+    st.last = estimate(st.th, nN(), useB(), rand, true); st.last.kind = 'sample';
+    pseudo.hl(['samp', 'est']); draw();
+  }
+  function stepUp() {
+    var e = estimate(st.th, nN(), useB(), rand, true), th0 = st.th.slice();
+    st.th = [Math.max(-LIM, Math.min(LIM, st.th[0] + eta() * e.g[0])), Math.max(-LIM, Math.min(LIM, st.th[1] + eta() * e.g[1]))];
+    e.kind = 'step'; e.th0 = th0; st.last = e;
+    st.path.push(st.th.slice()); st.k++; st.hist.push(J(st.th));
+    st.est = []; for (var i = 0; i < K; i++) st.est.push(estimate(st.th, nN(), useB(), rand, false).g);
+    pseudo.hl(['samp', 'est', 'upd']); draw();
+    return st.k < 300;
+  }
+
+  // ---------- vẽ ----------
+  var cv = V_.$('#cv'), ctx2 = cv.getContext('2d'), ov = V_.$('#ov');
+  function px(v) { return (v + LIM) / (2 * LIM) * S; }
+  function py(v) { return (LIM - v) / (2 * LIM) * S; }
+  function drawMap() {
+    var c0 = V_.cssVar('--surface-2'), c1 = V_.cssVar('--pos'), G = 110, cell = S / G, lo = off(), hi = 3 + off(), BANDS = 12;
+    for (var i = 0; i < G; i++) for (var j = 0; j < G; j++) {
+      var th = [-LIM + (i + 0.5) / G * 2 * LIM, LIM - (j + 0.5) / G * 2 * LIM];
+      var t = (J(th) - lo) / (hi - lo); t = Math.floor(t * BANDS) / BANDS;
+      ctx2.fillStyle = V_.mix(c0, c1, 0.08 + 0.8 * t);
+      ctx2.fillRect(i * cell, j * cell, cell + 0.6, cell + 0.6);
+    }
+    V_.$('#scale').innerHTML = '<span>' + V_.fmt(lo, 0) + '</span><span class="bar" style="background:linear-gradient(90deg,' + V_.mix(c0, c1, 0.08) + ',' + V_.mix(c0, c1, 0.88) + ')"></span><span>' + V_.fmt(hi, 0) + ' = $\\bar R_\\theta$</span>';
+    V_.texAll(V_.$('#scale'));
+  }
+  var SCALE = 1.2; // độ dài mũi tên (đơn vị θ) = SCALE × ‖g‖
+  function arrow(x0, y0, gx, gy, color, w, op) {
+    var x1 = px(x0 + SCALE * gx), y1 = py(y0 + SCALE * gy), X0 = px(x0), Y0 = py(y0);
+    var dx = x1 - X0, dy = y1 - Y0, L = Math.hypot(dx, dy);
+    if (L < 1) return '';
+    var ux = dx / L, uy = dy / L, hs = Math.min(9, L * 0.4);
+    return '<g stroke="' + color + '" stroke-width="' + w + '" stroke-opacity="' + op + '" fill="none" stroke-linecap="round"><path d="M' + X0 + ' ' + Y0 + 'L' + x1 + ' ' + y1 +
+      'M' + (x1 - ux * hs - uy * hs * 0.55) + ' ' + (y1 - uy * hs + ux * hs * 0.55) + 'L' + x1 + ' ' + y1 + 'L' + (x1 - ux * hs + uy * hs * 0.55) + ' ' + (y1 - uy * hs - ux * hs * 0.55) + '"/></g>';
+  }
+  function drawOverlay() {
+    var s = '';
+    [-4, -2, 0, 2, 4].forEach(function (v) {
+      s += '<line x1="' + px(v) + '" x2="' + px(v) + '" y1="0" y2="' + S + '" stroke="' + V_.cssVar('--border') + '" stroke-width="' + (v ? 0.6 : 1.2) + '"/>' +
+           '<line y1="' + py(v) + '" y2="' + py(v) + '" x1="0" x2="' + S + '" stroke="' + V_.cssVar('--border') + '" stroke-width="' + (v ? 0.6 : 1.2) + '"/>';
+    });
+    s += '<text class="ax" x="' + (S - 6) + '" y="' + (py(0) - 6) + '" text-anchor="end">θ₁</text><text class="ax" x="' + (px(0) + 6) + '" y="14">θ₂</text>';
+    s += '<text class="ax" x="' + (S - 8) + '" y="16" text-anchor="end">trái, trái: 3</text><text class="ax" x="8" y="' + (S - 8) + '">phải, phải: 2</text>';
+    var th = st.th;
+    st.est.forEach(function (g) { s += arrow(th[0], th[1], g[0], g[1], V_.cssVar('--s2'), 1.6, 0.45); });
+    var pts = st.path.map(function (p) { return px(p[0]).toFixed(1) + ',' + py(p[1]).toFixed(1); }).join(' ');
+    s += '<polyline points="' + pts + '" fill="none" stroke="' + V_.cssVar('--s1') + '" stroke-width="2" stroke-linejoin="round"/>';
+    var gt = grad(th);
+    s += arrow(th[0], th[1], gt[0], gt[1], V_.cssVar('--text'), 3.2, 1);
+    s += '<circle cx="' + px(th[0]) + '" cy="' + py(th[1]) + '" r="6" fill="' + V_.cssVar('--s1') + '" stroke="' + V_.cssVar('--surface') + '" stroke-width="2"/>';
+    ov.innerHTML = s;
+  }
+  function draw() {
+    drawOverlay();
+    var th = st.th;
+    V_.$('#kk').textContent = st.k;
+    V_.tex(V_.$('#thv'), '(' + V_.tn(th[0], 2) + ',\\ ' + V_.tn(th[1], 2) + ')');
+    V_.$('#jv').textContent = V_.fmt(J(th), 3);
+    showCalc(); varTable(); insight(); chart.set([st.hist]);
+    V_.postHeight();
+  }
+  var AW = ['trái', 'phải'];
+  function showCalc() {
+    var el = V_.$('#calc'), L = st.last; if (!L) { el.innerHTML = ''; return; }
+    var n = L.log.length, show = L.log.slice(0, 4), gt = grad(L.kind === 'step' ? L.th0 : st.th);
+    var rows = show.map(function (o, i) {
+      return '&\\tau^{' + (i + 1) + '} = (\\text{' + AW[o.a[0]] + ', ' + AW[o.a[1]] + '}):\\ (R - b)\\,\\nabla\\log p_\\theta(\\tau) = (' + V_.tz(o.R, 2) + ' - ' + V_.tz(L.b, 2, true) + ')\\,[' + V_.tz(o.gl[0], 2) + ',\\ ' + V_.tz(o.gl[1], 2) + ']';
+    });
+    if (n > 4) rows.push('&\\quad\\vdots\\quad(\\text{còn ' + (n - 4) + ' quỹ đạo})');
+    rows.push('&\\hat g = \\tfrac{1}{' + n + '}\\textstyle\\sum_n (\\cdots) = [' + V_.tz(L.g[0], 3) + ',\\ ' + V_.tz(L.g[1], 3) + ']\\qquad \\nabla\\bar R_\\theta = [' + V_.tz(gt[0], 3) + ',\\ ' + V_.tz(gt[1], 3) + ']');
+    if (L.kind === 'step') rows.push('&\\theta \\leftarrow \\theta + ' + V_.tz(eta(), 1) + '\\,\\hat g:\\ (' + V_.tz(L.th0[0], 2) + ',\\ ' + V_.tz(L.th0[1], 2) + ')\\ \\to\\ (' + V_.tz(st.th[0], 2) + ',\\ ' + V_.tz(st.th[1], 2) + ')');
+    V_.tex(el, '\\begin{aligned}' + rows.join('\\\\') + '\\end{aligned}', true);
+  }
+  function varTable() {
+    var th = st.th, n = nN(), cur = useB();
+    V_.$('#vtab').innerHTML = '<thead><tr><th>Sai số bình phương trung bình $\\mathbb{E}\\|\\hat g - \\nabla\\bar R_\\theta\\|^2$ tại $\\theta$ hiện tại</th><th>$N = 1$</th><th>$N = ' + n + '$</th></tr></thead><tbody>' +
+      [[false, 'Không có đường cơ sở'], [true, 'Có đường cơ sở $b = \\bar R_\\theta$']].map(function (r) {
+        return '<tr class="' + (r[0] === cur ? 'cur' : '') + '"><td>' + r[1] + '</td><td>' + V_.fmt(mse(th, 1, r[0]), 3) + '</td><td>' + V_.fmt(mse(th, n, r[0]), 3) + '</td></tr>';
+      }).join('') + '</tbody>';
+    V_.texAll(V_.$('#vtab'));
+  }
+  function insight() {
+    var el = V_.$('#insight'), th = st.th, n = nN(), a = mse(th, n, false), b = mse(th, n, true), gt = grad(th), ng = Math.hypot(gt[0], gt[1]);
+    var mean = [0, 0]; st.est.forEach(function (g) { mean[0] += g[0] / K; mean[1] += g[1] / K; });
+    var dist = Math.hypot(mean[0] - gt[0], mean[1] - gt[1]), se = Math.sqrt(mse(th, n, useB()) / K);
+    var h = 'Trung bình của 40 ước lượng là $[' + V_.tz(mean[0], 3) + ',\\ ' + V_.tz(mean[1], 3) + ']$, gradient thật là $[' + V_.tz(gt[0], 3) + ',\\ ' + V_.tz(gt[1], 3) + ']$. ' +
+      (dist <= 2 * se + 1e-3 && se < 0.1 ? 'Hai số gần nhau: ước lượng <b>không chệch</b>. ' : 'Về kỳ vọng hai số bằng nhau (ước lượng <b>không chệch</b>), nhưng phương sai lớn nên trung bình của chỉ 40 ước lượng vẫn còn lệch (sai số chuẩn khoảng ' + V_.fmt(se, 2) + '). ');
+    if (off() && !useB()) h += 'Cộng thêm 10 vào mọi phần thưởng <b>không đổi</b> địa hình hay gradient thật, nhưng làm các ước lượng tung tóe khắp nơi (sai số gấp khoảng ' + V_.fmt(a / Math.max(b, 1e-9), 0) + ' lần so với khi có đường cơ sở). Đây chính là vấn đề “phần thưởng luôn dương” ở mục 4.2.1. Bật đường cơ sở để thấy đám mũi tên co lại.';
+    else if (useB()) h += 'Đường cơ sở $b = \\bar R_\\theta$ làm $R - b$ có cả dương lẫn âm: đám mũi tên co lại quanh hướng đúng mà trung bình không đổi.' + (off() ? ' Cộng thêm 10 giờ không còn ảnh hưởng gì, vì $b$ cũng tăng đúng 10.' : '');
+    else h += 'Tăng $N$ thì sai số giảm đúng theo $1/N$ (xem bảng). Thử “Cộng thêm 10”.';
+    if (ng < 0.02) h += ' Ở đây gradient thật gần bằng 0 (gần đỉnh hoặc điểm yên ngựa).';
+    el.innerHTML = h; V_.texAll(el);
+  }
+
+  // ---------- mã giả ----------
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  var pseudo = V_.Pseudo(V_.$('#pseudo'), { strip: V_.$('#pstrip'), title: 'đi lên theo gradient lấy mẫu (4.4)', lines: [
+    ['init', 0, 'Chọn $\\theta$ ban đầu <span class="cm">(chấm xanh)</span>'],
+    ['loop', 0, KW('lặp') + ':'],
+    ['samp', 1, 'lấy mẫu $N$ quỹ đạo $\\tau^n = (a_1^n, a_2^n) \\sim p_\\theta$, nhận $R(\\tau^n)$'],
+    ['est', 1, '$\\hat g \\leftarrow \\frac{1}{N}\\sum_{n}\\big(R(\\tau^n) - b\\big)\\sum_{t}\\nabla_\\theta\\log\\pi_\\theta(a_t^n)$'],
+    ['upd', 1, '$\\theta \\leftarrow \\theta + \\eta\\,\\hat g$']
+  ] });
+
+  var chart;
+  function makeChart() {
+    V_.$('#chart').innerHTML = '';
+    chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'R̄θ', color: '--s1' }], xName: 'Bước', xLabel: 'Bước', dec: 2, yMin: off(), yMax: 3 + off(), aria: 'Giá trị kỳ vọng theo số bước' });
+  }
+  makeChart();
+  var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: stepUp });
+
+  // bảng phần thưởng
+  V_.$('#rtab').innerHTML = '<table class="rtab"><tr><th>$R(\\tau)$</th><th>$a_2$ = trái</th><th>$a_2$ = phải</th></tr><tr><th>$a_1$ = trái</th><td>3</td><td>0</td></tr><tr><th>$a_1$ = phải</th><td>0</td><td>2</td></tr></table>';
+
+  V_.$('#step').addEventListener('click', function () { player.stop(); stepUp(); });
+  V_.$('#resample').addEventListener('click', function () { player.stop(); resample(); });
+  V_.$('#reset').addEventListener('click', reset);
+  ['#nsel', '#base', '#off'].forEach(function (id) {
+    V_.$(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      V_.$$(id + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      if (id === '#off') { drawMap(); makeChart(); st.hist = st.path.map(J); }
+      resample();
+    });
+  });
+  V_.$('#eta').addEventListener('input', function () { V_.$('#eta-v').textContent = V_.fmt(eta(), 1); });
+  ov.addEventListener('pointerdown', function (e) {
+    var r = ov.getBoundingClientRect(), x = (e.clientX - r.left) / r.width * 2 * LIM - LIM, y = LIM - (e.clientY - r.top) / r.height * 2 * LIM;
+    player.stop();
+    st.th = [x, y]; st.path = [[x, y]]; st.k = 0; st.hist = [J(st.th)];
+    resample();
+  });
+  V_.onTheme(function () { drawMap(); draw(); });
+  V_.$('#eta-v').textContent = V_.fmt(eta(), 1);
+  V_.texAll();
+  drawMap();
+  reset();
+})();
+</script>
+</body>
+</html>

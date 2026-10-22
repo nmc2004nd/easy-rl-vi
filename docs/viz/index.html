@@ -16,7 +16,7 @@
 <div class="wrap">
   <div class="top">
     <h1>Mô phỏng thuật toán</h1>
-    <div class="crumbs"><a href="../#/">Sách</a> · <a href="../review/index.html?ch=2">Ôn tập chương 2</a> · <a href="../review/index.html?ch=3">Ôn tập chương 3</a></div>
+    <div class="crumbs"><a href="../#/">Sách</a> · <a href="../review/index.html?ch=2">Ôn tập chương 2</a> · <a href="../review/index.html?ch=3">Ôn tập chương 3</a> · <a href="../review/index.html?ch=4">Ôn tập chương 4</a></div>
   </div>
   <p class="lead">Các thuật toán trong sách được chạy từng bước, kèm phép tính bằng số thật ở mỗi ô. Mỗi mô phỏng cũng được nhúng ngay dưới hình tương ứng trong chương.</p>
 
@@ -34,6 +34,12 @@
     <a class="card" href="td-control.html"><div class="ref">Mục 3.2–3.4 · hình 3.9, 3.10, 3.16, 3.29–3.34</div><h3>Sarsa và Q-learning từng bước</h3><p>Bảng $Q$ 4 tam giác mỗi ô, phép cập nhật bằng số thật; vách đá và kho báu; hệ số chiết khấu $\gamma$ trên đường đi.</p></a>
     <a class="card" href="nstep-td.html"><div class="ref">Mục 3.3.2 · hình 3.18, (3.2)</div><h3>TD $n$ bước</h3><p>Ô nào được cập nhật sau một tập với $n = 1, 2, 4, 8, \infty$; chọn $n$ nào cho sai số nhỏ nhất.</p></a>
     <a class="card" href="mc-control.html"><div class="ref">Mục 3.4 · hình 3.25, 3.26</div><h3>Monte Carlo điều khiển</h3><p>Sinh tập rồi quét ngược $G \leftarrow \gamma G + r$; khởi đầu khám phá (lần thăm đầu tiên) và $\varepsilon$-tham lam.</p></a>
+  </div>
+
+  <h2 id="ch4" style="font-size:1.05rem;margin:26px 0 10px">Chương 4 · Gradient chính sách</h2>
+  <div class="cards">
+    <a class="card" href="reinforce.html"><div class="ref">Mục 4.3 · hình 4.14, 4.20</div><h3>REINFORCE từng bước</h3><p>sample() → tính $G_t$ ngược → learn() trên lưới 4×4; chính sách softmax mỗi ô; so sánh $R(\tau)$, phần thưởng từ bước $t$, $G_t$ và đường cơ sở.</p></a>
+    <a class="card" href="pg-sample.html"><div class="ref">Mục 4.1–4.2.1 · (4.4)</div><h3>Gradient lấy mẫu</h3><p>Bản đồ $\bar R_\theta$, gradient thật và các ước lượng từ $N$ quỹ đạo; vì sao cần nhiều mẫu và đường cơ sở.</p></a>
   </div>
 </div>
 <script src="viz.js"></script>

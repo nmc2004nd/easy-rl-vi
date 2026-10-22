@@ -604,10 +604,31 @@
     ctx.typeset(root);
   }
 
+  // ======================================================================
+  // TAB "Mô phỏng": liên kết tới các trang docs/viz
+  // ======================================================================
+  var VIZ = [
+    ['reinforce.html', 'Mục 4.3', 'REINFORCE từng bước', 'sample() → tính $G_t$ ngược → learn() trên lưới 4×4, kèm phép tính $e_{a_t} - \\pi$; so sánh các cách tính trọng số của mục 4.2.'],
+    ['pg-sample.html', 'Mục 4.1–4.2.1', 'Gradient lấy mẫu', 'Gradient thật và các ước lượng từ $N$ quỹ đạo trên bản đồ $\\bar R_\\theta$; số mẫu và đường cơ sở làm giảm phương sai thế nào.']
+  ];
+  function renderViz(root, ctx) {
+    root.innerHTML = '';
+    root.classList.add('rx');
+    var b = h('<section class="blk"><h2>Mô phỏng thuật toán</h2>' +
+      '<p class="lead">Chạy từng bước các thuật toán của chương, kèm phép tính bằng số thật và mã giả tô sáng dòng đang chạy. Mở trong cùng tab; bấm “← Các mô phỏng” để quay lại danh sách.</p>' +
+      '<div class="lanes">' + VIZ.map(function (v) {
+        return '<a class="lane" style="display:block;text-decoration:none;color:inherit" href="../viz/' + v[0] + '"><div class="lt">' + v[2] +
+          ' <span>· ' + v[1] + '</span></div><div class="rxs">' + v[3] + '</div></a>';
+      }).join('') + '</div></section>');
+    root.appendChild(b);
+    ctx.typeset(b);
+  }
+
   window.ReviewExtras = {
     tabs: [
       { id: 'lab', label: 'Thí nghiệm', render: renderLab },
-      { id: 'map', label: 'Sơ đồ', render: renderMap }
+      { id: 'map', label: 'Sơ đồ', render: renderMap },
+      { id: 'viz', label: 'Mô phỏng', render: renderViz }
     ]
   };
 })();
