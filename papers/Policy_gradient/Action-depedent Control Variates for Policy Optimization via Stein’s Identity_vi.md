@@ -28,9 +28,9 @@ Gradient của $`J(\theta)`$ có thể viết là
 ```
 Trong đó
 
- ```math
- Q^\pi(s, a)=\mathbb{E}_\pi\left[\sum_{t=1}^{\infty} \gamma^{t-1} r\left(s_t, a_t\right) \mid s_1=s, a_1=a\right]
- ```
+```math
+Q^\pi(s, a)=\mathbb{E}_\pi\left[\sum_{t=1}^{\infty} \gamma^{t-1} r\left(s_t, a_t\right) \mid s_1=s, a_1=a\right]
+```
 
 Cách đơn giản nhất để ước lượng $`\nabla_\theta J(\theta)`$ là thu thập rất nhiều mẫu $`\left\{\left(s_t, a_t, r_t\right)\right\}_{t=1}^n`$, rồi ước lượng Monte Carlo
 ```math

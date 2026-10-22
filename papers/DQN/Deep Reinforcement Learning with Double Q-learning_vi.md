@@ -31,7 +31,7 @@ Q-Learning là một **phương pháp sai phân thời gian**, được dùng r�
 Chi tiết xin tham khảo bài viết về Q-Learning, ở đây đưa ra công thức lặp để tiện giải thích phần sau.
 
 ```math
-Q(S_t,A_t)=Q(S_t,A_t)+ \alpha (Y_t^Q-Q(S_t,A_t)) \tag{1}
+Q(S_t,A_t)=Q(S_t,A_t)+ \alpha (Y_t^Q-Q(S_t,A_t)) \qquad \text{(1)}
 ```
 
 ### 2. Q-Learning với xấp xỉ hàm giá trị
@@ -39,7 +39,7 @@ Q(S_t,A_t)=Q(S_t,A_t)+ \alpha (Y_t^Q-Q(S_t,A_t)) \tag{1}
 Vì số trạng thái quá nhiều hoặc liên tục, không thể duyệt hết tất cả các trạng thái, cần dùng hàm tham số hóa $`Q(s,a;\theta _t)`$ để khớp các giá trị hiện có, và dự đoán hàm giá trị cho các trạng thái chưa biết, thông qua công thức
 
 ```math
-\theta_{t-1}=\theta_t +\alpha(Y_t^Q-Q(S_t,A_t;\theta_t))\nabla Q(S_t, A_t,;\theta _t) \tag{2}
+\theta_{t-1}=\theta_t +\alpha(Y_t^Q-Q(S_t,A_t;\theta_t))\nabla Q(S_t, A_t,;\theta _t) \qquad \text{(2)}
 ```
 
 để hoàn thành việc cập nhật tham số, trong đó $`Y_t^Q =R_{t+1}+\gamma \max_{a}Q(S_{t+1},a;\theta _t)`$ là TD-target (mục tiêu sai phân thời gian), ý tưởng chính là dùng phương pháp tương tự giảm gradient, giúp hàm tham số hóa được khớp gần mục tiêu hơn, tức là phù hợp hơn với giá trị thực.
@@ -60,11 +60,11 @@ DQN có ba điểm cải tiến sau so với Q-Learning truyền thống, nâng 
 
    Dùng một mạng mục tiêu được cập nhật bất đồng bộ, tham số mạng ký hiệu là $`\theta^-`$ (cứ mỗi $`\tau`$ lần thì gán tham số $`\theta`$ của Q-net cho mạng mục tiêu) để tính mục tiêu.
 
-   ```math
-   Y_t^Q = R_{t+1}+\gamma\max_{a}Q(S_t=s, A_t=a;\theta^-_t) \tag{3}
-   ```
+```math
+Y_t^Q = R_{t+1}+\gamma\max_{a}Q(S_t=s, A_t=a;\theta^-_t) \qquad \text{(3)}
+```
 
-   
+
 
 3. #### Dùng **phát lại kinh nghiệm** (Lin, 1992): lưu kinh nghiệm và dùng lại nhiều lần, tăng hiệu suất sử dụng, giảm chi phí lấy mẫu
 
@@ -81,18 +81,18 @@ DQN có ba điểm cải tiến sau so với Q-Learning truyền thống, nâng 
 Thay đổi cách tính mục tiêu, công thức là:
 
 ```math
-Y_t^Q = R_{t+1}+\gamma Q(S_t=s, A_t=\arg\max_{a \in \mathbb{A}}Q(s,a|\theta_t^-);\theta_t) \tag{4}
+Y_t^Q = R_{t+1}+\gamma Q(S_t=s, A_t=\arg\max_{a \in \mathbb{A}}Q(s,a|\theta_t^-);\theta_t) \qquad \text{(4)}
 ```
 
 ### 2. Nguồn gốc ý tưởng: tách rời việc chọn và việc tính
 
 ​	Trong DQN truyền thống, việc tính TD-target có thể chia thành hai bước: **chọn hành động tối ưu** và **tính hàm giá trị hành động tối ưu**. Công thức này có thể biến đổi thành dạng phân tách sau:
 
-   ```math
-   \begin{gathered}
-   a^*=\arg\max_{a \in \mathbb{A}}Q(s,a|\theta_t)\\Y_t^Q=r+\gamma Q(S_t=s, A_t=a^*;\theta_t)
-   \end{gathered}
-   ```
+```math
+\begin{gathered}
+a^*=\arg\max_{a \in \mathbb{A}}Q(s,a|\theta_t)\\Y_t^Q=r+\gamma Q(S_t=s, A_t=a^*;\theta_t)
+\end{gathered}
+```
 
 ​	Nhiệm vụ tính mục tiêu được chuyển sang mạng mục tiêu:
 
@@ -143,19 +143,19 @@ Thrun và Schwartz (1993) lần đầu phát hiện hiện tượng ước lư�
 Từ phương trình tối ưu Bellman có thể suy ra quan hệ giữa hàm giá trị hành động tối ưu và hàm giá trị trạng thái tối ưu:
 
 ```math
-Q_*(s,a)=V_*(s) \tag{5}
+Q_*(s,a)=V_*(s) \qquad \text{(5)}
 ```
 
 ​		Vì khi môi trường cố định, phần thưởng cố định, hàm giá trị trạng thái là hằng số, giả sử: ước lượng không chệch của hàm giá trị hành động bất kỳ là $`Q_t(s,a)`$, thì đẳng thức $`(6)`$ đúng
 
 ```math
-\sum_a (Q_t(s,a)-V_*(s))=0 \tag{6}
+\sum_a (Q_t(s,a)-V_*(s))=0 \qquad \text{(6)}
 ```
 
 ​		Dù định nghĩa ước lượng là không chệch, sai số trung bình bằng 0, nhưng không phải sai số của mỗi ước lượng đều bằng 0, cũng có thể xảy ra trường hợp sau:
 
 ```math
-\frac{1}{m} \sum_a(Q_t(s,a)-V_*(s))^2=C \quad (m>1 \text{ là số hành động}, C>0 \text{ là số thực}) \tag{7}
+\frac{1}{m} \sum_a(Q_t(s,a)-V_*(s))^2=C \quad (m>1 \text{ là số hành động}, C>0 \text{ là số thực}) \qquad \text{(7)}
 ```
 
 ​		Dưới giả định này, dùng phép max trong $`(3)`$, khi dùng $`(2)`$ để cập nhật hàm giá trị, $`\max_aQ_t(s,a) \geq V_*(s)+ \sqrt{\frac{C}{m-1}}`$, có được cận dưới của ước lượng quá cao.

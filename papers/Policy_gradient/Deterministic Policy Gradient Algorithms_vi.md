@@ -50,9 +50,9 @@ Chú ý: trong quá trình này có một vấn đề: ta đưa vào $`Q^{w}(s,a
 ```
 
 2) $`\quad`$ Tham số w của $`Q^{w}(s,a)`$ cần tối thiểu hóa sai số bình phương trung bình (MSE) sau:
-   ```math
-   \quad \epsilon^{2}(w)=E_{s\sim\rho^{\pi},a\sim\pi_{\theta}}[(Q^{w}(s,a)-Q^{\pi}(s,a))^{2}]
-   ```
+```math
+\quad \epsilon^{2}(w)=E_{s\sim\rho^{\pi},a\sim\pi_{\theta}}[(Q^{w}(s,a)-Q^{\pi}(s,a))^{2}]
+```
 
 ### Thuật toán diễn viên-nhà phê bình off-policy (Off-Policy Actor-Critic)
 Khác biệt giữa thuật toán này và thuật toán diễn viên-nhà phê bình ban đầu là chính sách dùng để lấy mẫu quỹ đạo (behaviour policy: $`\beta(a|s)`$) và chính sách được cập nhật thực tế (target policy: $`\pi_{\theta}(a|s)`$) không giống nhau, tức là

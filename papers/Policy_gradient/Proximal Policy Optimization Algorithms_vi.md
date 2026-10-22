@@ -27,13 +27,13 @@ Những năm gần đây, người ta đề xuất một số phương pháp kh�
 Thuật toán gradient chính sách tham số hóa chính sách $`\pi`$ thành $`\pi _\theta`$, rồi tối ưu tham số bằng phương pháp tăng gradient, gradient chính sách thường dùng nhất có dạng như sau:
 
 ```math
-\hat{g}=\hat{\mathbb{E}_t}[\nabla _{\theta}\log \pi_\theta(a_t|s_t)\hat{A_t}] \tag{1}
+\hat{g}=\hat{\mathbb{E}_t}[\nabla _{\theta}\log \pi_\theta(a_t|s_t)\hat{A_t}] \qquad \text{(1)}
 ```
 
 Trong đó, $`\hat{A_t}`$ là bộ ước lượng của hàm lợi thế (Advantage Function), $`\mathbb{E}_t`$ là trung bình trên một batch hữu hạn. Có thể ngược lại tìm được Loss-function (hàm mất mát):
 
 ```math
-L(\theta)=\hat{\mathbb{E}}_t[\pi_\theta(a_t|s_t)\hat{A_t}] \text{ (ở đây có thể khác bài gốc, nhưng vì tính đơn điệu của hàm log, thực chất là như nhau)} \tag{2}
+L(\theta)=\hat{\mathbb{E}}_t[\pi_\theta(a_t|s_t)\hat{A_t}] \text{ (ở đây có thể khác bài gốc, nhưng vì tính đơn điệu của hàm log, thực chất là như nhau)} \qquad \text{(2)}
 ```
 
 Quá trình làm việc là lặp lại lấy mẫu và tối ưu mô hình. Tác giả nói ở đây: ***nghe có vẻ dùng dữ liệu của cùng một lần lấy mẫu để cập nhật tham số chính sách nhiều lần rất hấp dẫn, nhưng thực nghiệm về sau chứng minh ảnh hưởng gây ra là mang tính phá hoại***, lý do ở đây sẽ được nhắc đến ở phần tiếp theo.
@@ -47,17 +47,17 @@ Trước tiên trả lời câu hỏi nêu ở phần trước: **tại sao dữ
 Quay lại suy luận gradient chính sách. Theo ý tưởng ban đầu nhất, thứ ta muốn tối đa hóa là kỳ vọng phần thưởng tích lũy $`\bar{R_\theta}(\tau)=p_\theta(\tau)R(\tau)`$ của mỗi chuỗi tương tác hoàn chỉnh $`\tau :(s_1,a_1,r_1,s_2,a_2,r_2...,s_n,a_n,r_n)`$, thông qua tính gradient chính sách và dùng phương pháp tối ưu tăng gradient để cập nhật tham số, trong đó gradient chính sách là:
 
 ```math
-\nabla \bar{R}_\theta=\mathbb{E}_{\tau\sim p_\theta(\tau)}[R(\tau)\nabla \log(p_\theta(\tau))] \tag{3}
+\nabla \bar{R}_\theta=\mathbb{E}_{\tau\sim p_\theta(\tau)}[R(\tau)\nabla \log(p_\theta(\tau))] \qquad \text{(3)}
 ```
 
 Viết lại thành gradient chính sách theo cặp hành động-trạng thái, và dùng hàm lợi thế:
 
 ```math
-\nabla \bar{R}_\theta=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta}}[\hat{A}_t\nabla \log\pi_{\theta}(a_t|s_t)] \tag{4.1}
+\nabla \bar{R}_\theta=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta}}[\hat{A}_t\nabla \log\pi_{\theta}(a_t|s_t)] \qquad \text{(4.1)}
 ```
 
 ```math
-L(\theta)=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta}}[\pi_{\theta}(a_t|s_t)\hat{A}_t ]                          \tag{4.2}
+L(\theta)=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta}}[\pi_{\theta}(a_t|s_t)\hat{A}_t ] \qquad \text{(4.2)}
 ```
 
 Suy luận cụ thể có thể tham khảo bài viết Zhihu của tôi [*Ghi chú học tăng cường -6 Phương pháp dựa trên chính sách: thuật toán gradient chính sách (PG) và REINFORCE - bài viết của Yu Tianqi*](https://zhuanlan.zhihu.com/p/549583458		).
@@ -71,17 +71,17 @@ Vì vậy muốn dùng lại dữ liệu lấy mẫu trước đó để cập n
 Hiện có các phân phối $`p(x)`$ và $`q(x)`$, lấy mẫu ngẫu nhiên từ $`p(x)`$ để tính kỳ vọng của hàm $`f(x)`$: $`\mathbb{E}_{x \sim p}[f(x)]=\int f(x)p(x)dx`$, nếu nhân nó với **một hệ số quan trọng $`\frac{q(x)}{p(x)}`$**, thì có thể dùng mẫu từ phân phối $`p(x)`$ để tính kỳ vọng của $`f(x)`$ dưới phân phối $`q(x)`$, tức là:
 
 ```math
-\mathbb{E}_{x \sim p}[\frac{q(x)}{p(x)}f(x)]=\int \frac{q(x)}{p(x)}f(x)p(x)dx=\int f(x)q(x)dx=\mathbb{E}_{x \sim q}[f(x)] \tag{5}
+\mathbb{E}_{x \sim p}[\frac{q(x)}{p(x)}f(x)]=\int \frac{q(x)}{p(x)}f(x)p(x)dx=\int f(x)q(x)dx=\mathbb{E}_{x \sim q}[f(x)] \qquad \text{(5)}
 ```
 
 Trên đây chính là importance sampling. Nhân hàm cần tính kỳ vọng với một hệ số quan trọng (tỉ số giữa phân phối mục tiêu và phân phối lấy mẫu), là có thể lấy mẫu dữ liệu từ một phân phối để tính kỳ vọng của phân phối khác. Dùng importance sampling, có thể viết lại gradient chính sách ban đầu:
 
 ```math
-\nabla \bar{R}_\theta=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta '}}[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta '}(a_t|s_t)}\hat{A}_t\nabla \log\pi_{\theta}(a_t|s_t)]    \tag{6.1}
+\nabla \bar{R}_\theta=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta '}}[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta '}(a_t|s_t)}\hat{A}_t\nabla \log\pi_{\theta}(a_t|s_t)] \qquad \text{(6.1)}
 ```
 
 ```math
-L(\theta)=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta '}}[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta '}(a_t|s_t)}\hat{A}_t ]                          \tag{6.2}
+L(\theta)=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta '}}[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta '}(a_t|s_t)}\hat{A}_t ] \qquad \text{(6.2)}
 ```
 
 ##### (3) Tính chất đặc biệt của importance sampling
@@ -89,11 +89,11 @@ L(\theta)=\mathbb{E}_{(s_t,a_t)\sim \pi_{\theta '}}[\frac{\pi_\theta(a_t|s_t)}{\
 Sau importance sampling, có thể lấy mẫu từ $`p(x)`$ để tìm kỳ vọng của $`f(x)`$ dưới phân phối $`q(x)`$, như công thức $`(5)`$, vậy có phải giải quyết một lần là xong mãi? Nếu tính phương sai của cả hai sẽ phát hiện:
 
 ```math
-\mathrm{Var}_{x \sim q}[f(X)]=\mathbb{E}_{x \sim q}[f(x)^2]-[\mathbb{E}_{x \sim q}[f(x)]^2 \tag{7.1}
+\mathrm{Var}_{x \sim q}[f(X)]=\mathbb{E}_{x \sim q}[f(x)^2]-[\mathbb{E}_{x \sim q}[f(x)]^2 \qquad \text{(7.1)}
 ```
 
 ```math
-\mathrm{Var}_{x\sim p}[\frac{q(x)}{p(x)}f(x)]=\mathbb{E}_{x \sim p}[(\frac{q(x)}{p(x)}f(x))^2]-[\mathbb{E}_{x \sim p}[\frac{q(x)}{p(x)}f(x)]^2=\mathbb{E}_{x \sim q}[f(x)^2\frac{q(x)}{p(x)}]-(\mathbb{E}_{x \sim q}[f(x)])^2 \tag{7.2 }
+\mathrm{Var}_{x\sim p}[\frac{q(x)}{p(x)}f(x)]=\mathbb{E}_{x \sim p}[(\frac{q(x)}{p(x)}f(x))^2]-[\mathbb{E}_{x \sim p}[\frac{q(x)}{p(x)}f(x)]^2=\mathbb{E}_{x \sim q}[f(x)^2\frac{q(x)}{p(x)}]-(\mathbb{E}_{x \sim q}[f(x)])^2 \qquad \text{(7.2)}
 ```
 
 Phương sai của hai cái không bằng nhau, chênh lệch nằm ở trọng số quan trọng. Nếu trọng số quan trọng quá lớn, sẽ dẫn đến phương sai khá lớn, tiếp đó khiến việc lấy mẫu vẫn thất bại.
@@ -139,13 +139,13 @@ Thông qua hạn chế độ phân kỳ KL để hạn chế chênh lệch giữ
 ```math
 \begin{gathered}
 \mathop{\mathrm{maximize}}\limits_\theta\,\,\,{\hat {\mathbb{E}}_t[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t]}\\ \text{subject to}\;\;\hat{\mathbb{E}}_t[KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]]\leq\delta
-\end{gathered}\tag{8}
+\end{gathered} \qquad \text{(8)}
 ```
 
 Tương đương với bài toán tối ưu không ràng buộc:
 
 ```math
-\mathop{\mathrm{maximize}}\limits_\theta\,\,\,\hat{\mathbb{E}}_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t-\beta\, KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]\right] \tag{9}
+\mathop{\mathrm{maximize}}\limits_\theta\,\,\,\hat{\mathbb{E}}_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t-\beta\, KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]\right] \qquad \text{(9)}
 ```
 
  Thực nghiệm về sau cho thấy, chỉ đơn giản chọn một hệ số phạt cố định β, dùng SGD để tối ưu phương trình mục tiêu phạt $`(9)`$ là không đủ; còn cần thực hiện các sửa đổi khác.
@@ -159,13 +159,13 @@ Tương đương với bài toán tối ưu không ràng buộc:
 Trước tiên định nghĩa $`r_t(\theta)=\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta _{old}}(a_t|s_t)},so\,\,\,r(\theta_{old})=1`$, hàm mất mát chuyển thành:
 
 ```math
-L(\theta)=\hat{\mathbb{E}}_t[r_t(\theta) \hat A_t] \tag{10}
+L(\theta)=\hat{\mathbb{E}}_t[r_t(\theta) \hat A_t] \qquad \text{(10)}
 ```
 
 Để phạt các lần cập nhật chính sách quá lớn, thiết kế hàm mất mát mới:
 
 ```math
-L^{CLIP}(\theta)=\hat{\mathbb{E}}_t[\min(r_t(\theta) \hat A_t,clip(r_t(\theta),1-\epsilon,1+\epsilon)\hat{A}_t] \tag{11}
+L^{CLIP}(\theta)=\hat{\mathbb{E}}_t[\min(r_t(\theta) \hat A_t,clip(r_t(\theta),1-\epsilon,1+\epsilon)\hat{A}_t] \qquad \text{(11)}
 ```
 
 Trong đó hàm clip() nghĩa là khi $`r_t(\theta)\in[1-\epsilon,1+\epsilon]`$, hàm đưa ra $`r_t(\theta)`$; khi vượt cận trên/dưới, thì đưa ra cận trên/dưới.
@@ -184,9 +184,9 @@ Kế thừa ý tưởng của TRPO, dùng độ phân kỳ KL để đo chênh l
 
 - Dùng bộ tối ưu SGD, hàm mất mát
 
-  ```math
-  L^{KLPEN}(\theta)=\hat{\mathbb{E}}_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t-\beta\, KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]\right]\tag{12}
-  ```
+```math
+L^{KLPEN}(\theta)=\hat{\mathbb{E}}_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t-\beta\, KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]\right] \qquad \text{(12)}
+```
 
   > Ghi chú của người dịch: các công thức (8), (9) và (12) ở bản gốc viết $`\pi_{\theta'(a_t|s_t)}`$ (đặt nhầm $`(a_t|s_t)`$ vào chỉ số dưới) và ở (9), (12) thừa một dấu ngoặc vuông; bản dịch đã sửa thành $`\pi_{\theta'}(a_t|s_t)`$ và cân lại dấu ngoặc.
 
@@ -206,7 +206,7 @@ Nhờ dùng importance sampling, PPO có thể dùng lại dữ liệu lấy m�
 Kết hợp các phương pháp phổ biến, thêm "chính quy hóa" trong RL là $`entropy bonus\,\,S[\pi_\theta](s_t)`$ (để tăng khả năng khám phá). Khi tính advantage để giảm phương sai cũng dùng đến hàm giá trị trạng thái $`V_\theta(s_t)`$ (đôi khi chính sách và giá trị dùng chung mạng), nên thêm $`L_{t}^{LF}(\theta)=(V_\theta(s_t)-V_t^{targ})^2`$ để huấn luyện mạng có thể học ước lượng ra hàm giá trị trạng thái khá sát thực tế. Hàm mất mát cuối cùng có dạng sau:
 
 ```math
-L_t^{CLIP+VF+S}(\theta)=\hat{\mathbb{E}}_t[L_t^{CLIP}(\theta)-c_1L_t^{VF}(\theta)+c_2S[\pi_\theta](s_t)]\tag{13}
+L_t^{CLIP+VF+S}(\theta)=\hat{\mathbb{E}}_t[L_t^{CLIP}(\theta)-c_1L_t^{VF}(\theta)+c_2S[\pi_\theta](s_t)] \qquad \text{(13)}
 ```
 
 Thuật toán như sau

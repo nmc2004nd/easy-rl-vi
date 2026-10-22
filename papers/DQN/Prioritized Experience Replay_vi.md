@@ -151,14 +151,14 @@ w_j=\frac{(N * P(j))^{-\beta}}{\max _i\left(w_i\right)}=\frac{(N * P(j))^{-\beta
 ```math
 y_j= \begin{cases}R_j & \text { is end }_j \text { is true } \\ R_j+\gamma Q^{\prime}\left(\phi\left(S_j^{\prime}\right), \arg \max _{a^{\prime}} Q\left(\phi\left(S_j^{\prime}\right), a, w\right), w^{\prime}\right) & \text { is end }_j \text { is false }\end{cases}
 ```
-    
-    g) Dùng hàm mất mát sai số bình phương trung bình $`\frac{1}{m} \sum_{j=1}^m w_j\left(y_j-Q\left(\phi\left(S_j\right), A_j, w\right)\right)^2`$, thông qua lan truyền ngược gradient của mạng nơ-ron để cập nhật toàn bộ tham số $`w`$ của mạng Q
-    
-    h) Tính lại TD error của tất cả các mẫu $`\delta_j=y_j-Q\left(\phi\left(S_j\right), A_j, w\right)`$, cập nhật độ ưu tiên của tất cả các nút trong SumTree $`p_j=\left|\delta_j\right|`$
-    
-    i) Nếu $`\mathrm{i} \% \mathrm{C}=1`$, thì cập nhật tham số mạng $`\mathrm{Q}`$ mục tiêu $`w^{\prime}=w`$
-    
-    j) Nếu $`S^{\prime}`$ là trạng thái kết thúc, vòng lặp hiện tại hoàn tất, nếu không thì chuyển đến bước b)
+
+   g) Dùng hàm mất mát sai số bình phương trung bình $`\frac{1}{m} \sum_{j=1}^m w_j\left(y_j-Q\left(\phi\left(S_j\right), A_j, w\right)\right)^2`$, thông qua lan truyền ngược gradient của mạng nơ-ron để cập nhật toàn bộ tham số $`w`$ của mạng Q
+
+   h) Tính lại TD error của tất cả các mẫu $`\delta_j=y_j-Q\left(\phi\left(S_j\right), A_j, w\right)`$, cập nhật độ ưu tiên của tất cả các nút trong SumTree $`p_j=\left|\delta_j\right|`$
+
+   i) Nếu $`\mathrm{i} \% \mathrm{C}=1`$, thì cập nhật tham số mạng $`\mathrm{Q}`$ mục tiêu $`w^{\prime}=w`$
+
+   j) Nếu $`S^{\prime}`$ là trạng thái kết thúc, vòng lặp hiện tại hoàn tất, nếu không thì chuyển đến bước b)
 
 
 ### 2 Code liên quan
