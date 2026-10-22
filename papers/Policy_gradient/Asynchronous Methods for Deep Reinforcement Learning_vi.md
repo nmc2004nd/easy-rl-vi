@@ -17,7 +17,7 @@ Hội nghị: International Conference on Machine Learning (ICML 2016)
 
 ### Asynchronous RL Framework (Kiến trúc học tăng cường bất đồng bộ)
 
-Bài báo áp dụng kiến trúc bất đồng bộ cho bốn thuật toán học tăng cường: Sarsa một bước, Q-learning một bước, Q-learning $n$ bước và diễn viên-nhà phê bình lợi thế (advantage actor-critic, A2C). Ở đây có thể thấy kiến trúc này áp dụng được cho cả thuật toán học tăng cường on-policy/off-policy, dựa trên giá trị/dựa trên chính sách.
+Bài báo áp dụng kiến trúc bất đồng bộ cho bốn thuật toán học tăng cường: Sarsa một bước, Q-learning một bước, Q-learning $`n`$ bước và diễn viên-nhà phê bình lợi thế (advantage actor-critic, A2C). Ở đây có thể thấy kiến trúc này áp dụng được cho cả thuật toán học tăng cường on-policy/off-policy, dựa trên giá trị/dựa trên chính sách.
 
 Khung bất đồng bộ có hai đặc điểm lớn:
 
@@ -28,7 +28,7 @@ Trước tiên nói về Hogwild!, đây là cốt lõi của khung, bạn nào 
 
 ![image-20221109221145358](https://gitee.com/xyfcw/CloudPictures/raw/master/img/image-20221109221145358.png)
 
-Lấy một ví dụ: giả sử mạng có 100 tham số, gradient do worker $i$ gửi đến cập nhật được 40 tham số thì gradient do worker $j$ gửi đến đã bắt đầu cập nhật, khi $i$ cập nhật xong thì một số tham số phía trước đã bị $j$ ghi đè, nhưng không sao, $i$ cập nhật xong vẫn đồng bộ tham số sau cập nhật hiện tại cho $i$ như thường, đây chính là ý nghĩa của bất đồng bộ.
+Lấy một ví dụ: giả sử mạng có 100 tham số, gradient do worker $`i`$ gửi đến cập nhật được 40 tham số thì gradient do worker $`j`$ gửi đến đã bắt đầu cập nhật, khi $`i`$ cập nhật xong thì một số tham số phía trước đã bị $`j`$ ghi đè, nhưng không sao, $`i`$ cập nhật xong vẫn đồng bộ tham số sau cập nhật hiện tại cho $`i`$ như thường, đây chính là ý nghĩa của bất đồng bộ.
 
 Tiếp theo giới thiệu bốn thuật toán bất đồng bộ:
 
@@ -36,27 +36,27 @@ Tiếp theo giới thiệu bốn thuật toán bất đồng bộ:
 
 ![image-20230113230006360](https://gitee.com/xyfcw/CloudPictures/raw/master/img/image-20230113230006360.png)
 
-- $\theta$ và $\theta^-$ được dùng chung, bất kỳ luồng nào cũng có thể sửa
+- $`\theta`$ và $`\theta^-`$ được dùng chung, bất kỳ luồng nào cũng có thể sửa
 - Tích lũy gradient là một mẹo để tăng batch size, và có thể giảm cơ hội ghi đè lên cập nhật của các luồng khác (tần suất cập nhật giảm)
-- $I_{target}$ là khoảng cách giữa các lần đồng bộ tham số của hai mạng
-- $I_{AsyncUpdate}$ là khoảng cách giữa các lần luồng cập nhật tham số dùng chung $\theta$
+- $`I_{target}`$ là khoảng cách giữa các lần đồng bộ tham số của hai mạng
+- $`I_{AsyncUpdate}`$ là khoảng cách giữa các lần luồng cập nhật tham số dùng chung $`\theta`$
 
 #### Asynchronous one-step Sarsa (Sarsa một bước bất đồng bộ)
 
-So với Q-learning một bước bất đồng bộ ở trên, chỉ có giá trị mục tiêu (target value) đổi thành $r+\gamma Q(s^\prime,a^\prime;\theta^\prime)$, các phần còn lại giống nhau.
+So với Q-learning một bước bất đồng bộ ở trên, chỉ có giá trị mục tiêu (target value) đổi thành $`r+\gamma Q(s^\prime,a^\prime;\theta^\prime)`$, các phần còn lại giống nhau.
 
 #### Asynchronous n-step Q-learning (Q-learning n bước bất đồng bộ)
 
 ![image-20230113231647918](https://gitee.com/xyfcw/CloudPictures/raw/master/img/image-20230113231647918.png)
 
-- Nhược điểm của phương pháp một bước là $r$ chỉ ảnh hưởng trực tiếp đến giá trị $Q(s,a)$ dẫn đến việc sinh ra $r$, các giá trị $Q$ khác bị ảnh hưởng gián tiếp. $r$ có được từ phương pháp $n$ bước có thể ảnh hưởng đến giá trị $Q$ của $n$ bước phía trước, điều này giúp việc cập nhật giá trị $Q$ thông qua $r$ hiệu quả hơn. Phần thực nghiệm phía sau có so sánh hai cách.
-- So với phương pháp một bước thì có thêm tham số riêng của luồng $\theta^{\prime}$, tham số này được dùng khi chọn hành động và tính gradient, không bị ảnh hưởng bởi các luồng khác, có thể giúp huấn luyện ổn định hơn.
+- Nhược điểm của phương pháp một bước là $`r`$ chỉ ảnh hưởng trực tiếp đến giá trị $`Q(s,a)`$ dẫn đến việc sinh ra $`r`$, các giá trị $`Q`$ khác bị ảnh hưởng gián tiếp. $`r`$ có được từ phương pháp $`n`$ bước có thể ảnh hưởng đến giá trị $`Q`$ của $`n`$ bước phía trước, điều này giúp việc cập nhật giá trị $`Q`$ thông qua $`r`$ hiệu quả hơn. Phần thực nghiệm phía sau có so sánh hai cách.
+- So với phương pháp một bước thì có thêm tham số riêng của luồng $`\theta^{\prime}`$, tham số này được dùng khi chọn hành động và tính gradient, không bị ảnh hưởng bởi các luồng khác, có thể giúp huấn luyện ổn định hơn.
 
 #### Asynchronous advantage actor-critic (A3C)
 
 ![image-20221109234156910](https://gitee.com/xyfcw/CloudPictures/raw/master/img/202211092341970.png)
 
-- Dùng chung tham số của hai mạng diễn viên, nhà phê bình, mỗi luồng cũng có tham số riêng của mình, phần còn lại về cơ bản giống Q-learning $n$ bước
+- Dùng chung tham số của hai mạng diễn viên, nhà phê bình, mỗi luồng cũng có tham số riêng của mình, phần còn lại về cơ bản giống Q-learning $`n`$ bước
 
 
 
@@ -68,7 +68,7 @@ So sánh tốc độ huấn luyện của thuật toán trên 5 trò chơi Atari
 
 ![image-20221110000219965](https://gitee.com/xyfcw/CloudPictures/raw/master/img/202211100002021.png)
 
-- DQN dùng GPU K40, phương pháp bất đồng bộ dùng CPU 16 nhân, có thể thấy bất đồng bộ tốt hơn DQN, và phương pháp $n$ bước tốt hơn phương pháp một bước, A3C tốt hơn rõ rệt các thuật toán khác.
+- DQN dùng GPU K40, phương pháp bất đồng bộ dùng CPU 16 nhân, có thể thấy bất đồng bộ tốt hơn DQN, và phương pháp $`n`$ bước tốt hơn phương pháp một bước, A3C tốt hơn rõ rệt các thuật toán khác.
 
 So sánh hiệu năng thuật toán trên 57 trò chơi Atari:
 
@@ -104,7 +104,7 @@ Kiểm tra trên trò chơi Atari xem thời gian huấn luyện và hiệu qu�
 
 ![image-20230114151851212](https://gitee.com/xyfcw/CloudPictures/raw/master/img/image-20230114151851212.png)
 
-- Tác giả đề xuất lấy thời gian một luồng đạt một điểm số cố định chia cho thời gian $n$ luồng đạt điểm số đó, để đo mức tăng tốc của thuật toán khi tăng số luồng. Kết quả cho thấy tốc độ huấn luyện tăng theo số luồng, chứng minh khung bất đồng bộ có thể tận dụng tốt tài nguyên huấn luyện.
+- Tác giả đề xuất lấy thời gian một luồng đạt một điểm số cố định chia cho thời gian $`n`$ luồng đạt điểm số đó, để đo mức tăng tốc của thuật toán khi tăng số luồng. Kết quả cho thấy tốc độ huấn luyện tăng theo số luồng, chứng minh khung bất đồng bộ có thể tận dụng tốt tài nguyên huấn luyện.
 
 #### Robustness and Stability (Tính bền vững và tính ổn định)
 

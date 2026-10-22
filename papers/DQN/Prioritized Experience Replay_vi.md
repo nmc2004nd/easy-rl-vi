@@ -26,7 +26,7 @@ Bài báo thiết kế cho cơ chế phát lại kinh nghiệm và một số bi
 
 ## 3. Lý thuyết cơ bản
 ### 1 Phát lại kinh nghiệm (Experience Replay):
-- Tạo một bể kinh nghiệm (Experience Replay Buffer), mỗi lần Agent chọn một hành động tương tác với môi trường thì lưu một bộ dữ liệu $e_t = (s_t, a_t, r_t, s_{t+1})$ vào bể kinh nghiệm.
+- Tạo một bể kinh nghiệm (Experience Replay Buffer), mỗi lần Agent chọn một hành động tương tác với môi trường thì lưu một bộ dữ liệu $`e_t = (s_t, a_t, r_t, s_{t+1})`$ vào bể kinh nghiệm.
 
 - Duy trì bể kinh nghiệm này (hàng đợi), khi số bộ dữ liệu được lưu đạt đến một ngưỡng nhất định, dữ liệu sẽ được trích xuất khỏi hàng đợi.
 
@@ -51,11 +51,13 @@ Nhắm vào các vấn đề tồn tại trên của PER, tác giả đề xuấ
 
 ## 4. Các công trình cải tiến liên quan
 ### 1 Ưu tiên ngẫu nhiên (Stochastic Prioritization)
-Bài báo định nghĩa xác suất lấy mẫu transition $i$ là:
-$$P(i)=\frac{p_i^\alpha}{\sum_k p_k^\alpha}$$
-Trong đó $p_i>0$ biểu thị độ ưu tiên của transition $i$. Số mũ $α$ quyết định dùng bao nhiêu độ ưu tiên, có thể xem là một hệ số đánh đổi (trade-off), dùng để cân bằng mức độ giữa uniform (đồng đều) và greedy (tham lam), khi $α=0$ là lấy mẫu đồng đều, $α=1$ là lấy mẫu tham lam (chọn giá trị lớn nhất).
+Bài báo định nghĩa xác suất lấy mẫu transition $`i`$ là:
+```math
+P(i)=\frac{p_i^\alpha}{\sum_k p_k^\alpha}
+```
+Trong đó $`p_i>0`$ biểu thị độ ưu tiên của transition $`i`$. Số mũ $`α`$ quyết định dùng bao nhiêu độ ưu tiên, có thể xem là một hệ số đánh đổi (trade-off), dùng để cân bằng mức độ giữa uniform (đồng đều) và greedy (tham lam), khi $`α=0`$ là lấy mẫu đồng đều, $`α=1`$ là lấy mẫu tham lam (chọn giá trị lớn nhất).
 
-Trong DQN: $\delta=y -Q(s, a)$, $\delta$ biểu thị TD-error, tức hiệu giữa giá trị Q hiện tại ở mỗi bước và giá trị mục tiêu $y$, trong quá trình cập nhật cũng là để kỳ vọng của $\delta^2$ càng nhỏ càng tốt.
+Trong DQN: $`\delta=y -Q(s, a)`$, $`\delta`$ biểu thị TD-error, tức hiệu giữa giá trị Q hiện tại ở mỗi bước và giá trị mục tiêu $`y`$, trong quá trình cập nhật cũng là để kỳ vọng của $`\delta^2`$ càng nhỏ càng tốt.
 
 Bài báo chia phát lại kinh nghiệm ưu tiên ngẫu nhiên thành hai loại sau:
 
@@ -63,24 +65,28 @@ a) Trực tiếp, dựa trên tỉ lệ: **Proportional Prioritization**
 
 b) Gián tiếp, dựa trên thứ hạng: **Rank-based Prioritization**
 
-- Trong **a) Proportional Prioritization**, quyết định xác suất lấy mẫu dựa vào $|\delta|$:
+- Trong **a) Proportional Prioritization**, quyết định xác suất lấy mẫu dựa vào $`|\delta|`$:
 
-$$p_i=\left|\delta_i\right|+\epsilon$$
-Trong đó $\delta$ biểu thị TD-error, $\epsilon$ là một hằng số lớn hơn 0, để đảm bảo dù TD-error nhận giá trị nào, xác suất lấy mẫu $p_i$ vẫn lớn hơn 0, tức vẫn có xác suất được lấy mẫu.
-- Trong **b) Rank-based Prioritization**, quyết định xác suất lấy mẫu dựa vào **thứ hạng (Rank)** của $|\delta|$:
+```math
+p_i=\left|\delta_i\right|+\epsilon
+```
+Trong đó $`\delta`$ biểu thị TD-error, $`\epsilon`$ là một hằng số lớn hơn 0, để đảm bảo dù TD-error nhận giá trị nào, xác suất lấy mẫu $`p_i`$ vẫn lớn hơn 0, tức vẫn có xác suất được lấy mẫu.
+- Trong **b) Rank-based Prioritization**, quyết định xác suất lấy mẫu dựa vào **thứ hạng (Rank)** của $`|\delta|`$:
 
-$$p_i=\frac{1}{\operatorname{rank}(i)}$$
+```math
+p_i=\frac{1}{\operatorname{rank}(i)}
+```
 
 Tác giả so sánh hai phương pháp trong bài:
 
 **a) Phân tích ở mức lý thuyết:**
-Ưu thế của **proportional prioritization** là có thể lấy trực tiếp thông tin của $|\delta|$, tức là thông tin thu được nhiều hơn một chút; còn **rank-based prioritization** thì không có thông tin của $|\delta|$, nhưng nó không nhạy với điểm ngoại lai, vì TD-error của điểm ngoại lai quá lớn hay quá nhỏ cũng không ảnh hưởng nhiều đến giá trị rank, cũng chính vì vậy, **rank-based prioritization** có tính bền vững tốt hơn.
+Ưu thế của **proportional prioritization** là có thể lấy trực tiếp thông tin của $`|\delta|`$, tức là thông tin thu được nhiều hơn một chút; còn **rank-based prioritization** thì không có thông tin của $`|\delta|`$, nhưng nó không nhạy với điểm ngoại lai, vì TD-error của điểm ngoại lai quá lớn hay quá nhỏ cũng không ảnh hưởng nhiều đến giá trị rank, cũng chính vì vậy, **rank-based prioritization** có tính bền vững tốt hơn.
 
 **b) Phân tích ở mức thực nghiệm:**
 Kết quả như hình dưới, có thể thấy hai phương pháp thể hiện gần như nhau. ![Mô tả hình ảnh](https://img-blog.csdnimg.cn/76f2099443674c2b9861ee94bcb75476.jpeg#pic_center)
 ### 2 SumTree 
 Cài đặt Proportional Prioritization khá phức tạp, có thể nhờ cấu trúc dữ liệu SumTree để hoàn thành. SumTree là một cấu trúc cây, mỗi lá lưu độ ưu tiên P của mỗi mẫu, mỗi nút nhánh chỉ có hai nhánh con, giá trị của nút là tổng của hai nhánh con, nên đỉnh của SumTree chính là tổng của tất cả p. Cấu trúc như hình dưới ([trích từ jaromiru.com](https://jaromiru.com/2016/11/07/lets-make-a-dqn-double-learning-and-prioritized-experience-replay/)), nút ở tầng trên cùng là tổng của toàn bộ p. ![Mô tả hình ảnh](https://img-blog.csdnimg.cn/029d51b629cb4dceae5a69f7d5157dbe.png#pic_center)
-Khi lấy mẫu, ta chia tổng của p cho batch size, chia thành batch size khoảng, tức $n={ sum(p) }/{batchsize}$. Nếu cộng độ ưu tiên của tất cả các nút được 42, nếu ta lấy 6 mẫu, thì priority của các khoảng lúc này có thể như sau: [0-7], [7-14], [14-21], [21-28], [28-35], [35-42]
+Khi lấy mẫu, ta chia tổng của p cho batch size, chia thành batch size khoảng, tức $`n={ sum(p) }/{batchsize}`$. Nếu cộng độ ưu tiên của tất cả các nút được 42, nếu ta lấy 6 mẫu, thì priority của các khoảng lúc này có thể như sau: [0-7], [7-14], [14-21], [21-28], [28-35], [35-42]
 
 Sau đó chọn ngẫu nhiên một số trong mỗi khoảng. Ví dụ trong khoảng [21-28] chọn được 24, thì theo số 24 này tìm kiếm từ trên cùng là 42 xuống dưới. Trước tiên thấy bên dưới 42 trên cùng có hai child nodes (nút con), cầm số 24 trong tay so với child bên trái là 29, nếu child bên trái lớn hơn giá trị trong tay, thì ta đi đường bên trái, tiếp theo so với điểm bên trái phía dưới 29 là 13, lúc này, số 24 trong tay lớn hơn 13, thì ta đi đường bên phải, và sửa giá trị trong tay theo 13, thành 24-13 = 11. Tiếp theo cầm 11 so với 12 ở góc dưới bên trái của 13, kết quả 12 lớn hơn 11, thì ta chọn 12 làm priority được chọn lần này, và cũng chọn dữ liệu tương ứng với 12.
 
@@ -91,68 +97,68 @@ Nếu muốn lấy mẫu hai mẫu, ta có thể lấy mẫu đồng đều tron
 Dùng phát lại kinh nghiệm ưu tiên còn một vấn đề là làm thay đổi phân phối của trạng thái, DQN đưa vào bể kinh nghiệm là để giải quyết tính tương quan của dữ liệu, giúp dữ liệu (cố gắng) độc lập và phân phối đồng nhất. Nhưng dùng phát lại kinh nghiệm ưu tiên lại làm thay đổi phân phối của trạng thái, như vậy tất yếu sẽ đưa vào độ chệch (bias), vì vậy, bài báo dùng lấy mẫu theo trọng số quan trọng (importance sampling) kết hợp với hệ số ủ (annealing) để khử độ chệch được đưa vào.
 
 Trong DQN, gradient được tính như sau:
-$$
+```math
 \nabla_{\theta_i} L\left(\theta_i\right)=\mathbb{E}_{s, a, r, s^{\prime}}\left[\left(r+\gamma \max _{a^{\prime}} Q\left(s^{\prime}, a^{\prime} ; \theta_i\right)-Q\left(s, a ; \theta_i\right)\right) \nabla_{\theta_i} Q\left(s, a ; \theta_i\right)\right] \quad (1)
-$$
+```
 Trong giảm gradient ngẫu nhiên (SGD) có thể biểu diễn là:
-$$
+```math
 \nabla_\theta L(\theta)=\delta \nabla_\theta Q(s, a)
-$$
-Còn importance sampling là thêm một trọng số $w$ vào gradient này
-$$
+```
+Còn importance sampling là thêm một trọng số $`w`$ vào gradient này
+```math
 \nabla_\theta L(\theta)=w \delta \nabla_\theta Q(s, a)
-$$
-Trọng số importance sampling $w_i$ được định nghĩa trong bài là:
-$$
+```
+Trọng số importance sampling $`w_i`$ được định nghĩa trong bài là:
+```math
 w_i=\left(\frac{1}{N} \cdot \frac{1}{P(i)}\right)^\beta
-$$
-$N$ là số mẫu trong Buffer, còn $\beta$ là một siêu tham số, dùng để quyết định muốn triệt tiêu ảnh hưởng của Prioritized Experience Replay lên kết quả hội tụ ở mức độ nào. Nếu $\beta=0$, nghĩa là hoàn toàn không dùng importance sampling; $\beta=1$ nghĩa là triệt tiêu hoàn toàn ảnh hưởng, vì $(s, a)$ không còn được chọn ngẫu nhiên theo phân phối đồng đều nữa, mà được chọn với xác suất $P(i)$, do đó, nếu $\beta=1$, thì $w$ và $P(i)$ vừa đúng triệt tiêu nhau, vì vậy tác dụng của Prioritized Experience Replay cũng bị triệt tiêu, tức $\beta=1$ tương đương với Experience Replay trong DQN.
+```
+$`N`$ là số mẫu trong Buffer, còn $`\beta`$ là một siêu tham số, dùng để quyết định muốn triệt tiêu ảnh hưởng của Prioritized Experience Replay lên kết quả hội tụ ở mức độ nào. Nếu $`\beta=0`$, nghĩa là hoàn toàn không dùng importance sampling; $`\beta=1`$ nghĩa là triệt tiêu hoàn toàn ảnh hưởng, vì $`(s, a)`$ không còn được chọn ngẫu nhiên theo phân phối đồng đều nữa, mà được chọn với xác suất $`P(i)`$, do đó, nếu $`\beta=1`$, thì $`w`$ và $`P(i)`$ vừa đúng triệt tiêu nhau, vì vậy tác dụng của Prioritized Experience Replay cũng bị triệt tiêu, tức $`\beta=1`$ tương đương với Experience Replay trong DQN.
 
-Để ổn định, ta cần chuẩn hóa trọng số $w$, nhưng không cần chuẩn hóa theo đúng nghĩa, chỉ cần chia cho $\max _i w_i$ là được, tức là:
+Để ổn định, ta cần chuẩn hóa trọng số $`w`$, nhưng không cần chuẩn hóa theo đúng nghĩa, chỉ cần chia cho $`\max _i w_i`$ là được, tức là:
 
-$$
+```math
 w_j=(N * P(j))^{-\beta} / \max _i\left(w_i\right)
-$$
+```
 
-$w_i$ sau khi chuẩn hóa khi viết code có thể suy ra và chuyển thành:
+$`w_i`$ sau khi chuẩn hóa khi viết code có thể suy ra và chuyển thành:
 
-$$
+```math
 w_j=\frac{(N * P(j))^{-\beta}}{\max _i\left(w_i\right)}=\frac{(N * P(j))^{-\beta}}{\max _i\left((N * P(i))^{-\beta}\right)}=\frac{(P(j))^{-\beta}}{\max _i\left((P(i))^{-\beta}\right)}=\left(\frac{P_j}{\min _i P(i)}\right)^{-\beta}
-$$
+```
 
 ## 5. Code PER
 ### 1 Quy trình thuật toán Prioritized Replay DQN
-**Đầu vào thuật toán**: số vòng lặp $T$, số chiều đặc trưng trạng thái $n$, tập hành động $A$, bước nhảy $\alpha$, hệ số trọng số lấy mẫu $\beta$, hệ số suy giảm $\gamma$, tỉ lệ khám phá $\epsilon$, mạng $Q$ hiện tại $Q$, mạng $\mathrm{Q}$ mục tiêu $Q^{\prime}$, số mẫu của giảm gradient theo lô $m$, tần suất cập nhật tham số mạng $\mathrm{Q}$ mục tiêu $C$, số nút lá của SumTree $S$.
+**Đầu vào thuật toán**: số vòng lặp $`T`$, số chiều đặc trưng trạng thái $`n`$, tập hành động $`A`$, bước nhảy $`\alpha`$, hệ số trọng số lấy mẫu $`\beta`$, hệ số suy giảm $`\gamma`$, tỉ lệ khám phá $`\epsilon`$, mạng $`Q`$ hiện tại $`Q`$, mạng $`\mathrm{Q}`$ mục tiêu $`Q^{\prime}`$, số mẫu của giảm gradient theo lô $`m`$, tần suất cập nhật tham số mạng $`\mathrm{Q}`$ mục tiêu $`C`$, số nút lá của SumTree $`S`$.
 
 **Đầu ra**: tham số mạng Q.
 
-1. Khởi tạo ngẫu nhiên giá trị $Q$ ứng với tất cả các trạng thái và hành động. Khởi tạo ngẫu nhiên toàn bộ tham số $w$ của mạng $\mathrm{Q}$ hiện tại, khởi tạo tham số của mạng Q mục tiêu $Q^{\prime}$ là $w^{\prime}=w$. Khởi tạo cấu trúc dữ liệu mặc định của SumTree phát lại kinh nghiệm, độ ưu tiên $p_j$ của tất cả $S$ nút lá của SumTree là 1.
+1. Khởi tạo ngẫu nhiên giá trị $`Q`$ ứng với tất cả các trạng thái và hành động. Khởi tạo ngẫu nhiên toàn bộ tham số $`w`$ của mạng $`\mathrm{Q}`$ hiện tại, khởi tạo tham số của mạng Q mục tiêu $`Q^{\prime}`$ là $`w^{\prime}=w`$. Khởi tạo cấu trúc dữ liệu mặc định của SumTree phát lại kinh nghiệm, độ ưu tiên $`p_j`$ của tất cả $`S`$ nút lá của SumTree là 1.
 
-2. for i from 1 to $T$, thực hiện lặp.
+2. for i from 1 to $`T`$, thực hiện lặp.
         
-    a) Khởi tạo S là trạng thái đầu tiên của chuỗi trạng thái hiện tại, có được vectơ đặc trưng $\phi(S)$ của nó
+    a) Khởi tạo S là trạng thái đầu tiên của chuỗi trạng thái hiện tại, có được vectơ đặc trưng $`\phi(S)`$ của nó
 
-    b) Trong mạng $\mathrm{Q}$ dùng $\phi(S)$ làm đầu vào, có được giá trị $\mathrm{Q}$ đầu ra ứng với tất cả các hành động của mạng $\mathrm{Q}$. Dùng phương pháp $\epsilon$-tham lam để chọn hành động tương ứng $A$ trong giá trị $\mathrm{Q}$ đầu ra hiện tại
+    b) Trong mạng $`\mathrm{Q}`$ dùng $`\phi(S)`$ làm đầu vào, có được giá trị $`\mathrm{Q}`$ đầu ra ứng với tất cả các hành động của mạng $`\mathrm{Q}`$. Dùng phương pháp $`\epsilon`$-tham lam để chọn hành động tương ứng $`A`$ trong giá trị $`\mathrm{Q}`$ đầu ra hiện tại
 
-    c) Thực hiện hành động hiện tại $A$ ở trạng thái $S$, có được vectơ đặc trưng $\phi\left(S^{\prime}\right)$ ứng với trạng thái mới $S^{\prime}$ và phần thưởng $R$, có phải trạng thái kết thúc is_end hay không
+    c) Thực hiện hành động hiện tại $`A`$ ở trạng thái $`S`$, có được vectơ đặc trưng $`\phi\left(S^{\prime}\right)`$ ứng với trạng thái mới $`S^{\prime}`$ và phần thưởng $`R`$, có phải trạng thái kết thúc is_end hay không
 
-    d) Lưu bộ năm $\left\{\phi(S), A, R, \phi\left(S^{\prime}\right), i s_{-} e n d\right\}$ này vào SumTree
+    d) Lưu bộ năm $`\left\{\phi(S), A, R, \phi\left(S^{\prime}\right), i s_{-} e n d\right\}`$ này vào SumTree
 
-    e) $S=S^{\prime}$
+    e) $`S=S^{\prime}`$
 
-    f) Lấy mẫu $m$ mẫu từ SumTree $\left\{\phi\left(S_j\right), A_j, R_j, \phi\left(S_j^{\prime}\right), i s_{-} e n d_j\right\}, j=1,2 .,,, m$, xác suất mỗi mẫu được lấy mẫu dựa trên $P(j)=\frac{p_j}{\sum_i\left(p_i\right)}$, trọng số hàm mất mát $w_j=(N * P(j))^{-\beta} / \max _i\left(w_i\right)$, tính giá trị Q mục tiêu hiện tại $y_j$:
+    f) Lấy mẫu $`m`$ mẫu từ SumTree $`\left\{\phi\left(S_j\right), A_j, R_j, \phi\left(S_j^{\prime}\right), i s_{-} e n d_j\right\}, j=1,2 .,,, m`$, xác suất mỗi mẫu được lấy mẫu dựa trên $`P(j)=\frac{p_j}{\sum_i\left(p_i\right)}`$, trọng số hàm mất mát $`w_j=(N * P(j))^{-\beta} / \max _i\left(w_i\right)`$, tính giá trị Q mục tiêu hiện tại $`y_j`$:
 
-    $$
-    y_j= \begin{cases}R_j & \text { is end }_j \text { is true } \\ R_j+\gamma Q^{\prime}\left(\phi\left(S_j^{\prime}\right), \arg \max _{a^{\prime}} Q\left(\phi\left(S_j^{\prime}\right), a, w\right), w^{\prime}\right) & \text { is end }_j \text { is false }\end{cases}
-    $$
+```math
+y_j= \begin{cases}R_j & \text { is end }_j \text { is true } \\ R_j+\gamma Q^{\prime}\left(\phi\left(S_j^{\prime}\right), \arg \max _{a^{\prime}} Q\left(\phi\left(S_j^{\prime}\right), a, w\right), w^{\prime}\right) & \text { is end }_j \text { is false }\end{cases}
+```
     
-    g) Dùng hàm mất mát sai số bình phương trung bình $\frac{1}{m} \sum_{j=1}^m w_j\left(y_j-Q\left(\phi\left(S_j\right), A_j, w\right)\right)^2$, thông qua lan truyền ngược gradient của mạng nơ-ron để cập nhật toàn bộ tham số $w$ của mạng Q
+    g) Dùng hàm mất mát sai số bình phương trung bình $`\frac{1}{m} \sum_{j=1}^m w_j\left(y_j-Q\left(\phi\left(S_j\right), A_j, w\right)\right)^2`$, thông qua lan truyền ngược gradient của mạng nơ-ron để cập nhật toàn bộ tham số $`w`$ của mạng Q
     
-    h) Tính lại TD error của tất cả các mẫu $\delta_j=y_j-Q\left(\phi\left(S_j\right), A_j, w\right)$, cập nhật độ ưu tiên của tất cả các nút trong SumTree $p_j=\left|\delta_j\right|$
+    h) Tính lại TD error của tất cả các mẫu $`\delta_j=y_j-Q\left(\phi\left(S_j\right), A_j, w\right)`$, cập nhật độ ưu tiên của tất cả các nút trong SumTree $`p_j=\left|\delta_j\right|`$
     
-    i) Nếu $\mathrm{i} \% \mathrm{C}=1$, thì cập nhật tham số mạng $\mathrm{Q}$ mục tiêu $w^{\prime}=w$
+    i) Nếu $`\mathrm{i} \% \mathrm{C}=1`$, thì cập nhật tham số mạng $`\mathrm{Q}`$ mục tiêu $`w^{\prime}=w`$
     
-    j) Nếu $S^{\prime}$ là trạng thái kết thúc, vòng lặp hiện tại hoàn tất, nếu không thì chuyển đến bước b)
+    j) Nếu $`S^{\prime}`$ là trạng thái kết thúc, vòng lặp hiện tại hoàn tất, nếu không thì chuyển đến bước b)
 
 
 ### 2 Code liên quan

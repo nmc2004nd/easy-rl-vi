@@ -18,124 +18,124 @@ Bài báo này nhằm đề xuất một cấu trúc mạng nơ-ron phù hợp v
 
 ## **2.** Kiến thức chuẩn bị
 
-&#x20;Nếu $s_t$ là video gồm $M$ khung hình mà tác tử cảm nhận được, thì:
+&#x20;Nếu $`s_t`$ là video gồm $`M`$ khung hình mà tác tử cảm nhận được, thì:
 
-$$
+```math
 s_t = (x_{t−M+1},\cdots,x_t)\in S
-$$
+```
 
-Tương ứng, $a_t$ là tập rời rạc các hành động có thể chọn của tác tử, thì $a_t \in A={1,2,3,\cdots,|A|}$; tín hiệu phần thưởng do bộ giả lập trò chơi sinh ra là $r_t$. Mục tiêu của tác tử là tối đa hóa lợi tức chiết khấu $R_t$ ($R_t= \sum _{r=t}^\infty \gamma^{r-t}r_t$), trong công thức này, $\gamma\in[0,1]$ là hệ số chiết khấu, nó cân bằng tầm quan trọng của phần thưởng tức thời và phần thưởng tương lai.
+Tương ứng, $`a_t`$ là tập rời rạc các hành động có thể chọn của tác tử, thì $`a_t \in A={1,2,3,\cdots,|A|}`$; tín hiệu phần thưởng do bộ giả lập trò chơi sinh ra là $`r_t`$. Mục tiêu của tác tử là tối đa hóa lợi tức chiết khấu $`R_t`$ ($`R_t= \sum _{r=t}^\infty \gamma^{r-t}r_t`$), trong công thức này, $`\gamma\in[0,1]`$ là hệ số chiết khấu, nó cân bằng tầm quan trọng của phần thưởng tức thời và phần thưởng tương lai.
 
-Với tác tử hành động theo chính sách ngẫu nhiên $\pi$, giá trị của cặp trạng thái-hành động $(s, a)$ và trạng thái $s$ được định nghĩa như sau:
+Với tác tử hành động theo chính sách ngẫu nhiên $`\pi`$, giá trị của cặp trạng thái-hành động $`(s, a)`$ và trạng thái $`s`$ được định nghĩa như sau:
 
-  $Q^{\pi}(s,a) = E[R_{t}|s_{t}=s,a_{t}=a,\pi]$ (hàm giá trị hành động)
+  $`Q^{\pi}(s,a) = E[R_{t}|s_{t}=s,a_{t}=a,\pi]`$ (hàm giá trị hành động)
 
-  $V^{\pi}(s) = E_{a \sim \pi(s)}[Q^{\pi}(s,a)]$ (hàm giá trị trạng thái)
+  $`V^{\pi}(s) = E_{a \sim \pi(s)}[Q^{\pi}(s,a)]`$ (hàm giá trị trạng thái)
 
-&#x20;   $Q^{\star}(s, a) = \mathop{max}\limits_{\pi} Q^\pi(s, a)$ (hàm giá trị hành động tối ưu)
+&#x20;   $`Q^{\star}(s, a) = \mathop{\max}\limits_{\pi} Q^\pi(s, a)`$ (hàm giá trị hành động tối ưu)
 
-  $V^{\star}(s)=\mathop{max}\limits_{\pi}V^{\pi}(s)$ (hàm giá trị trạng thái tối ưu)
+  $`V^{\star}(s)=\mathop{\max}\limits_{\pi}V^{\pi}(s)`$ (hàm giá trị trạng thái tối ưu)
 
-&#x20;   $A^{\pi}(s,a) = Q^{\pi}(s,a) - V^{\pi}(s,a)$ (hàm lợi thế)
+&#x20;   $`A^{\pi}(s,a) = Q^{\pi}(s,a) - V^{\pi}(s,a)`$ (hàm lợi thế)
 
-**Theorem 1 (Định lý 1):** $V^{\star}(s) = \mathop{max}\limits_{a} Q^{\star}(s, a)$ (hàm giá trị tối ưu bằng giá trị lớn nhất của hàm giá trị hành động tối ưu theo hành động $a$)
-$$
+**Theorem 1 (Định lý 1):** $`V^{\star}(s) = \mathop{\max}\limits_{a} Q^{\star}(s, a)`$ (hàm giá trị tối ưu bằng giá trị lớn nhất của hàm giá trị hành động tối ưu theo hành động $`a`$)
+```math
 A^{\star}(s, a)=Q^{\star}(s, a)-V^{\star}(s).\text{ (lấy max theo hành động a ở cả hai vế)}
-$$
+```
 
-$$
-\mathop{max}\limits_{a}A^{\star}(s, a)=\mathop{max}\limits_{a}Q^{\star}(s, a)-V^{\star}(s)
-$$
+```math
+\mathop{\max}\limits_{a}A^{\star}(s, a)=\mathop{\max}\limits_{a}Q^{\star}(s, a)-V^{\star}(s)
+```
 
-$$
-\mathop{max}\limits_{a}A^{\star}(s, a) = \mathop{max}\limits_{a}Q^{\star}(s, a) - \mathop{max}\limits_{a}Q^{\star}(s, a) =0
-$$
+```math
+\mathop{\max}\limits_{a}A^{\star}(s, a) = \mathop{\max}\limits_{a}Q^{\star}(s, a) - \mathop{\max}\limits_{a}Q^{\star}(s, a) =0
+```
 
 Ngoài ra có:
 
-$$
+```math
 A^{\star}(s, a)=Q^{\star}(s, a)-V^{\star}(s) \Rightarrow Q^{\star}(s, a)=A^{\star}(s, a)+V^{\star}(s)
-$$
+```
 
-$$
+```math
 Q^{\star}(s, a)=A^{\star}(s, a)+V^{\star}(s) \Rightarrow Q^{\star}(s, a)=A^{\star}(s, a)+V^{\star}(s)-0
-$$
+```
 
-$$
-A^{\star}(s, a)+V^{\star}(s)+0 = A^{\star}(s, a)+V^{\star}(s)-\mathop{max}\limits_{a}A^{\star}(s, a)
-$$
+```math
+A^{\star}(s, a)+V^{\star}(s)+0 = A^{\star}(s, a)+V^{\star}(s)-\mathop{\max}\limits_{a}A^{\star}(s, a)
+```
 
-**Theorem 2 (Định lý 2):** $Q^{\star}(s, a)=A^{\star}(s, a)+V^{\star}(s)-\mathop{max}\limits_{a}A^{\star}(s, a)$
+**Theorem 2 (Định lý 2):** $`Q^{\star}(s, a)=A^{\star}(s, a)+V^{\star}(s)-\mathop{\max}\limits_{a}A^{\star}(s, a)`$
 
 ### 2.1 Deep Q-networks
 
-$Q(s, a; θ)$ là xấp xỉ của mạng nơ-ron cho $Q^{\star}(s, a)$, đầu vào của mạng nơ-ron là trạng thái $s$, thông qua mạng nơ-ron ánh xạ đầu vào thành một vectơ đầu ra, vectơ đầu ra là điểm cho từng hành động $a$ ở trạng thái $s$.
+$`Q(s, a; θ)`$ là xấp xỉ của mạng nơ-ron cho $`Q^{\star}(s, a)`$, đầu vào của mạng nơ-ron là trạng thái $`s`$, thông qua mạng nơ-ron ánh xạ đầu vào thành một vectơ đầu ra, vectơ đầu ra là điểm cho từng hành động $`a`$ ở trạng thái $`s`$.
 
-Hàm mất mát ở vòng lặp $i$:
+Hàm mất mát ở vòng lặp $`i`$:
 
-$$
+```math
 L_i(\theta_i)=E_{s,a,r,s'}[(y_i^{DQN}-Q(s,a;\theta_i))^2]
-$$
+```
 
-Trong đó, $y^{DDQN}{i}=r+\gamma Q(s'+ \mathop{max}\limits_{a'}Q(s',a';\theta^{-}))$.
+Trong đó, $`y^{DDQN}{i}=r+\gamma Q(s'+ \mathop{\max}\limits_{a'}Q(s',a';\theta^{-}))`$.
 
 Ngoài ra, còn có thể sửa đổi cách huấn luyện từ góc độ giảm gradient và phát lại kinh nghiệm.
 
 *   Giảm gradient
 
-$$
+```math
 \nabla_{\theta_i}  L_i(\theta_i)=E_{s,a,r,s'}[(y_i^{DQN}-Q(s,a;\theta_i))\nabla_{\theta_i}Q(s,a;\theta_i)]
-$$
+```
 
 *   Phát lại kinh nghiệm
 
-$$
+```math
 L_i(\theta_i) = E_{s,a,r,s'} \sim u(D)[y_i^{DQN}-Q(s,a;\theta_i))^2]
-$$
+```
 
-Trong quá trình học, tác tử tích lũy một tập dữ liệu $D_t = {e_1, e_2, . . . , e_t}$, trong đó kinh nghiệm $e_t = (s_t, a_t, r_t, s_{t+1})$ đến từ nhiều tập.
+Trong quá trình học, tác tử tích lũy một tập dữ liệu $`D_t = {e_1, e_2, . . . , e_t}`$, trong đó kinh nghiệm $`e_t = (s_t, a_t, r_t, s_{t+1})`$ đến từ nhiều tập.
 
 ### 2.2 Double Deep Q-networks
 
-$$
-y^{DDQN}_{i}=r+\gamma Q(s'+ argmax_{a'}Q(s',a';\theta_{i};\theta^{-}))
-$$
+```math
+y^{DDQN}_{i}=r+\gamma Q(s'+ \arg\max_{a'}Q(s',a';\theta_{i};\theta^{-}))
+```
 
-DDQN cơ bản giống DQN, chỉ thay đổi biểu thức của $y^{DDQN}_{i}$.
+DDQN cơ bản giống DQN, chỉ thay đổi biểu thức của $`y^{DDQN}_{i}`$.
 
 ## **3. Kiến trúc Dueling Network**
 
-Khác với DQN, Dueling Network xấp xỉ $A^{\star}(s, a)$ và $V^{\star}(s)$, lần lượt là $A(s,a;\theta,\alpha)$ và $V(s;\theta,\beta)$. Điều này cũng có nghĩa là Dueling Network có thể dùng tham số của cùng một mạng tích chập để trích xuất đặc trưng, nhưng đầu ra thì dùng các cấu trúc khác nhau.
+Khác với DQN, Dueling Network xấp xỉ $`A^{\star}(s, a)`$ và $`V^{\star}(s)`$, lần lượt là $`A(s,a;\theta,\alpha)`$ và $`V(s;\theta,\beta)`$. Điều này cũng có nghĩa là Dueling Network có thể dùng tham số của cùng một mạng tích chập để trích xuất đặc trưng, nhưng đầu ra thì dùng các cấu trúc khác nhau.
 
 ![Cấu trúc của Dueling network](img/Dueling_2.png "Cấu trúc của Dueling network")
 
 Cụ thể, theo **Theorem 2**, có:
 
-$$
-Q(s, a; \theta, \alpha, \beta) = V (s; \theta, \beta) + A(s, a; \theta, \alpha)-\mathop{max}\limits_{a}A(s, a; \theta, \alpha)
-$$
+```math
+Q(s, a; \theta, \alpha, \beta) = V (s; \theta, \beta) + A(s, a; \theta, \alpha)-\mathop{\max}\limits_{a}A(s, a; \theta, \alpha)
+```
 
 Vì Dueling Network chỉ thay đổi kiến trúc mạng, nên cách huấn luyện mạng giống DQN và DDQN, mọi cải tiến huấn luyện dựa trên DQN đều có thể dùng trên Dueling Network.
 
-### 3.1 Tác dụng của $\mathop{max}\limits_{a}A(s, a; θ, α)$
+### 3.1 Tác dụng của $`\mathop{\max}\limits_{a}A(s, a; θ, α)`$
 
-Vì $Q^{\star}(s, a)=A^{\star}(s, a)+V^{\star}(s)$, nên $Q^{\star}(s, a)$ có được theo cách này không duy nhất.
+Vì $`Q^{\star}(s, a)=A^{\star}(s, a)+V^{\star}(s)`$, nên $`Q^{\star}(s, a)`$ có được theo cách này không duy nhất.
 
-Nếu đồng thời cộng thêm một số vào $A^\star$ và trừ đi cùng số đó ở $V^\star$, sẽ được $Q^{\star}(s, a)$ giống như trước. Còn khi thêm số hạng $\mathop{max}\limits_{a}A(s, a; θ, α)$ thì sẽ không xảy ra tình huống này.
+Nếu đồng thời cộng thêm một số vào $`A^\star`$ và trừ đi cùng số đó ở $`V^\star`$, sẽ được $`Q^{\star}(s, a)`$ giống như trước. Còn khi thêm số hạng $`\mathop{\max}\limits_{a}A(s, a; θ, α)`$ thì sẽ không xảy ra tình huống này.
 
-### 3.2 $\mathop{max}\limits_{a}A(s, a; θ, α)$ trong sử dụng thực tế
+### 3.2 $`\mathop{\max}\limits_{a}A(s, a; θ, α)`$ trong sử dụng thực tế
 
-Trong sử dụng thực tế, số hạng thứ ba trong $Q(s, a; \theta, \alpha, \beta)$ thường không dùng $\mathop{max}\limits_{a}A(s, a; \theta, \alpha)$, mà dùng giá trị trung bình, tức là:
+Trong sử dụng thực tế, số hạng thứ ba trong $`Q(s, a; \theta, \alpha, \beta)`$ thường không dùng $`\mathop{\max}\limits_{a}A(s, a; \theta, \alpha)`$, mà dùng giá trị trung bình, tức là:
 
-$$
-  Q(s, a; \theta, \alpha, \beta) = V (s; \theta, \beta) + ( A(s, a; \theta, \alpha) − \frac{1} {|A|} \sum_ {a'} A(s, a'; \theta, \alpha) )
-$$
+```math
+Q(s, a; \theta, \alpha, \beta) = V (s; \theta, \beta) + ( A(s, a; \theta, \alpha) − \frac{1} {|A|} \sum_ {a'} A(s, a'; \theta, \alpha) )
+```
 
 ## **4.** Thực nghiệm
 
 ### 4.1 Đánh giá chính sách
 
-Để đánh giá giá trị $Q$ học được, bài báo chọn một môi trường đơn giản, trong đó có thể tính chính xác giá trị $Q_\pi(s,a)$ riêng cho mọi $(s, a) ∈ S × A$.
+Để đánh giá giá trị $`Q`$ học được, bài báo chọn một môi trường đơn giản, trong đó có thể tính chính xác giá trị $`Q_\pi(s,a)`$ riêng cho mọi $`(s, a) ∈ S × A`$.
 
 Môi trường này, gọi là hành lang (corridor), gồm ba hành lang nối với nhau. Sơ đồ môi trường hành lang như hình (a), tác tử bắt đầu từ góc dưới bên trái của môi trường, phải di chuyển đến góc trên bên phải mới nhận được phần thưởng lớn nhất. Tổng cộng có 5 hành động có thể dùng: lên, xuống, trái, phải và không thao tác (no-op). Hai phần dọc đều có 10 trạng thái, còn phần ngang có 50 trạng thái.
 
@@ -145,7 +145,7 @@ Kiến trúc một luồng là một MLP ba tầng, mỗi tầng ẩn có 50 đ�
 
 ![](img/Dueling_3.png)
 
-Kết quả cho thấy, với 5 hành động, hai kiến trúc hội tụ với tốc độ gần như nhau. Tuy nhiên, khi ta tăng số hành động, kiến trúc Dueling Network thể hiện tốt hơn mạng Q truyền thống. Trong Dueling Network, luồng $V (s; θ, β)$ học được một giá trị chung, giá trị này được dùng chung giữa nhiều hành động tương tự ở trạng thái $s$, từ đó dẫn đến hội tụ nhanh hơn.
+Kết quả cho thấy, với 5 hành động, hai kiến trúc hội tụ với tốc độ gần như nhau. Tuy nhiên, khi ta tăng số hành động, kiến trúc Dueling Network thể hiện tốt hơn mạng Q truyền thống. Trong Dueling Network, luồng $`V (s; θ, β)`$ học được một giá trị chung, giá trị này được dùng chung giữa nhiều hành động tương tự ở trạng thái $`s`$, từ đó dẫn đến hội tụ nhanh hơn.
 
 ### 4.2 General Atari Game-Playing (Chơi game Atari tổng quát)
 
@@ -155,9 +155,9 @@ Kiến trúc mạng của bài báo có cấu trúc tích chập cấp thấp gi
 
 **Hàm đánh giá:**
 
-$$
-30 no-op=\frac{Score_{Agent} − Score_{Baseline}} {max\{Score_{Human}, Score_{Baseline}\} − Score_{Random}}
-$$
+```math
+30 no-op=\frac{Score_{Agent} − Score_{Baseline}} {\max\{Score_{Human}, Score_{Baseline}\} − Score_{Random}}
+```
 
 **Kết quả:**
 

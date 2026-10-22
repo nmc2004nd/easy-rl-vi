@@ -37,23 +37,23 @@ Bài báo giới thiệu một phương pháp actor-critic dùng phương pháp 
 
 ##### 1.1 Học tăng cường và phương pháp actor-critic
 
-Ta xét một tác tử tương tác với quá trình quyết định Markov chiết khấu tầm nhìn vô hạn, biểu diễn là một bộ năm $(X, A, \gamma, P, r)$. Mục tiêu của tác tử là tối đa hóa kỳ vọng lợi tức tích lũy chiết khấu $J(\theta)$ của chính sách có tham số $\theta$. Phương pháp gradient chính sách tham số hóa trực tiếp chính sách $\pi_{\theta}(a \mid s_{t})$, cập nhật $\theta$ để tối đa hóa mục tiêu $J(\theta)$. Dạng tổng quát của gradient chính sách được định nghĩa là:
+Ta xét một tác tử tương tác với quá trình quyết định Markov chiết khấu tầm nhìn vô hạn, biểu diễn là một bộ năm $`(X, A, \gamma, P, r)`$. Mục tiêu của tác tử là tối đa hóa kỳ vọng lợi tức tích lũy chiết khấu $`J(\theta)`$ của chính sách có tham số $`\theta`$. Phương pháp gradient chính sách tham số hóa trực tiếp chính sách $`\pi_{\theta}(a \mid s_{t})`$, cập nhật $`\theta`$ để tối đa hóa mục tiêu $`J(\theta)`$. Dạng tổng quát của gradient chính sách được định nghĩa là:
 
 ![Chèn hình ảnh](img/ACKTR-1-1.png)
 
-Trong đó $\psi^{t}$ thường chọn là hàm lợi thế $A^{\pi}(s_{t},a_{t})$. Bài báo tham khảo phương pháp actor-critic lợi thế bất đồng bộ (A3C) để định nghĩa hàm lợi thế như sau:
+Trong đó $`\psi^{t}`$ thường chọn là hàm lợi thế $`A^{\pi}(s_{t},a_{t})`$. Bài báo tham khảo phương pháp actor-critic lợi thế bất đồng bộ (A3C) để định nghĩa hàm lợi thế như sau:
 
 ![Chèn hình ảnh](img/ACKTR-1-2.png)
 
-Trong đó $V^{\pi}_{\phi}(s_{t})$ là mạng giá trị, $V^{\pi}_{t}(s_{t})=E_{\pi}[R_{t}]$. $\phi$ là tham số của mạng giá trị, bài báo cập nhật TD để tối thiểu hóa bình phương chênh lệch giữa lợi tức tự cập nhật (bootstrap) $k$ bước $\hat{R}_{t}$ và giá trị dự đoán, $\frac {1}{2}\left\|\hat{r}_{t} - V^{\pi}_{\phi}(s_{t})\right \|^{2}$.
+Trong đó $`V^{\pi}_{\phi}(s_{t})`$ là mạng giá trị, $`V^{\pi}_{t}(s_{t})=E_{\pi}[R_{t}]`$. $`\phi`$ là tham số của mạng giá trị, bài báo cập nhật TD để tối thiểu hóa bình phương chênh lệch giữa lợi tức tự cập nhật (bootstrap) $`k`$ bước $`\hat{R}_{t}`$ và giá trị dự đoán, $`\frac {1}{2}\left\|\hat{r}_{t} - V^{\pi}_{\phi}(s_{t})\right \|^{2}`$.
 
 ##### 1.2 Gradient tự nhiên dùng xấp xỉ nhân tử Kronecker
 
-Để tối thiểu hóa hàm không lồi $J(\theta)$, dùng phương pháp giảm dốc nhất tính cập nhật $\nabla \theta$, tối thiểu hóa $J(\theta + \nabla \theta)$. Tuy nhiên sự thay đổi của chuẩn Euclid phụ thuộc vào tham số $\theta$, điều này không phù hợp; vì việc tham số hóa mô hình là một lựa chọn tùy ý, không nên ảnh hưởng đến quỹ đạo tối ưu. Phương pháp gradient tự nhiên dùng ma trận thông tin Fisher $F$ để xây dựng xấp xỉ bậc hai cục bộ của chuẩn - độ phân kỳ KL. Chuẩn này độc lập với tham số mô hình $\theta$ trên lớp phân phối xác suất, cung cấp cập nhật ổn định hơn, hiệu quả hơn. Nhưng vì mạng nơ-ron có thể chứa hàng triệu tham số, tính và lưu trữ chính xác ma trận Fisher và nghịch đảo của nó là không thực tế, vì vậy cần nhờ đến giá trị xấp xỉ. Kỹ thuật xấp xỉ độ cong nhân tử Kronecker dùng xấp xỉ nhân tử Kronecker của ma trận Fisher để thực hiện hiệu quả cập nhật gradient tự nhiên xấp xỉ. Chi tiết xem nguyên văn dưới đây:
+Để tối thiểu hóa hàm không lồi $`J(\theta)`$, dùng phương pháp giảm dốc nhất tính cập nhật $`\nabla \theta`$, tối thiểu hóa $`J(\theta + \nabla \theta)`$. Tuy nhiên sự thay đổi của chuẩn Euclid phụ thuộc vào tham số $`\theta`$, điều này không phù hợp; vì việc tham số hóa mô hình là một lựa chọn tùy ý, không nên ảnh hưởng đến quỹ đạo tối ưu. Phương pháp gradient tự nhiên dùng ma trận thông tin Fisher $`F`$ để xây dựng xấp xỉ bậc hai cục bộ của chuẩn - độ phân kỳ KL. Chuẩn này độc lập với tham số mô hình $`\theta`$ trên lớp phân phối xác suất, cung cấp cập nhật ổn định hơn, hiệu quả hơn. Nhưng vì mạng nơ-ron có thể chứa hàng triệu tham số, tính và lưu trữ chính xác ma trận Fisher và nghịch đảo của nó là không thực tế, vì vậy cần nhờ đến giá trị xấp xỉ. Kỹ thuật xấp xỉ độ cong nhân tử Kronecker dùng xấp xỉ nhân tử Kronecker của ma trận Fisher để thực hiện hiệu quả cập nhật gradient tự nhiên xấp xỉ. Chi tiết xem nguyên văn dưới đây:
 
 ![Chèn hình ảnh](img/ACKTR-1-3.png)
 
-Xấp xỉ này có thể giải thích là giả định các thống kê bậc hai của kích hoạt và đạo hàm lan truyền ngược là không tương quan. Có xấp xỉ này, cập nhật gradient tự nhiên có thể tính hiệu quả. Cập nhật gradient tự nhiên xấp xỉ K-FAC chỉ cần tính trên các ma trận có kích thước tương đương $W$. Cũng có nghiên cứu mở rộng thuật toán K-FAC sang mạng tích chập và mạng phân tán, K-FAC phân tán tăng tốc độ 2-3 lần khi huấn luyện các mạng tích chập phân loại hiện đại cỡ lớn.
+Xấp xỉ này có thể giải thích là giả định các thống kê bậc hai của kích hoạt và đạo hàm lan truyền ngược là không tương quan. Có xấp xỉ này, cập nhật gradient tự nhiên có thể tính hiệu quả. Cập nhật gradient tự nhiên xấp xỉ K-FAC chỉ cần tính trên các ma trận có kích thước tương đương $`W`$. Cũng có nghiên cứu mở rộng thuật toán K-FAC sang mạng tích chập và mạng phân tán, K-FAC phân tán tăng tốc độ 2-3 lần khi huấn luyện các mạng tích chập phân loại hiện đại cỡ lớn.
 
 > Ghi chú của người dịch: bản gốc viết nhầm "Knonecker" ở nhiều chỗ, đúng là "Kronecker".
 
@@ -65,19 +65,21 @@ Xấp xỉ này có thể giải thích là giả định các thống kê bậc
 
 ![Chèn hình ảnh](img/ACKTR-2-1.png)
 
-Bài báo mô tả một phương pháp áp dụng gradient tự nhiên để tối ưu critic. Học critic có thể xem là một bài toán xấp xỉ hàm bình phương tối thiểu, dù mục tiêu của bài toán này là di động. Trong xấp xỉ hàm bình phương tối thiểu thường dùng phương pháp Gauss-Newton. Nó xấp xỉ độ cong bằng ma trận Gauss-Newton $G:=E[J^{T}J]$, trong đó $J$ là ma trận Jacobian ánh xạ tham số đến đầu ra. Ma trận Gauss-Newton tương đương với ma trận Fisher của mô hình quan sát Gauss. Sự tương đương này cho phép ta áp dụng K-FAC cả cho critic. Giả sử ma trận Fisher của critic $v$ được định nghĩa theo phân phối Gauss $p(v\mid s_{t})\sim N(v;V(s_{t},\sigma^{2}))$. Ma trận Fisher của critic được định nghĩa theo phân phối đầu ra Gauss này. Đặt $\sigma$ bằng 1, đây chính là phương pháp Gauss-Newton thông thường.
+Bài báo mô tả một phương pháp áp dụng gradient tự nhiên để tối ưu critic. Học critic có thể xem là một bài toán xấp xỉ hàm bình phương tối thiểu, dù mục tiêu của bài toán này là di động. Trong xấp xỉ hàm bình phương tối thiểu thường dùng phương pháp Gauss-Newton. Nó xấp xỉ độ cong bằng ma trận Gauss-Newton $`G:=E[J^{T}J]`$, trong đó $`J`$ là ma trận Jacobian ánh xạ tham số đến đầu ra. Ma trận Gauss-Newton tương đương với ma trận Fisher của mô hình quan sát Gauss. Sự tương đương này cho phép ta áp dụng K-FAC cả cho critic. Giả sử ma trận Fisher của critic $`v`$ được định nghĩa theo phân phối Gauss $`p(v\mid s_{t})\sim N(v;V(s_{t},\sigma^{2}))`$. Ma trận Fisher của critic được định nghĩa theo phân phối đầu ra Gauss này. Đặt $`\sigma`$ bằng 1, đây chính là phương pháp Gauss-Newton thông thường.
 
-Nếu actor và critic tách biệt, có thể dùng các thước đo định nghĩa ở trên để áp dụng cập nhật K-FAC riêng. Ta có thể định nghĩa phân phối đồng thời của phân phối chính sách và phân phối giá trị bằng cách giả định hai phân phối đầu ra độc lập, tức $p(a,v\mid s)=\pi(a\mid s)p(v\mid s)$, và xây dựng thước đo Fisher theo $p(a,v\mid s)$. Nó không khác K-FAC tiêu chuẩn, chỉ là ta cần lấy mẫu độc lập các đầu ra của mạng. Sau đó ta có thể áp dụng K-FAC để xấp xỉ ma trận Fisher $E_{p(\tau)}[\nabla log p(a,v|s)\nabla log p(a,v|s)^{T}]$, để cập nhật đồng thời.
+Nếu actor và critic tách biệt, có thể dùng các thước đo định nghĩa ở trên để áp dụng cập nhật K-FAC riêng. Ta có thể định nghĩa phân phối đồng thời của phân phối chính sách và phân phối giá trị bằng cách giả định hai phân phối đầu ra độc lập, tức $`p(a,v\mid s)=\pi(a\mid s)p(v\mid s)`$, và xây dựng thước đo Fisher theo $`p(a,v\mid s)`$. Nó không khác K-FAC tiêu chuẩn, chỉ là ta cần lấy mẫu độc lập các đầu ra của mạng. Sau đó ta có thể áp dụng K-FAC để xấp xỉ ma trận Fisher $`E_{p(\tau)}[\nabla \log p(a,v|s)\nabla \log p(a,v|s)^{T}]`$, để cập nhật đồng thời.
 
 Ngoài ra, tác giả còn dùng kỹ thuật chính quy hóa. Tác giả thực hiện tính bất đồng bộ các thống kê bậc hai và nghịch đảo cần cho xấp xỉ Kronecker, để giảm thời gian tính toán.
 
 ##### 2.2 Chọn bước và tối ưu vùng tin cậy
 
-Dùng cập nhật gradient tự nhiên truyền thống sẽ khiến thuật toán hội tụ sớm về một chính sách gần như tất định. Bài báo dùng công thức vùng tin cậy của K-FAC, chọn bước hiệu dụng $\eta$ là 
+Dùng cập nhật gradient tự nhiên truyền thống sẽ khiến thuật toán hội tụ sớm về một chính sách gần như tất định. Bài báo dùng công thức vùng tin cậy của K-FAC, chọn bước hiệu dụng $`\eta`$ là 
 
-$$min(\eta_{max}, \sqrt{\frac{2\delta}{\nabla \theta^{T}\hat{F}\nabla \theta}})$$
+```math
+\min(\eta_{\max}, \sqrt{\frac{2\delta}{\nabla \theta^{T}\hat{F}\nabla \theta}})
+```
 
-Trong đó tốc độ học $\eta$ và bán kính vùng tin cậy $\delta$ là siêu tham số. Nếu actor và critic tách biệt, hai tham số này cần được chỉnh riêng.
+Trong đó tốc độ học $`\eta`$ và bán kính vùng tin cậy $`\delta`$ là siêu tham số. Nếu actor và critic tách biệt, hai tham số này cần được chỉnh riêng.
 
 #### 3. Các công trình liên quan
 
@@ -111,7 +113,7 @@ Kết quả của 6 trò chơi Atari sau khi huấn luyện 10 triệu bước t
 
 ![Chèn hình ảnh](img/ACKTR-1.png)
 
-Bảng 1 là dữ liệu đánh giá thực nghiệm của nhiệm vụ điều khiển rời rạc trên sáu trò chơi Atari 2600. Kết quả ACKTR và A2C cho thấy phần thưởng trung bình của 100 lượt cuối có được sau 50 triệu bước thời gian, và kết quả TRPO có được sau 10 triệu bước thời gian. Bảng còn cho thấy lượt thứ $N$, trong đó $N$ là lượt đầu tiên mà phần thưởng trung bình của các trò chơi thứ $N$ đến thứ $(N + 100)$ vượt mức thể hiện của con người [16], trung bình trên 2 hạt giống ngẫu nhiên. Trong các trò chơi *Beamrider*, *Breakout*, *Pong* và *Q-bert*, A2C cần số lượt nhiều hơn ACKTR lần lượt 2.7, 3.5, 5.3 và 3.0 lần mới đạt được mức thể hiện của con người. Ngoài ra, trong *Space Invaders*, kết quả chạy của A2C không bằng con người, còn điểm trung bình của ACKTR là 19723, gấp 12 lần mức thể hiện của con người (1652). Trong *Breakout*, *Q-bert* và *Beamrider*, phần thưởng lượt mà ACKTR có được lần lượt cao hơn A2C 26%, 35% và 67%.
+Bảng 1 là dữ liệu đánh giá thực nghiệm của nhiệm vụ điều khiển rời rạc trên sáu trò chơi Atari 2600. Kết quả ACKTR và A2C cho thấy phần thưởng trung bình của 100 lượt cuối có được sau 50 triệu bước thời gian, và kết quả TRPO có được sau 10 triệu bước thời gian. Bảng còn cho thấy lượt thứ $`N`$, trong đó $`N`$ là lượt đầu tiên mà phần thưởng trung bình của các trò chơi thứ $`N`$ đến thứ $`(N + 100)`$ vượt mức thể hiện của con người [16], trung bình trên 2 hạt giống ngẫu nhiên. Trong các trò chơi *Beamrider*, *Breakout*, *Pong* và *Q-bert*, A2C cần số lượt nhiều hơn ACKTR lần lượt 2.7, 3.5, 5.3 và 3.0 lần mới đạt được mức thể hiện của con người. Ngoài ra, trong *Space Invaders*, kết quả chạy của A2C không bằng con người, còn điểm trung bình của ACKTR là 19723, gấp 12 lần mức thể hiện của con người (1652). Trong *Breakout*, *Q-bert* và *Beamrider*, phần thưởng lượt mà ACKTR có được lần lượt cao hơn A2C 26%, 35% và 67%.
 
 Tác giả còn đánh giá ACKTR trên các trò chơi Atari khác, kết quả đầy đủ xem phụ lục bài báo gốc. Tác giả so sánh ACKTR với các phương pháp Q-learning, phát hiện trong 36 trên 44 benchmark, ACKTR tương đương các phương pháp Q-learning về hiệu quả mẫu, và tiêu tốn thời gian tính toán ít hơn nhiều.
 
@@ -144,7 +146,7 @@ Trọng số mô hình đã huấn luyện trước: https: //github.com/emansim
 
 #####  4.3 Có chuẩn nào tốt hơn để tối ưu critic không?
 
-Các phương pháp gradient chính sách tự nhiên trước đây chỉ áp dụng cập nhật gradient tự nhiên cho actor, tác giả bài báo còn đề xuất áp dụng cập nhật gradient tự nhiên cho critic. Khác biệt chỉ nằm ở việc chọn chuẩn nào để thực hiện giảm gradient nhanh nhất cho critic; tức chuẩn $\left \| \cdot \right \| _{B}$ định nghĩa trong mục 2.2. Ở đây áp dụng ACKTR cho actor, và so sánh việc tối ưu critic bằng phương pháp bậc một (tức chuẩn Euclid) và bằng ACKTR (tức chuẩn định nghĩa bởi Gauss-Newton). Hình 5 (a) và (b) cho thấy kết quả của nhiệm vụ điều khiển liên tục *HalfCheetah* và trò chơi Atari *Breakout*. Tác giả quan sát thấy, bất kể dùng chuẩn nào để tối ưu critic, so với đường cơ sở A2C, áp dụng ACKTR cho actor đều mang lại cải thiện.
+Các phương pháp gradient chính sách tự nhiên trước đây chỉ áp dụng cập nhật gradient tự nhiên cho actor, tác giả bài báo còn đề xuất áp dụng cập nhật gradient tự nhiên cho critic. Khác biệt chỉ nằm ở việc chọn chuẩn nào để thực hiện giảm gradient nhanh nhất cho critic; tức chuẩn $`\left \| \cdot \right \| _{B}`$ định nghĩa trong mục 2.2. Ở đây áp dụng ACKTR cho actor, và so sánh việc tối ưu critic bằng phương pháp bậc một (tức chuẩn Euclid) và bằng ACKTR (tức chuẩn định nghĩa bởi Gauss-Newton). Hình 5 (a) và (b) cho thấy kết quả của nhiệm vụ điều khiển liên tục *HalfCheetah* và trò chơi Atari *Breakout*. Tác giả quan sát thấy, bất kể dùng chuẩn nào để tối ưu critic, so với đường cơ sở A2C, áp dụng ACKTR cho actor đều mang lại cải thiện.
 
 ![Chèn hình ảnh](img/ACKTR-3.png)
 

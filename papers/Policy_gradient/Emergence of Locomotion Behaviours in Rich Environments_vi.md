@@ -10,42 +10,46 @@ Thời gian công bố: 10 Jul 2017
 
 ##  1. Động cơ viết bài
 <font size="4">**Why:**</font> 
-Trong lĩnh vực học tăng cường sâu, cùng với sự trỗi dậy của các thuật toán gradient chính sách (Policy gradient), đã đạt được tiến bộ đáng kể trong các nhiệm vụ có không gian trạng thái liên tục và không gian hành động liên tục. Nhưng đều cần định nghĩa hàm phần thưởng (Reward function) rõ ràng theo đặc tính nhiệm vụ và dùng tín hiệu phần thưởng (Reward) để tối ưu chính sách $\pi _{\theta}$ của tác tử, dẫn dắt hành vi của tác tử hoạt động như mong đợi. Nhưng trong môi trường nhiệm vụ có hành vi phức tạp, thường thì hàm phần thưởng khi đối mặt với các hành động phức tạp này, dẫn dắt tác tử không rõ rệt, tức là tác tử rất khó học được hành vi phức tạp.
+Trong lĩnh vực học tăng cường sâu, cùng với sự trỗi dậy của các thuật toán gradient chính sách (Policy gradient), đã đạt được tiến bộ đáng kể trong các nhiệm vụ có không gian trạng thái liên tục và không gian hành động liên tục. Nhưng đều cần định nghĩa hàm phần thưởng (Reward function) rõ ràng theo đặc tính nhiệm vụ và dùng tín hiệu phần thưởng (Reward) để tối ưu chính sách $`\pi _{\theta}`$ của tác tử, dẫn dắt hành vi của tác tử hoạt động như mong đợi. Nhưng trong môi trường nhiệm vụ có hành vi phức tạp, thường thì hàm phần thưởng khi đối mặt với các hành động phức tạp này, dẫn dắt tác tử không rõ rệt, tức là tác tử rất khó học được hành vi phức tạp.
 
 <font size="4">**What:**</font> 
-Thiết kế hàm phần thưởng rất quan trọng với nhiệm vụ học tăng cường, chỉ một thay đổi nhỏ của hàm phần thưởng cũng ảnh hưởng đến hành vi của tác tử. Phần thưởng tức thời do hàm phần thưởng sinh ra có thể biểu diễn là $r=R(s,a)$. Vì vậy với môi trường nhiệm vụ có hành vi phức tạp, để điểm số của tác tử trong môi trường có thể hội tụ, người ta sẽ thiết kế hàm phần thưởng theo hướng thận trọng. Nhưng đồng thời hàm phần thưởng thận trọng sẽ **né tránh** thách thức chính của học tăng cường: tác tử học trực tiếp từ tín hiệu phần thưởng hạn chế và dẫn dắt chính sách, với kỳ vọng tác tử có được hành vi phong phú và hiệu quả.
+Thiết kế hàm phần thưởng rất quan trọng với nhiệm vụ học tăng cường, chỉ một thay đổi nhỏ của hàm phần thưởng cũng ảnh hưởng đến hành vi của tác tử. Phần thưởng tức thời do hàm phần thưởng sinh ra có thể biểu diễn là $`r=R(s,a)`$. Vì vậy với môi trường nhiệm vụ có hành vi phức tạp, để điểm số của tác tử trong môi trường có thể hội tụ, người ta sẽ thiết kế hàm phần thưởng theo hướng thận trọng. Nhưng đồng thời hàm phần thưởng thận trọng sẽ **né tránh** thách thức chính của học tăng cường: tác tử học trực tiếp từ tín hiệu phần thưởng hạn chế và dẫn dắt chính sách, với kỳ vọng tác tử có được hành vi phong phú và hiệu quả.
 
 <font size="4">**How:**</font> 
 Tác giả bài báo đề xuất, trong trường hợp bản thân môi trường đủ phong phú và đa dạng, dùng phương pháp **thiết lập môi trường (chướng ngại vật) với các mức độ khó khác nhau để dẫn dắt tác tử tìm ra phương án giải quyết vấn đề từ môi trường hạn chế**, thì có thể dùng hàm phần thưởng đơn giản để sinh ra hành vi phong phú và bền vững. Thiết lập như vậy vừa có thể tránh quá khớp do hàm phần thưởng và môi trường nhiệm vụ gây ra, vừa giúp tác tử tìm được phương án giải quyết đặc thù áp dụng được cho mọi thách thức của môi trường.
 
 ##  2. Giới thiệu bối cảnh
 ### 1. Policy Gradient (Gradient chính sách)
-Thuật toán gradient chính sách học trực tiếp chính sách $\pi$, trong học tăng cường sâu dùng mạng nơ-ron sâu để khớp hàm chính sách (Policy function), vì vậy mục tiêu với chính sách ngẫu nhiên $\pi{_\theta}(a|s)$ là mong muốn tối ưu tham số mạng nơ-ron $\theta$ để chính sách $\pi{_\theta}$ tối đa hóa lợi tức kỳ vọng của hành vi
-$$
+Thuật toán gradient chính sách học trực tiếp chính sách $`\pi`$, trong học tăng cường sâu dùng mạng nơ-ron sâu để khớp hàm chính sách (Policy function), vì vậy mục tiêu với chính sách ngẫu nhiên $`\pi{_\theta}(a|s)`$ là mong muốn tối ưu tham số mạng nơ-ron $`\theta`$ để chính sách $`\pi{_\theta}`$ tối đa hóa lợi tức kỳ vọng của hành vi
+```math
 J(\theta)= \mathbb{E}_{\rho_{\theta}(\tau ) }\left [  {\textstyle \sum_{t}^{}\gamma^{t-1} r (s_t,a_t)}  \right ]
-$$
-Trong đó $\tau$ là quỹ đạo có được khi tác tử tương tác với môi trường động: $\tau=(s_0,a_0,s_1,a_1\dots )$  
+```
+Trong đó $`\tau`$ là quỹ đạo có được khi tác tử tương tác với môi trường động: $`\tau=(s_0,a_0,s_1,a_1\dots )`$  
 
-Các yếu tố chính dẫn dắt chuyển trạng thái gồm chính sách của tác tử $\pi{_\theta}$ và xác suất chuyển trạng thái được thiết lập sẵn của bản thân môi trường, là:  
-$$
+Các yếu tố chính dẫn dắt chuyển trạng thái gồm chính sách của tác tử $`\pi{_\theta}`$ và xác suất chuyển trạng thái được thiết lập sẵn của bản thân môi trường, là:  
+```math
 p(s_{t+1}|s_t,a_t)\text{, trong đó } a_t=\pi{_\theta}(s_t)
-$$
-Xác suất xảy ra quỹ đạo $\tau$ là:  
-$$
+```
+Xác suất xảy ra quỹ đạo $`\tau`$ là:  
+```math
+\begin{gathered}
 \rho _{\theta }(\tau) = p(s_0)\pi (a_0|s_0)p(s_1|s_0,a_0)\dots \\=p(s_0)\prod_{t=1}^{T}p_{\theta}(a_t|s_t)p(s_{t+1}|s_t,a_t)
-$$
-Ước lượng giá trị của trạng thái $s_t$ dùng phương pháp Monte Carlo (Monte-Carlo), dùng $R_t$ với hệ số chiết khấu $\gamma$ để biểu diễn phần thưởng tích lũy tương lai của mỗi bước:  
-$$
+\end{gathered}
+```
+Ước lượng giá trị của trạng thái $`s_t`$ dùng phương pháp Monte Carlo (Monte-Carlo), dùng $`R_t`$ với hệ số chiết khấu $`\gamma`$ để biểu diễn phần thưởng tích lũy tương lai của mỗi bước:  
+```math
+\begin{gathered}
 R_t= {\textstyle \sum_{t^{'}=t}^{}\gamma^{t^{'}-t}r(s_{t^{'}},a_{t^{'}})} \\= r(s_{t^{'}},a_{t^{'}})+\gamma R_{t+1}
-$$
-Lấy đạo hàm gradient theo tham số mạng nơ-ron sâu $\theta$ của chính sách $\pi{_\theta}$:
-$$
-\nabla_{\theta }J=\mathbb{E}_{\theta}\left [  {\textstyle \sum_{t}^{}\nabla_{\theta }log\pi_{\theta}(a_t|s_t)(R_t-b_t)}  \right ]
-$$
-Ở đây $b_t$ làm đường cơ sở (Baseline), đại diện cho phần thưởng kỳ vọng tích lũy trung bình trong tương lai ở trạng thái $s_t$, thường được ước lượng bằng hàm giá trị (Value Function).
-$$
+\end{gathered}
+```
+Lấy đạo hàm gradient theo tham số mạng nơ-ron sâu $`\theta`$ của chính sách $`\pi{_\theta}`$:
+```math
+\nabla_{\theta }J=\mathbb{E}_{\theta}\left [  {\textstyle \sum_{t}^{}\nabla_{\theta }\log\pi_{\theta}(a_t|s_t)(R_t-b_t)}  \right ]
+```
+Ở đây $`b_t`$ làm đường cơ sở (Baseline), đại diện cho phần thưởng kỳ vọng tích lũy trung bình trong tương lai ở trạng thái $`s_t`$, thường được ước lượng bằng hàm giá trị (Value Function).
+```math
 b_t=V^\theta (s_t)=\mathbb{E}\left [ R_t|s_t \right ]
-$$
+```
 
 ### 2. Proximal Policy Optimization (Tối ưu chính sách cận kề)
 Khi dùng thuật toán gradient chính sách, các vấn đề cần đối mặt gồm:  
@@ -58,22 +62,22 @@ Khi dùng thuật toán gradient chính sách, các vấn đề cần đối m�
 
 Phương pháp vùng tin cậy (Trust region) đề xuất trong thuật toán **tối ưu chính sách vùng tin cậy** (Trust region policy optimization, TRPO) là phương pháp cập nhật bước cao cấp hơn, nghĩa là cập nhật trong vùng này thì giá trị lợi tức mà chính sách đạt được không giảm một cách đơn điệu.
 
-Nhưng thuật toán TRPO, để tránh tính nghịch đảo ma trận $\theta ^{'}=\theta+\alpha F^{-1}\nabla _{\theta }J(\theta)$, dùng tối ưu bậc hai, giải bằng phương pháp gradient liên hợp, tránh tính nghịch đảo của ma trận $F$
+Nhưng thuật toán TRPO, để tránh tính nghịch đảo ma trận $`\theta ^{'}=\theta+\alpha F^{-1}\nabla _{\theta }J(\theta)`$, dùng tối ưu bậc hai, giải bằng phương pháp gradient liên hợp, tránh tính nghịch đảo của ma trận $`F`$
 
 Mục tiêu tối ưu của TRPO:
-$$
+```math
 maximize_{\theta^{'}}\mathbb{E}_{\tau \sim \rho_{\theta}(\tau)}\left [  {\textstyle \sum_{t=0}^{\infty }\frac{\pi_{\theta^{'}}(a_t|s_t)}{\pi_{\theta}(a_t|s_t)}\gamma^{t}A_{\pi\theta}(s_t,a_t) }  \right ]
-$$
+```
 
-$$
+```math
 D_{KL}\left ( \pi_{\theta}\left ( a_t|s_t \right ) | \pi_{\theta^{'}}\left ( a_t|s_t \right ) \right ) \le \epsilon
-$$
+```
 
 Thuật toán **tối ưu chính sách cận kề** (Proximal policy optimization, PPO) đơn giản hóa về mặt kỹ thuật dựa trên thuật toán TRPO
-$$
-maximize_{\theta^{'}}\mathbb{E}_{\tau \sim \rho_{\theta}(\tau)}\left [  {\textstyle \sum_{t=0}^{\infty }\frac{\pi_{\theta^{'}}(a_t|s_t)}{\pi_{\theta}(a_t|s_t)}\gamma^{t}A_{\pi\theta}(s_t,a_t) }  \right ]- \beta [D_{KL}\left ( \pi_{\theta}\left ( a_t|s_t \right ) | \pi_{\theta^{'}}\left ( a_t|s_t \right ) \right ) - \epsilon ] 
-$$
-Đưa ràng buộc $D_{KL}$ vào mục tiêu tối ưu bằng phương pháp nhân tử Lagrange, đưa vào siêu tham số $\beta$ để điều chỉnh. Như vậy có thể **tự thích nghi** điều chỉnh hệ số phạt KL, giúp chính sách cập nhật trong **vùng tin cậy (Trust region)**.
+```math
+maximize_{\theta^{'}}\mathbb{E}_{\tau \sim \rho_{\theta}(\tau)}\left [  {\textstyle \sum_{t=0}^{\infty }\frac{\pi_{\theta^{'}}(a_t|s_t)}{\pi_{\theta}(a_t|s_t)}\gamma^{t}A_{\pi\theta}(s_t,a_t) }  \right ]- \beta [D_{KL}\left ( \pi_{\theta}\left ( a_t|s_t \right ) | \pi_{\theta^{'}}\left ( a_t|s_t \right ) \right ) - \epsilon ]
+```
+Đưa ràng buộc $`D_{KL}`$ vào mục tiêu tối ưu bằng phương pháp nhân tử Lagrange, đưa vào siêu tham số $`\beta`$ để điều chỉnh. Như vậy có thể **tự thích nghi** điều chỉnh hệ số phạt KL, giúp chính sách cập nhật trong **vùng tin cậy (Trust region)**.
 
 **PPO with Adaptive KL Penalty**
 ![Mô tả hình ảnh](https://img-blog.csdnimg.cn/8bc5dc728b5a4339963827c04ce8b1b9.png#pic_center)
@@ -84,9 +88,12 @@ Bài báo xét thấy môi trường sử dụng đủ phong phú và đa dạng
 ![Mô tả hình ảnh](https://img-blog.csdnimg.cn/e4608f46ac4649528332dbf955fd55c1.png#pic_center)
 Phương pháp cập nhật đồng bộ dùng một bộ điều phối (Coordinator) theo thời gian, đợi các luồng hoàn thành nhiệm vụ của mình trước, rồi tính trung bình gradient của các luồng, sau đó cập nhật tham số thống nhất.
 
-Trong <font color="#660000"> *Asynchronous Methods for Deep Reinforcement Learning(Volodymyr Mnih  et al., 2016)*  </font>, với phương pháp cập nhật bất đồng bộ đã thiết lập cửa sổ thời gian $K$ bước để tính giá trị lợi tức. Bài báo này cũng kết hợp phần thưởng tích lũy từ $K$ bước với hàm lợi thế (Advantage function), và tự cập nhật (Bootstrap) từ hàm giá trị sau $K$ bước.  
+Trong <font color="#660000"> *Asynchronous Methods for Deep Reinforcement Learning(Volodymyr Mnih  et al., 2016)*  </font>, với phương pháp cập nhật bất đồng bộ đã thiết lập cửa sổ thời gian $`K`$ bước để tính giá trị lợi tức. Bài báo này cũng kết hợp phần thưởng tích lũy từ $`K`$ bước với hàm lợi thế (Advantage function), và tự cập nhật (Bootstrap) từ hàm giá trị sau $`K`$ bước.  
 
-Hàm lợi thế $K$ bước (K-steps) là: $$\hat{A}_t= {\textstyle \sum_{i=1}^{K}\gamma ^{i-1}r_{t+i}+\gamma ^{K-1}V_\phi (s_{t+K})-V_\phi (s_{t})}  $$
+Hàm lợi thế $`K`$ bước (K-steps) là:
+```math
+\hat{A}_t= {\textstyle \sum_{i=1}^{K}\gamma ^{i-1}r_{t+i}+\gamma ^{K-1}V_\phi (s_{t+K})-V_\phi (s_{t})}
+```
 
 ### 3. Đánh giá PPO phân tán
 Để xác định thuật toán DPPO có thể tối ưu chính sách bền vững với việc chỉnh tham số hạn chế, và mở rộng đa luồng hiệu quả. Bằng cách chọn số luồng để so sánh với hai phương án thuật toán thay thế khác (TRPO và Continuous A3C), có 3 môi trường nhiệm vụ chuẩn để so sánh. Trong đó hai cái là **nhiệm vụ vận động trong môi trường không chướng ngại vật**, cái thứ ba là **nhiệm vụ đạt mục tiêu trên mặt phẳng cần trí nhớ**. Môi trường nhiệm vụ đều được xây dựng dựa trên engine vật lý [Mujoco](https://mujoco.org/).
@@ -120,7 +127,7 @@ Tác tử được xét có ba loại cơ thể điều khiển bằng mô-men k
 Robot bốn chân (Quadruped): một cơ thể động vật bốn chân ba chiều đơn giản, có 12 bậc tự do và 8 khớp dẫn động.
 
 **Phần thưởng**
-Nghiên cứu này giữ hàm phần thưởng của mọi môi trường nhiệm vụ đơn giản và nhất quán giữa các địa hình. Phần thưởng gồm một phần chính tỉ lệ thuận với tốc độ trên trục $X$, để khuyến khích tác tử tiến về phía trước dọc theo đường đua, hàm phần thưởng còn thêm một số hạng nhỏ phạt mô-men.
+Nghiên cứu này giữ hàm phần thưởng của mọi môi trường nhiệm vụ đơn giản và nhất quán giữa các địa hình. Phần thưởng gồm một phần chính tỉ lệ thuận với tốc độ trên trục $`X`$, để khuyến khích tác tử tiến về phía trước dọc theo đường đua, hàm phần thưởng còn thêm một số hạng nhỏ phạt mô-men.
 
  Với robot hai chân (Planar walker), hàm phần thưởng còn bao gồm ràng buộc khung tư thế giống phần 2. Với robot bốn chân (Quadruped) và robot hình người (Humanoid), hàm phần thưởng thêm phạt hành vi lệch khỏi tâm đường đua, và robot hình người mỗi bước thời gian nếu không ngã còn nhận được phần thưởng thêm. 
 
@@ -143,7 +150,7 @@ Bài báo dựa trên các loại địa hình và chướng ngại vật trên 
 **Quan sát (Observations)**
 Tác tử nhận được hai nhóm kết quả quan sát trong môi trường:
 ① Đặc trưng từ bản thân cơ thể (proprioceptive): chủ yếu gồm góc khớp và vận tốc góc, và với robot bốn chân, robot hình người còn gồm số đọc của đồng hồ đo vận tốc, gia tốc kế và con quay hồi chuyển ở thân, cung cấp thông tin vận tốc và gia tốc lấy bản thân làm trung tâm, cùng các cảm biến tiếp xúc nối với bàn chân và chân. Các khớp chi dưới của robot hình người cũng có cảm biến mô-men để lấy đặc trưng.  
-② Đặc trưng bên ngoài từ môi trường: chủ yếu gồm vị trí so với tâm đường đua và đường viền địa hình phía trước. Thông tin địa hình được cung cấp dưới dạng mảng giá trị đo chiều cao lấy tại các điểm mẫu tịnh tiến cùng cơ thể dọc theo trục $X$ và trục $Y$. Robot hai chân (Planar walker) vì bị giới hạn trong trục $X$, trục $Y$, nên không thể di chuyển sang trái phải, do đó đơn giản hóa đặc trưng bên ngoài cảm nhận được.
+② Đặc trưng bên ngoài từ môi trường: chủ yếu gồm vị trí so với tâm đường đua và đường viền địa hình phía trước. Thông tin địa hình được cung cấp dưới dạng mảng giá trị đo chiều cao lấy tại các điểm mẫu tịnh tiến cùng cơ thể dọc theo trục $`X`$ và trục $`Y`$. Robot hai chân (Planar walker) vì bị giới hạn trong trục $`X`$, trục $`Y`$, nên không thể di chuyển sang trái phải, do đó đơn giản hóa đặc trưng bên ngoài cảm nhận được.
 
 ### 2. Tham số hóa hàm chính sách  
 Khi xây dựng hàm chính sách tham số hóa, **mục tiêu** là để mạng nơ-ron sâu tách biệt mối quan tâm giữa đặc trưng từ bản thân cơ thể (kỹ năng vận động cơ bản) và đặc trưng bên ngoài từ môi trường (nhận thức địa hình và định hướng). Xây dựng chính sách thành hai mạng con, trong đó một mạng chỉ nhận đặc trưng từ bản thân cơ thể, mạng kia chỉ nhận đặc trưng bên ngoài từ môi trường.
@@ -153,13 +160,13 @@ Kiến trúc mạng nơ-ron tách biệt này được so sánh với mạng nơ
 **Kiến trúc mạng nơ-ron của hàm chính sách** là:
 <div align=center><img src="https://img-blog.csdnimg.cn/e0781b42c72246deab1eec976ba6862f.png#pic_center" alt="Mô tả hình ảnh" style="zoom:80%;" /></div>
 
-Ở đây bổ sung giải thích về *$\mu$* (trung bình) và *$\sigma$* (phương sai):  
+Ở đây bổ sung giải thích về *$`\mu`$* (trung bình) và *$`\sigma`$* (phương sai):  
 Thuật toán tối ưu chính sách cận kề (Proximal policy optimization, PPO) dùng chính sách ngẫu nhiên (Stochastic policy) trong học tăng cường, giả định trước rằng phân phối xác suất hành động tuân theo phân phối chuẩn (Normal distribution), đầu vào là quan sát môi trường, đầu ra là phân phối xác suất của tất cả hành động.  
 <div align=center><img src="https://img-blog.csdnimg.cn/9abf074c803146d4b1f4dbd12c52deb3.png#pic_center" alt="Mô tả hình ảnh" style="zoom: 50%;" /></div>
 
-Với *$\mu$* (trung bình) và *$\sigma$* (phương sai) do hàm chính sách đưa ra, xây dựng phân phối xác suất hành động thông qua hàm mật độ xác suất (Probability distribution function, PDF), và lấy mẫu ngẫu nhiên hành động từ đó.
+Với *$`\mu`$* (trung bình) và *$`\sigma`$* (phương sai) do hàm chính sách đưa ra, xây dựng phân phối xác suất hành động thông qua hàm mật độ xác suất (Probability distribution function, PDF), và lấy mẫu ngẫu nhiên hành động từ đó.
 
-> Ghi chú của người dịch: theo quy ước thông thường, $\sigma$ là độ lệch chuẩn, còn phương sai là $\sigma^2$.
+> Ghi chú của người dịch: theo quy ước thông thường, $`\sigma`$ là độ lệch chuẩn, còn phương sai là $`\sigma^2`$.
 
 
 ##  4. Kết quả
@@ -204,7 +211,7 @@ Hình trên cho thấy, trong một số trường hợp, **chính sách tác t�
 ### 4. Kết quả thực nghiệm với robot hình người (Humanoid):  
 Robot hình người so với robot hai chân, robot bốn chân thì phức tạp hơn nhiều về cấu tạo cơ thể. Về môi trường, cũng dùng cùng địa hình hỗn hợp để huấn luyện.
 
-Về thiết kế **hàm phần thưởng** của robot hình người, chọn tỉ lệ thuận với tốc độ dọc trục $X$.  
+Về thiết kế **hàm phần thưởng** của robot hình người, chọn tỉ lệ thuận với tốc độ dọc trục $`X`$.  
 Về thiết kế **điều kiện kết thúc** của robot hình người, bài báo thử nghiệm hai điều kiện kết thúc thay thế:
 - Cách thứ nhất là kết thúc lượt khi khoảng cách nhỏ nhất giữa đầu và chân của robot hình người thấp hơn 0.9m.
 - Cách thứ hai là kết thúc lượt khi khoảng cách nhỏ nhất giữa đầu robot hình người và mặt đất thấp hơn 1.1m.

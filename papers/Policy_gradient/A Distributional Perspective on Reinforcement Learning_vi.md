@@ -18,52 +18,52 @@ Thay toán tử Bellman ban đầu bằng toán tử Bellman phân phối (distr
 
 **Phương trình Bellman**
 
-Các phương pháp học tăng cường dựa trên giá trị kinh điển cố gắng dùng giá trị kỳ vọng để mô hình hóa lợi tức tích lũy, biểu diễn bằng hàm giá trị $V(x)$ hoặc hàm giá trị hành động $Q(x,a)$, sau đó tác tử xem hàm giá trị như "bản đồ", theo chỉ dẫn mà chọn hành vi ở các trạng thái khác nhau. Học tăng cường thường dùng phương trình Bellman để mô tả hàm giá trị
-$$
+Các phương pháp học tăng cường dựa trên giá trị kinh điển cố gắng dùng giá trị kỳ vọng để mô hình hóa lợi tức tích lũy, biểu diễn bằng hàm giá trị $`V(x)`$ hoặc hàm giá trị hành động $`Q(x,a)`$, sau đó tác tử xem hàm giá trị như "bản đồ", theo chỉ dẫn mà chọn hành vi ở các trạng thái khác nhau. Học tăng cường thường dùng phương trình Bellman để mô tả hàm giá trị
+```math
 \begin{aligned}
 &Q^\pi(x, a):=\mathbb{E} Z^\pi(x, a)=\mathbb{E}\left[\sum_{t=0}^{\infty} \gamma^t R\left(x_t, a_t\right)\right] \\
 &x_t \sim P\left(\cdot \mid x_{t-1}, a_{t-1}\right), a_t \sim \pi\left(\cdot \mid x_t\right), x_0=x, a_0=a
 \end{aligned}
-$$
-Trong đó, $Z^\pi$ biểu thị lợi tức, là tổng phần thưởng chiết khấu nhận được dọc theo quỹ đạo tương tác của tác tử với môi trường dưới chính sách $\pi$. Hàm giá trị $Q^\pi$ của chính sách $\pi$ mô tả lợi tức kỳ vọng khi bắt đầu từ trạng thái $x \in X$ thực hiện hành động $a \in A$, rồi hành động theo $\pi$. Phương trình Bellman cũng có thể viết lại thành dạng lặp như sau:
-$$
+```
+Trong đó, $`Z^\pi`$ biểu thị lợi tức, là tổng phần thưởng chiết khấu nhận được dọc theo quỹ đạo tương tác của tác tử với môi trường dưới chính sách $`\pi`$. Hàm giá trị $`Q^\pi`$ của chính sách $`\pi`$ mô tả lợi tức kỳ vọng khi bắt đầu từ trạng thái $`x \in X`$ thực hiện hành động $`a \in A`$, rồi hành động theo $`\pi`$. Phương trình Bellman cũng có thể viết lại thành dạng lặp như sau:
+```math
 Q^\pi(x, a)=\mathbb{E} R(x, a)+\gamma \underset{P, \pi}{\mathbb{E}} Q^\pi\left(x^{\prime}, a^{\prime}\right)
-$$
+```
 Trong học tăng cường, ta thường quan tâm đến việc thực hiện hành động để tối đa hóa lợi tức. Cách phổ biến nhất là dùng phương trình tối ưu:
-$$
+```math
 Q^*(x, a)=\mathbb{E} R(x, a)+\gamma \mathbb{E}_P \max _{a^{\prime} \in \mathcal{A}} Q^*\left(x^{\prime}, a^{\prime}\right) .
-$$
-Phương trình này có điểm bất động duy nhất $\mathrm{Q}^*$, tức hàm giá trị tối ưu, ứng với tập chính sách tối ưu $\pi^*$ ($\pi^*$ là tối ưu khi $\mathbb{E}_{a \sim \pi^*} Q^*(x, a)=\max _a Q^*(x, a)$). Ta xem hàm giá trị là một vectơ trong $\mathbb{R}^{\mathcal{X} \times \mathcal{A}}$, và cũng xem hàm phần thưởng kỳ vọng là một vectơ như vậy. Trong trường hợp này, toán tử Bellman và toán tử tối ưu T được định nghĩa như sau:
-$$
+```
+Phương trình này có điểm bất động duy nhất $`\mathrm{Q}^*`$, tức hàm giá trị tối ưu, ứng với tập chính sách tối ưu $`\pi^*`$ ($`\pi^*`$ là tối ưu khi $`\mathbb{E}_{a \sim \pi^*} Q^*(x, a)=\max _a Q^*(x, a)`$). Ta xem hàm giá trị là một vectơ trong $`\mathbb{R}^{\mathcal{X} \times \mathcal{A}}`$, và cũng xem hàm phần thưởng kỳ vọng là một vectơ như vậy. Trong trường hợp này, toán tử Bellman và toán tử tối ưu T được định nghĩa như sau:
+```math
 \begin{aligned}
 \mathcal{T}^\pi Q(x, a) &:=\mathbb{E} R(x, a)+\gamma \underset{P, \pi}{\mathbb{E}} Q\left(x^{\prime}, a^{\prime}\right) \\
 \mathcal{T} Q(x, a) &:=\mathbb{E} R(x, a)+\gamma \mathbb{E}_P \max _{a^{\prime} \in \mathcal{A}} Q\left(x^{\prime}, a^{\prime}\right)
 \end{aligned}
-$$
-Các toán tử này rất hữu ích, rất nhiều thuật toán học tăng cường được xây dựng trên chúng. Đặc biệt, chúng đều là ánh xạ co (contraction mapping), và việc áp dụng lặp lại chúng trên một $Q_0$ ban đầu nào đó sẽ hội tụ về $Q^\pi$ hoặc $Q^*$.
+```
+Các toán tử này rất hữu ích, rất nhiều thuật toán học tăng cường được xây dựng trên chúng. Đặc biệt, chúng đều là ánh xạ co (contraction mapping), và việc áp dụng lặp lại chúng trên một $`Q_0`$ ban đầu nào đó sẽ hội tụ về $`Q^\pi`$ hoặc $`Q^*`$.
 
 **Phương trình Bellman phân phối**
 
-Phương trình Bellman ở trên là phương trình Bellman dựa trên kỳ vọng, mô tả quan hệ giữa kỳ vọng của ba biến ngẫu nhiên, tức $Q^\pi(x, a), \mathbb{E} R(x, a), \gamma \underset{P, \pi}{\mathbb{E}} Q^\pi\left(x^{\prime}, a^{\prime}\right)$. Trong đó số hạng thứ nhất là tổng của hai số hạng sau, nên cũng có dạng kỳ vọng. Phương trình Bellman phân phối thay kỳ vọng của biến ngẫu nhiên bằng chính biến ngẫu nhiên đó, tức là:
-$$
+Phương trình Bellman ở trên là phương trình Bellman dựa trên kỳ vọng, mô tả quan hệ giữa kỳ vọng của ba biến ngẫu nhiên, tức $`Q^\pi(x, a), \mathbb{E} R(x, a), \gamma \underset{P, \pi}{\mathbb{E}} Q^\pi\left(x^{\prime}, a^{\prime}\right)`$. Trong đó số hạng thứ nhất là tổng của hai số hạng sau, nên cũng có dạng kỳ vọng. Phương trình Bellman phân phối thay kỳ vọng của biến ngẫu nhiên bằng chính biến ngẫu nhiên đó, tức là:
+```math
 Z(x, a)=R(x, a)+\gamma Z(X^{\prime}, A^{\prime})
-$$
-Trong đó, $Z(x,a)$ là biến ngẫu nhiên biểu thị lợi tức dưới $(x, a)$, $R(x,a)$ là biến ngẫu nhiên biểu thị phần thưởng hiện tại, $\gamma Z(X^{\prime}, A^{\prime})$ là biến ngẫu nhiên về lợi tức đã chiết khấu của trạng thái tiếp theo, về ý nghĩa vật lý không thay đổi.
+```
+Trong đó, $`Z(x,a)`$ là biến ngẫu nhiên biểu thị lợi tức dưới $`(x, a)`$, $`R(x,a)`$ là biến ngẫu nhiên biểu thị phần thưởng hiện tại, $`\gamma Z(X^{\prime}, A^{\prime})`$ là biến ngẫu nhiên về lợi tức đã chiết khấu của trạng thái tiếp theo, về ý nghĩa vật lý không thay đổi.
 
-Công thức cập nhật của toán tử Bellman phân phối giá trị ${T}^\pi$:
-$$
+Công thức cập nhật của toán tử Bellman phân phối giá trị $`{T}^\pi`$:
+```math
 \begin{aligned}
-\mathcal{T}^\pi Q(x, a) &:=R(x, a)+\gamma P^\pi Z\left(x,a\right) 
+\mathcal{T}^\pi Q(x, a) &:=R(x, a)+\gamma P^\pi Z\left(x,a\right)
 \end{aligned}
-$$
+```
 Trong đó,
-$$
+```math
 \begin{aligned}
 &P^\pi Z\left(x,a\right) :\overset{D}{=} Z(X^{\prime}, A^{\prime})
 \\
 & X \sim P\left(\cdot \mid x, a\right), A^\prime \sim \pi\left(\cdot \mid X^\prime\right)
 \end{aligned}
-$$
+```
 **Ưu điểm của việc ước lượng phân phối:**
 
 1. Nhiều khi giá trị trung bình không phản ánh được đặc điểm của phân phối
@@ -75,10 +75,10 @@ Thuật toán C51 gồm hai quá trình quan trọng: tham số hóa phân phố
 
 **Quá trình 1: Tham số hóa phân phối**
 
-Ở bất kỳ cặp trạng thái-hành động (x,a) nào, lợi tức chiết khấu tích lũy đều là một phân phối. Để biểu diễn phân phối này, C51 rời rạc hóa không gian biến ngẫu nhiên, rồi mô hình hóa biến ngẫu nhiên thành tổng được biểu diễn trên các không gian rời rạc này. Giả sử giá trị lớn nhất của lợi tức chiết khấu tích lũy $Z$ là $V_{M A X}$, giá trị nhỏ nhất là $V_{M I N}$, và rời rạc hóa đều khoảng giữa giá trị nhỏ nhất và lớn nhất thành $\mathrm{N}$ khoảng, thì mỗi tập giá trị (support) đều nhau là $\left\{z_i=V_{\min }+i \Delta z: 0 \leq i<N, \Delta z:=\frac{V_{M A X}-V_{M I N}}{N-1}\right\}$, support là các điểm có mật độ xác suất khác 0. Do đó ta có thể mô hình hóa phân phối xác suất trên support
-$$
+Ở bất kỳ cặp trạng thái-hành động (x,a) nào, lợi tức chiết khấu tích lũy đều là một phân phối. Để biểu diễn phân phối này, C51 rời rạc hóa không gian biến ngẫu nhiên, rồi mô hình hóa biến ngẫu nhiên thành tổng được biểu diễn trên các không gian rời rạc này. Giả sử giá trị lớn nhất của lợi tức chiết khấu tích lũy $`Z`$ là $`V_{M A X}`$, giá trị nhỏ nhất là $`V_{M I N}`$, và rời rạc hóa đều khoảng giữa giá trị nhỏ nhất và lớn nhất thành $`\mathrm{N}`$ khoảng, thì mỗi tập giá trị (support) đều nhau là $`\left\{z_i=V_{\min }+i \Delta z: 0 \leq i<N, \Delta z:=\frac{V_{M A X}-V_{M I N}}{N-1}\right\}`$, support là các điểm có mật độ xác suất khác 0. Do đó ta có thể mô hình hóa phân phối xác suất trên support
+```math
 Z_{\theta}(x,a) = z_i \quad w.p. \quad p_i(x,a):=\frac{e^{\theta_i(x,a)}}{\sum_je^{\theta_j(x,a)}}
-$$
+```
 Trong đó w.p. là viết tắt của with probability (với xác suất).
 
 ![2022-11-14 214510](img/C51_1.png)
@@ -91,7 +91,7 @@ Hình trên tham khảo từ [một câu trả lời trên Zhihu](https://zhuanl
 
 <img src="img/C51_2.png" alt="2022-11-14 213502" style="zoom:67%;" />
 
-Phần màu xanh lam trong hình (a) là phân phối của cặp trạng thái-hành động tiếp theo, sau khi chịu tác dụng của hệ số chiết khấu $\gamma$ trở thành phần màu tím trong hình (b), sau khi cộng với phần thưởng là biến ngẫu nhiên hằng, tịnh tiến thành phần ánh xạ trong hình (c). Rõ ràng có thể thấy, toán tử Bellman phân phối giá trị là co, nên cuối cùng có thể hội tụ. Nhưng đồng thời dưới tác dụng lặp đi lặp lại của toán tử Bellman phân phối giá trị, phân phối sẽ rời khỏi miền xác định ban đầu, vượt ra ngoài phạm vi support đã rời rạc hóa ở trên, vì vậy ta cần một ánh xạ $\phi$ để chiếu biến ngẫu nhiên sau khi cập nhật về support rời rạc ban đầu, đây chính là cập nhật Bellman có chiếu
+Phần màu xanh lam trong hình (a) là phân phối của cặp trạng thái-hành động tiếp theo, sau khi chịu tác dụng của hệ số chiết khấu $`\gamma`$ trở thành phần màu tím trong hình (b), sau khi cộng với phần thưởng là biến ngẫu nhiên hằng, tịnh tiến thành phần ánh xạ trong hình (c). Rõ ràng có thể thấy, toán tử Bellman phân phối giá trị là co, nên cuối cùng có thể hội tụ. Nhưng đồng thời dưới tác dụng lặp đi lặp lại của toán tử Bellman phân phối giá trị, phân phối sẽ rời khỏi miền xác định ban đầu, vượt ra ngoài phạm vi support đã rời rạc hóa ở trên, vì vậy ta cần một ánh xạ $`\phi`$ để chiếu biến ngẫu nhiên sau khi cập nhật về support rời rạc ban đầu, đây chính là cập nhật Bellman có chiếu
 
 **Thuật toán tổng thể**
 

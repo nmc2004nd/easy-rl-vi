@@ -24,21 +24,21 @@ Bài báo trước tiên chứng minh việc tối thiểu hóa một hàm mất
 
 #### 1. Tiền đề
 
-Định nghĩa một quá trình quyết định Markov (MDP) chiết khấu với tầm nhìn vô hạn là một bộ $<S,A,P,c,\rho_{0},\gamma>$, $S$ là tập trạng thái hữu hạn, $A$ là tập hành động hữu hạn, $P:S\times A\times S \to R$ là phân phối xác suất chuyển, $c:S\to R$ là hàm chi phí, $\rho_{0}:S\to R$ là phân phối của trạng thái ban đầu $s_{0}$, $\gamma \in(0,1)$ là hệ số chiết khấu.
+Định nghĩa một quá trình quyết định Markov (MDP) chiết khấu với tầm nhìn vô hạn là một bộ $`\langle S,A,P,c,\rho_{0},\gamma\rangle`$, $`S`$ là tập trạng thái hữu hạn, $`A`$ là tập hành động hữu hạn, $`P:S\times A\times S \to R`$ là phân phối xác suất chuyển, $`c:S\to R`$ là hàm chi phí, $`\rho_{0}:S\to R`$ là phân phối của trạng thái ban đầu $`s_{0}`$, $`\gamma \in(0,1)`$ là hệ số chiết khấu.
 
-Gọi $\pi$ là chính sách ngẫu nhiên $\pi:S\times A \to [0,1]$, gọi $\eta(\pi)$ là chi phí chiết khấu kỳ vọng, thì có:
+Gọi $`\pi`$ là chính sách ngẫu nhiên $`\pi:S\times A \to [0,1]`$, gọi $`\eta(\pi)`$ là chi phí chiết khấu kỳ vọng, thì có:
 
 ![Mô tả hình ảnh](img/TRPO-0.png)
 
-Định nghĩa chuẩn của hàm giá trị trạng thái-hành động $Q_{\pi}$, hàm giá trị $V_{\pi}$, hàm lợi thế $A_{\pi}$ như sau:
+Định nghĩa chuẩn của hàm giá trị trạng thái-hành động $`Q_{\pi}`$, hàm giá trị $`V_{\pi}`$, hàm lợi thế $`A_{\pi}`$ như sau:
 
 ![Mô tả hình ảnh](img/TRPO--0.png)
 
-Khi đó theo sự tích lũy qua các bước thời gian, chi phí kỳ vọng của một chính sách khác $\tilde{\pi}$ được biểu diễn theo lợi thế của $\pi$ như công thức (1):
+Khi đó theo sự tích lũy qua các bước thời gian, chi phí kỳ vọng của một chính sách khác $`\tilde{\pi}`$ được biểu diễn theo lợi thế của $`\pi`$ như công thức (1):
 
 ![Mô tả hình ảnh](img/TRPO--1.png)
 
-Gọi $\rho_{\pi}$ là tần suất thăm chiết khấu chưa chuẩn hóa, thì
+Gọi $`\rho_{\pi}`$ là tần suất thăm chiết khấu chưa chuẩn hóa, thì
 
 ![Mô tả hình ảnh](img/TRPO-2.png)
 
@@ -46,18 +46,18 @@ Sắp xếp lại công thức (1) thành tổng theo trạng thái, có công t
 
 ![Mô tả hình ảnh](img/TRPO--2.png)
 
-Công thức này có nghĩa là với bất kỳ cập nhật chính sách $\pi \to \tilde{\pi}$ nào mà $\tilde{\pi}$ có lợi thế kỳ vọng không dương tại mọi trạng thái $s$, tức $\sum_{a}\tilde{\pi}(a|s)A(\pi)(s,a)\le 0$, đều đảm bảo giảm $\eta$, hoặc giữ nguyên trong trường hợp lợi thế kỳ vọng bằng $0$ ở mọi nơi. Điều này hàm ý kết quả kinh điển của việc cập nhật bằng lặp chính sách chính xác. Tuy nhiên, trong thiết lập xấp xỉ, do sai số ước lượng và xấp xỉ, việc một số trạng thái có lợi thế kỳ vọng dương thường là không tránh khỏi, tức $\sum_{a}\tilde{\pi}(a|s)A(\pi)(s,a)\ge 0$. 
-Sự phụ thuộc phức tạp của $\rho_{\tilde{\pi}}$ vào $\tilde{\pi}$ khiến công thức (2) khó tối ưu trực tiếp. Vì vậy bài báo đưa vào xấp xỉ cục bộ sau của $\eta$:
+Công thức này có nghĩa là với bất kỳ cập nhật chính sách $`\pi \to \tilde{\pi}`$ nào mà $`\tilde{\pi}`$ có lợi thế kỳ vọng không dương tại mọi trạng thái $`s`$, tức $`\sum_{a}\tilde{\pi}(a|s)A(\pi)(s,a)\le 0`$, đều đảm bảo giảm $`\eta`$, hoặc giữ nguyên trong trường hợp lợi thế kỳ vọng bằng $`0`$ ở mọi nơi. Điều này hàm ý kết quả kinh điển của việc cập nhật bằng lặp chính sách chính xác. Tuy nhiên, trong thiết lập xấp xỉ, do sai số ước lượng và xấp xỉ, việc một số trạng thái có lợi thế kỳ vọng dương thường là không tránh khỏi, tức $`\sum_{a}\tilde{\pi}(a|s)A(\pi)(s,a)\ge 0`$. 
+Sự phụ thuộc phức tạp của $`\rho_{\tilde{\pi}}`$ vào $`\tilde{\pi}`$ khiến công thức (2) khó tối ưu trực tiếp. Vì vậy bài báo đưa vào xấp xỉ cục bộ sau của $`\eta`$:
 
 ![Mô tả hình ảnh](img/TRPO--3.png)
 
-Tuy nhiên, nếu ta có một chính sách tham số hóa $\pi_{\theta}$, trong đó $\pi_{\theta}(a|s)$ là hàm khả vi của vector tham số $\theta$, thì $L_{\pi}$ khớp với $\eta$ đến bậc một. Tức là, với mọi giá trị tham số $\theta_{0}$, có
+Tuy nhiên, nếu ta có một chính sách tham số hóa $`\pi_{\theta}`$, trong đó $`\pi_{\theta}(a|s)`$ là hàm khả vi của vector tham số $`\theta`$, thì $`L_{\pi}`$ khớp với $`\eta`$ đến bậc một. Tức là, với mọi giá trị tham số $`\theta_{0}`$, có
 
 ![Mô tả hình ảnh](img/TRPO--4.png)
 
-Công thức (4) cho thấy một bước cập nhật đủ nhỏ $\pi_{\theta_{0}}\to \tilde(\pi)$ mà cải thiện được $L_{\pi_{old}}$ thì cũng cải thiện được $\eta$, nhưng ta không biết bước này lớn bao nhiêu. Để giải quyết vấn đề này, Kakade & Langford (2002) đề xuất một phương án cập nhật chính sách gọi là lặp chính sách bảo thủ (conservative policy iteration), cung cấp cận dưới rõ ràng cho mức cải thiện của $\eta$.
+Công thức (4) cho thấy một bước cập nhật đủ nhỏ $`\pi_{\theta_{0}}\to \tilde{\pi}`$ mà cải thiện được $`L_{\pi_{old}}`$ thì cũng cải thiện được $`\eta`$, nhưng ta không biết bước này lớn bao nhiêu. Để giải quyết vấn đề này, Kakade & Langford (2002) đề xuất một phương án cập nhật chính sách gọi là lặp chính sách bảo thủ (conservative policy iteration), cung cấp cận dưới rõ ràng cho mức cải thiện của $`\eta`$.
 
-Để định nghĩa cập nhật lặp chính sách bảo thủ, gọi $\pi_{old}$ là chính sách hiện tại, giả sử giải được $\pi'=argmin_{\pi'}L_{\pi_{old}}(\pi')$. Chính sách mới $\pi_{new}$ được lấy là chính sách hỗn hợp, như công thức (5):
+Để định nghĩa cập nhật lặp chính sách bảo thủ, gọi $`\pi_{old}`$ là chính sách hiện tại, giả sử giải được $`\pi'=\arg\min_{\pi'}L_{\pi_{old}}(\pi')`$. Chính sách mới $`\pi_{new}`$ được lấy là chính sách hỗn hợp, như công thức (5):
 
 ![Mô tả hình ảnh](img/TRPO--5.png)
 
@@ -65,39 +65,39 @@ Kakade và Langford chứng minh kết quả sau của cập nhật này:
 
 ![Mô tả hình ảnh](img/TRPO--8.png)
 
-$\epsilon$ là lợi thế lớn nhất (âm hoặc dương) của $\pi'$ so với $\pi$, đẳng thức (6) đưa ra một cận đơn giản hơn. Cận này hơi yếu khi $\alpha \ll 1$. Cận này chỉ áp dụng cho chính sách hỗn hợp sinh ra bởi đẳng thức (5). Chính sách hỗn hợp không phù hợp với tình huống thực tế, với mọi chính sách ngẫu nhiên tổng quát cần một phương án cập nhật chính sách thực dụng.
+$`\epsilon`$ là lợi thế lớn nhất (âm hoặc dương) của $`\pi'`$ so với $`\pi`$, đẳng thức (6) đưa ra một cận đơn giản hơn. Cận này hơi yếu khi $`\alpha \ll 1`$. Cận này chỉ áp dụng cho chính sách hỗn hợp sinh ra bởi đẳng thức (5). Chính sách hỗn hợp không phù hợp với tình huống thực tế, với mọi chính sách ngẫu nhiên tổng quát cần một phương án cập nhật chính sách thực dụng.
 
 #### 2. Đảm bảo cải thiện đơn điệu cho chính sách ngẫu nhiên tổng quát
 
-Công thức (6) có nghĩa là cải thiện vế phải sẽ đảm bảo cải thiện mục tiêu chi phí kỳ vọng thực $\eta$. Kết quả lý thuyết chính của bài báo là, bằng cách thay $\alpha$ bằng một thước đo khoảng cách giữa $\pi$ và $\tilde{\pi}$, cận cải thiện chính sách trong công thức (6) có thể mở rộng cho chính sách ngẫu nhiên tổng quát, chứ không chỉ phù hợp với chính sách hỗn hợp. Kết quả này rất quan trọng để mở rộng đảm bảo cải thiện sang các bài toán thực tế. Với các phân phối xác suất rời rạc $p,q$, định nghĩa độ phân kỳ biến phân toàn phần (total variation divergence) giữa hai chính sách là:
+Công thức (6) có nghĩa là cải thiện vế phải sẽ đảm bảo cải thiện mục tiêu chi phí kỳ vọng thực $`\eta`$. Kết quả lý thuyết chính của bài báo là, bằng cách thay $`\alpha`$ bằng một thước đo khoảng cách giữa $`\pi`$ và $`\tilde{\pi}`$, cận cải thiện chính sách trong công thức (6) có thể mở rộng cho chính sách ngẫu nhiên tổng quát, chứ không chỉ phù hợp với chính sách hỗn hợp. Kết quả này rất quan trọng để mở rộng đảm bảo cải thiện sang các bài toán thực tế. Với các phân phối xác suất rời rạc $`p,q`$, định nghĩa độ phân kỳ biến phân toàn phần (total variation divergence) giữa hai chính sách là:
 
 ![Mô tả hình ảnh](img/TRPO--9.png)
 
-Định lý 1. Gọi $\alpha=D^{max}_{TV}(\pi_{old},\pi_{new})$, gọi $\epsilon=max_{s}\left |  E_{a\sim\pi'(a|s)}[A_{\pi}(s,a)]\right |$, thì công thức (8) đúng. Chứng minh ở phụ lục.
+Định lý 1. Gọi $`\alpha=D^{\max}_{TV}(\pi_{old},\pi_{new})`$, gọi $`\epsilon=\max_{s}\left |  E_{a\sim\pi'(a|s)}[A_{\pi}(s,a)]\right |`$, thì công thức (8) đúng. Chứng minh ở phụ lục.
 
-Ta chú ý rằng độ phân kỳ biến phân và độ phân kỳ KL có quan hệ như sau: $D_{TV}(p||q)^2 \le D_{KL}(p||q)$. Gọi $D^{max}_{KL}(\pi, \tilde{\pi}) = max_{s}D_{KL}(\pi(\cdot|s))$, có thể suy trực tiếp cận sau từ công thức (8), tức công thức (10):
+Ta chú ý rằng độ phân kỳ biến phân và độ phân kỳ KL có quan hệ như sau: $`D_{TV}(p||q)^2 \le D_{KL}(p||q)`$. Gọi $`D^{\max}_{KL}(\pi, \tilde{\pi}) = \max_{s}D_{KL}(\pi(\cdot|s))`$, có thể suy trực tiếp cận sau từ công thức (8), tức công thức (10):
 
 ![Mô tả hình ảnh](img/TRPO--10.png)
 
 ![Mô tả hình ảnh](img/TRPO-11.png)
 
-Thuật toán 1 mô tả phương pháp lặp chính sách xấp xỉ dựa trên cận cải thiện chính sách trong công thức (10). Chú ý rằng, ta giả định đánh giá chính xác giá trị lợi thế $A_{\pi}$.
+Thuật toán 1 mô tả phương pháp lặp chính sách xấp xỉ dựa trên cận cải thiện chính sách trong công thức (10). Chú ý rằng, ta giả định đánh giá chính xác giá trị lợi thế $`A_{\pi}`$.
 
-Từ công thức (10) có thể biết, thuật toán 1 đảm bảo sinh ra một chuỗi chính sách cải thiện đơn điệu $\eta(\pi_{0})\ge\eta(\pi_{1})\eta(\pi_{2})\ge ...$. Gọi
+Từ công thức (10) có thể biết, thuật toán 1 đảm bảo sinh ra một chuỗi chính sách cải thiện đơn điệu $`\eta(\pi_{0})\ge\eta(\pi_{1})\eta(\pi_{2})\ge ...`$. Gọi
 
 ![Mô tả hình ảnh](img/TRPO--11.png)
 
-Bằng cách tối thiểu hóa $M_{i}$ trong mỗi vòng lặp, ta có thể đảm bảo mục tiêu thực $\eta$ không tăng. Thuật toán này là một thuật toán majorization-minimization (MM), đây là một lớp phương pháp bao gồm cả cực đại hóa kỳ vọng (EM). Trong thuật toán MM, $M_{i}$ là hàm thay thế (surrogate), bằng $\eta$ tại $\pi_{i}$. Thuật toán này cũng gợi nhớ đến phương pháp gradient cận kề (proximal gradient) và phương pháp giảm gương (mirror descent). Tối ưu chính sách vùng tin cậy đề xuất trong phần tiếp theo là xấp xỉ của thuật toán 1, nó dùng ràng buộc trên độ phân kỳ KL thay vì phạt để cho phép các bước cập nhật lớn một cách bền vững.
+Bằng cách tối thiểu hóa $`M_{i}`$ trong mỗi vòng lặp, ta có thể đảm bảo mục tiêu thực $`\eta`$ không tăng. Thuật toán này là một thuật toán majorization-minimization (MM), đây là một lớp phương pháp bao gồm cả cực đại hóa kỳ vọng (EM). Trong thuật toán MM, $`M_{i}`$ là hàm thay thế (surrogate), bằng $`\eta`$ tại $`\pi_{i}`$. Thuật toán này cũng gợi nhớ đến phương pháp gradient cận kề (proximal gradient) và phương pháp giảm gương (mirror descent). Tối ưu chính sách vùng tin cậy đề xuất trong phần tiếp theo là xấp xỉ của thuật toán 1, nó dùng ràng buộc trên độ phân kỳ KL thay vì phạt để cho phép các bước cập nhật lớn một cách bền vững.
 
-> Ghi chú của người dịch: chuỗi bất đẳng thức ở trên bản gốc thiếu một dấu $\ge$, đúng ra là $\eta(\pi_{0})\ge\eta(\pi_{1})\ge\eta(\pi_{2})\ge ...$.
+> Ghi chú của người dịch: chuỗi bất đẳng thức ở trên bản gốc thiếu một dấu $`\ge`$, đúng ra là $`\eta(\pi_{0})\ge\eta(\pi_{1})\ge\eta(\pi_{2})\ge ...`$.
 
 #### 3. Tối ưu chính sách tham số hóa
 Phần này trình bày cách từ cơ sở lý thuyết đưa ra một thuật toán ứng dụng, trên cơ sở số mẫu hữu hạn và tham số hóa bất kỳ.
-Vì ta xét chính sách tham số hóa $\pi_{\theta}(a|s)$ với vector tham số $\theta$, nên ta dùng hàm theo $\theta$ thay vì $\pi$ để nạp chồng các ký hiệu chính sách trước đó. Mục tiêu tối ưu là công thức sau:
+Vì ta xét chính sách tham số hóa $`\pi_{\theta}(a|s)`$ với vector tham số $`\theta`$, nên ta dùng hàm theo $`\theta`$ thay vì $`\pi`$ để nạp chồng các ký hiệu chính sách trước đó. Mục tiêu tối ưu là công thức sau:
 
 ![Mô tả hình ảnh](img/TRPO-13.png)
 
-Nếu dùng hệ số phạt $C$ trong công thức trên, bước sẽ rất nhỏ, một cách để thực hiện các bước lớn hơn một cách bền vững là dùng ràng buộc trên độ phân kỳ KL giữa chính sách cũ và mới, tức ràng buộc vùng tin cậy, như công thức (12):
+Nếu dùng hệ số phạt $`C`$ trong công thức trên, bước sẽ rất nhỏ, một cách để thực hiện các bước lớn hơn một cách bền vững là dùng ràng buộc trên độ phân kỳ KL giữa chính sách cũ và mới, tức ràng buộc vùng tin cậy, như công thức (12):
 
 ![Mô tả hình ảnh](img/TRPO--12.png)
 
@@ -113,11 +113,11 @@ Các cập nhật chính sách tương tự đã được đề xuất trong cá
 
 #### 4. Ước lượng mục tiêu và ràng buộc dựa trên lấy mẫu
 
-Phần này mô tả cách dùng mô phỏng Monte Carlo để xấp xỉ hàm mục tiêu và hàm ràng buộc. Khai triển $L_{\theta_{old}}$ trong công thức (13) được công thức (14):
+Phần này mô tả cách dùng mô phỏng Monte Carlo để xấp xỉ hàm mục tiêu và hàm ràng buộc. Khai triển $`L_{\theta_{old}}`$ trong công thức (13) được công thức (14):
 
 ![Mô tả hình ảnh](img/TRPO-14.png)
 
-Dùng kỳ vọng $\frac{1}{1-\gamma}E_{s\sim\rho_{old}}[...]$ thay cho $\sum_{s}\rho_{\theta_{old}}[...]$, dùng giá trị lợi thế $A_{\theta_{old}}$ thay cho giá trị Q $Q_{\theta_{old}}$. Cuối cùng dùng một bộ ước lượng importance sampling thay cho tổng theo hành động, dùng $q$ biểu thị phân phối lấy mẫu, thì đóng góp của một $s_{n}$ vào hàm mất mát là:
+Dùng kỳ vọng $`\frac{1}{1-\gamma}E_{s\sim\rho_{old}}[...]`$ thay cho $`\sum_{s}\rho_{\theta_{old}}[...]`$, dùng giá trị lợi thế $`A_{\theta_{old}}`$ thay cho giá trị Q $`Q_{\theta_{old}}`$. Cuối cùng dùng một bộ ước lượng importance sampling thay cho tổng theo hành động, dùng $`q`$ biểu thị phân phối lấy mẫu, thì đóng góp của một $`s_{n}`$ vào hàm mất mát là:
 
 ![Mô tả hình ảnh](img/TRPO-14.png)
 
@@ -137,54 +137,54 @@ Phần còn lại là dùng trung bình mẫu thay cho kỳ vọng, dùng ước
 
 ##### 4.1 Phương pháp đường đơn
 
-Thu thập chuỗi trạng thái bằng cách lấy mẫu $s_{0}\sim \rho_{0}$, sau đó mô phỏng chính sách $\pi_{\theta_{old}}$ một số bước thời gian để sinh ra quỹ đạo $s_{0},a_{0},s_{1},a_{1},...,s_{T-1},a_{T-1},s_{T}$. Tức có $q(a|s)=\pi_{\theta_{old}}(a|s)$. Tại mỗi $(s_{t},a_{t})$ lấy tổng chiết khấu chi phí tương lai dọc theo quỹ đạo để tính $Q_{\theta_{old}}(s,a)$.
+Thu thập chuỗi trạng thái bằng cách lấy mẫu $`s_{0}\sim \rho_{0}`$, sau đó mô phỏng chính sách $`\pi_{\theta_{old}}`$ một số bước thời gian để sinh ra quỹ đạo $`s_{0},a_{0},s_{1},a_{1},...,s_{T-1},a_{T-1},s_{T}`$. Tức có $`q(a|s)=\pi_{\theta_{old}}(a|s)`$. Tại mỗi $`(s_{t},a_{t})`$ lấy tổng chiết khấu chi phí tương lai dọc theo quỹ đạo để tính $`Q_{\theta_{old}}(s,a)`$.
 
 ##### 4.2 Phương pháp vine
 
-Lấy mẫu $s_{0}\sim \rho_{0}$, mô phỏng chính sách $\pi_{\theta_{old}}$ sinh ra nhiều quỹ đạo, chọn dọc theo quỹ đạo một tập con có $N$ trạng thái $s_{1},s_{2},...,s_{N}$, bài báo gọi là "rollout set" (tập triển khai). Trong tập này, với mỗi trạng thái $s_{n}$, lấy mẫu $K$ hành động theo $a_{n,k}\sim q(\cdot|s_{n})$. Bài báo phát hiện $q(\cdot|s_{n})=\pi_{\theta_{i}}(\cdot|s_{n})$ thể hiện rất tốt trên các bài toán liên tục huấn luyện chuyển động robot, còn phân phối đều có thể khám phá tốt hơn trên các nhiệm vụ rời rạc như trò chơi Atari.
+Lấy mẫu $`s_{0}\sim \rho_{0}`$, mô phỏng chính sách $`\pi_{\theta_{old}}`$ sinh ra nhiều quỹ đạo, chọn dọc theo quỹ đạo một tập con có $`N`$ trạng thái $`s_{1},s_{2},...,s_{N}`$, bài báo gọi là "rollout set" (tập triển khai). Trong tập này, với mỗi trạng thái $`s_{n}`$, lấy mẫu $`K`$ hành động theo $`a_{n,k}\sim q(\cdot|s_{n})`$. Bài báo phát hiện $`q(\cdot|s_{n})=\pi_{\theta_{i}}(\cdot|s_{n})`$ thể hiện rất tốt trên các bài toán liên tục huấn luyện chuyển động robot, còn phân phối đều có thể khám phá tốt hơn trên các nhiệm vụ rời rạc như trò chơi Atari.
 
-Với mỗi hành động $a_{n,k}$ được lấy mẫu tại mỗi trạng thái $s_{n}$, ta ước lượng $\hat{Q}_{\theta_{i}}(s_{n},a_{n,k})$ bằng cách thực hiện một rollout (tức một quỹ đạo ngắn) bắt đầu từ trạng thái $s_{n}$ và hành động $a_{n,k}$. Ta có thể dùng cùng một chuỗi số ngẫu nhiên (tức số ngẫu nhiên chung) để xử lý nhiễu trong $K$ quỹ đạo ngắn, giảm đáng kể phương sai của chênh lệch giá trị $Q$ giữa các quỹ đạo ngắn.
+Với mỗi hành động $`a_{n,k}`$ được lấy mẫu tại mỗi trạng thái $`s_{n}`$, ta ước lượng $`\hat{Q}_{\theta_{i}}(s_{n},a_{n,k})`$ bằng cách thực hiện một rollout (tức một quỹ đạo ngắn) bắt đầu từ trạng thái $`s_{n}`$ và hành động $`a_{n,k}`$. Ta có thể dùng cùng một chuỗi số ngẫu nhiên (tức số ngẫu nhiên chung) để xử lý nhiễu trong $`K`$ quỹ đạo ngắn, giảm đáng kể phương sai của chênh lệch giá trị $`Q`$ giữa các quỹ đạo ngắn.
 
-Trong không gian hành động hữu hạn nhỏ, ta có thể sinh một quỹ đạo ngắn (rollout) cho mỗi hành động khả dĩ từ trạng thái đã cho. Đóng góp của một trạng thái $s_{n}$ vào $L_{\theta_{old}}$ như sau:
+Trong không gian hành động hữu hạn nhỏ, ta có thể sinh một quỹ đạo ngắn (rollout) cho mỗi hành động khả dĩ từ trạng thái đã cho. Đóng góp của một trạng thái $`s_{n}`$ vào $`L_{\theta_{old}}`$ như sau:
 
 ![Mô tả hình ảnh](img/TRPO--16.png)
 
-Trong không gian trạng thái lớn hoặc liên tục, ta dùng importance sampling để xây dựng bộ ước lượng của hàm mất mát thay thế. Bộ ước lượng tự chuẩn hóa của một trạng thái $s_{n}$ là
+Trong không gian trạng thái lớn hoặc liên tục, ta dùng importance sampling để xây dựng bộ ước lượng của hàm mất mát thay thế. Bộ ước lượng tự chuẩn hóa của một trạng thái $`s_{n}`$ là
 
 ![Mô tả hình ảnh](img/TRPO--17.png)
 
-Giả sử ta thực hiện $K$ hành động $a_{n,1}, a_{n,2}, …, a_{n,K}$ từ trạng thái $s_{n}$. Bộ ước lượng tự chuẩn hóa này loại bỏ nhu cầu dùng đường cơ sở cho giá trị $Q$ (thêm một hằng số vào giá trị Q, gradient không đổi). Lấy trung bình theo $s_{N}\sim \rho(\pi)$, có thể được bộ ước lượng của $L_{\theta_{old}}$, cùng gradient của nó.
+Giả sử ta thực hiện $`K`$ hành động $`a_{n,1}, a_{n,2}, …, a_{n,K}`$ từ trạng thái $`s_{n}`$. Bộ ước lượng tự chuẩn hóa này loại bỏ nhu cầu dùng đường cơ sở cho giá trị $`Q`$ (thêm một hằng số vào giá trị Q, gradient không đổi). Lấy trung bình theo $`s_{N}\sim \rho(\pi)`$, có thể được bộ ước lượng của $`L_{\theta_{old}}`$, cùng gradient của nó.
 
 Hình 1 minh họa phương pháp vine và phương pháp đường đơn.
 
 ![Mô tả hình ảnh](img/TRPO-1.png)
 
-Hình trái là sơ đồ quy trình đường đơn. Sinh một tập quỹ đạo bằng cách mô phỏng chính sách, và gộp tất cả các cặp trạng thái-hành động $(s_{n}, a_{n})$ vào mục tiêu. Hình phải là sơ đồ phương pháp vine. Sinh một tập quỹ đạo "thân chính", sau đó sinh các triển khai "nhánh" từ một tập con các trạng thái đạt được. Với mỗi trạng thái $s_{n}$, thực hiện nhiều hành động (ở đây là $a_{1}$ và $a_{2}$), và sau mỗi hành động thực hiện một quỹ đạo ngắn, dùng số ngẫu nhiên chung (CRN) để giảm phương sai.
+Hình trái là sơ đồ quy trình đường đơn. Sinh một tập quỹ đạo bằng cách mô phỏng chính sách, và gộp tất cả các cặp trạng thái-hành động $`(s_{n}, a_{n})`$ vào mục tiêu. Hình phải là sơ đồ phương pháp vine. Sinh một tập quỹ đạo "thân chính", sau đó sinh các triển khai "nhánh" từ một tập con các trạng thái đạt được. Với mỗi trạng thái $`s_{n}`$, thực hiện nhiều hành động (ở đây là $`a_{1}`$ và $`a_{2}`$), và sau mỗi hành động thực hiện một quỹ đạo ngắn, dùng số ngẫu nhiên chung (CRN) để giảm phương sai.
 
 Quỹ đạo dùng để lấy mẫu trong phương pháp vine có thể ví như thân của dây leo, nó chia thành vài nhánh ngắn (quỹ đạo triển khai) ở các điểm khác nhau (tập quỹ đạo ngắn).
 
-Với cùng số mẫu giá trị $Q$ cho hàm mất mát thay thế, phương pháp vine tốt hơn phương pháp đường đơn, ước lượng cục bộ của mục tiêu có phương sai thấp hơn. Tức phương pháp vine cho ước lượng giá trị lợi thế tốt hơn. Nhược điểm của phương pháp vine là với các ước lượng lợi thế này, phải gọi bộ mô phỏng nhiều lần hơn. Ngoài ra, phương pháp vine yêu cầu ta sinh nhiều quỹ đạo từ mỗi trạng thái trong tập triển khai, điều này giới hạn thiết lập của thuật toán vào những hệ thống có thể đặt lại về trạng thái bất kỳ. Ngược lại, thuật toán đường đơn không cần đặt lại trạng thái, có thể cài đặt trực tiếp trên hệ thống vật lý.
+Với cùng số mẫu giá trị $`Q`$ cho hàm mất mát thay thế, phương pháp vine tốt hơn phương pháp đường đơn, ước lượng cục bộ của mục tiêu có phương sai thấp hơn. Tức phương pháp vine cho ước lượng giá trị lợi thế tốt hơn. Nhược điểm của phương pháp vine là với các ước lượng lợi thế này, phải gọi bộ mô phỏng nhiều lần hơn. Ngoài ra, phương pháp vine yêu cầu ta sinh nhiều quỹ đạo từ mỗi trạng thái trong tập triển khai, điều này giới hạn thiết lập của thuật toán vào những hệ thống có thể đặt lại về trạng thái bất kỳ. Ngược lại, thuật toán đường đơn không cần đặt lại trạng thái, có thể cài đặt trực tiếp trên hệ thống vật lý.
 
-> Ghi chú của người dịch: ở mục 4.2, bản gốc viết $q(\cdot|s_{n}=\pi_{\theta_{i}}(\cdot|s_{n})$ (thiếu dấu ngoặc đóng), bản dịch đã sửa thành $q(\cdot|s_{n})=\pi_{\theta_{i}}(\cdot|s_{n})$.
+> Ghi chú của người dịch: ở mục 4.2, bản gốc viết $`q(\cdot|s_{n}=\pi_{\theta_{i}}(\cdot|s_{n})`$ (thiếu dấu ngoặc đóng), bản dịch đã sửa thành $`q(\cdot|s_{n})=\pi_{\theta_{i}}(\cdot|s_{n})`$.
 
 #### 5. Thuật toán thực dụng
 
 Dựa trên phương pháp lấy mẫu đường đơn và vine, bài báo đề xuất hai thuật toán tối ưu chính sách thực dụng. Thuật toán lặp lại các bước sau:
 
-1. Dùng quy trình đường đơn hoặc vine để thu thập một tập cặp trạng thái-hành động, cùng ước lượng Monte Carlo của giá trị $Q$ tương ứng.
+1. Dùng quy trình đường đơn hoặc vine để thu thập một tập cặp trạng thái-hành động, cùng ước lượng Monte Carlo của giá trị $`Q`$ tương ứng.
    
 2. Bằng cách lấy trung bình trên nhiều mẫu, xây dựng mục tiêu ước lượng và điều kiện ràng buộc trong công thức (15).
    
-3. Giải xấp xỉ bài toán tối ưu có ràng buộc này, cập nhật vector tham số $\theta$ của chính sách. Bài báo dùng thuật toán gradient liên hợp, kèm tìm kiếm theo đường (line search).
+3. Giải xấp xỉ bài toán tối ưu có ràng buộc này, cập nhật vector tham số $`\theta`$ của chính sách. Bài báo dùng thuật toán gradient liên hợp, kèm tìm kiếm theo đường (line search).
    
 
-Ở bước 3, bài báo tính giải tích ma trận Hessian của độ phân kỳ KL bằng cách xây dựng ma trận thông tin Fisher (FIM), không dùng ma trận hiệp phương sai của gradient. Bộ ước lượng giải tích lấy tích phân theo hành động tại mỗi trạng thái $s_{n}$, không phụ thuộc vào hành động được lấy mẫu $a_{t}$.
+Ở bước 3, bài báo tính giải tích ma trận Hessian của độ phân kỳ KL bằng cách xây dựng ma trận thông tin Fisher (FIM), không dùng ma trận hiệp phương sai của gradient. Bộ ước lượng giải tích lấy tích phân theo hành động tại mỗi trạng thái $`s_{n}`$, không phụ thuộc vào hành động được lấy mẫu $`a_{t}`$.
 
 Tổng kết mối liên hệ giữa tối ưu chính sách tham số hóa ở phần 3 và thuật toán của bài báo như sau:
 
-* Lý thuyết chứng minh có thể tối ưu hàm mất mát thay thế bằng cách phạt độ phân kỳ KL. Tuy nhiên hệ số phạt lớn $\frac{2\epsilon \gamma}{({2-\gamma})^{2}}$ sẽ dẫn đến bước rất nhỏ, thuật toán của bài báo muốn giảm hệ số này. Bài báo dùng ràng buộc cứng với tham số $\delta$ (cận của độ phân kỳ KL) thay cho phạt.
+* Lý thuyết chứng minh có thể tối ưu hàm mất mát thay thế bằng cách phạt độ phân kỳ KL. Tuy nhiên hệ số phạt lớn $`\frac{2\epsilon \gamma}{({2-\gamma})^{2}}`$ sẽ dẫn đến bước rất nhỏ, thuật toán của bài báo muốn giảm hệ số này. Bài báo dùng ràng buộc cứng với tham số $`\delta`$ (cận của độ phân kỳ KL) thay cho phạt.
   
-* Ràng buộc $D^{max}_{KL}(\theta_{old},\theta)$ rất khó tối ưu và ước lượng bằng số, nên thuật toán của bài báo ràng buộc $D_{KL}(\theta_{old},\theta)$.
+* Ràng buộc $`D^{\max}_{KL}(\theta_{old},\theta)`$ rất khó tối ưu và ước lượng bằng số, nên thuật toán của bài báo ràng buộc $`D_{KL}(\theta_{old},\theta)`$.
   
 * Lý thuyết thuật toán của bài báo bỏ qua sai số ước lượng của hàm lợi thế để đơn giản hóa, nhưng suy luận của Kakade & Langford (2002) có xét sai số này.
   
@@ -192,19 +192,19 @@ Tổng kết mối liên hệ giữa tối ưu chính sách tham số hóa ở p
 
 Thuật toán cập nhật chính sách được suy ra trong bài báo liên quan đến một số phương pháp trước đây.
 
-Gradient chính sách tự nhiên: là trường hợp đặc biệt của cập nhật công thức (13), bằng cách xấp xỉ tuyến tính $L$, dùng xấp xỉ bậc hai cho ràng buộc $\bar{D}_{KL}$, được công thức sau:
+Gradient chính sách tự nhiên: là trường hợp đặc biệt của cập nhật công thức (13), bằng cách xấp xỉ tuyến tính $`L`$, dùng xấp xỉ bậc hai cho ràng buộc $`\bar{D}_{KL}`$, được công thức sau:
 
 ![Mô tả hình ảnh](img/TRPO--18.png)
 
-Cập nhật $\theta _{new}=\theta _{old}-\lambda A(\theta _{old})^{-1} \nabla _{\theta }L(\theta )|_{\theta =\theta _{old}}$, trong đó nhân tử Lagrange $\lambda$ là tham số thuật toán. Cập nhật của thuật toán này khác với TRPO của bài báo, TRPO bắt buộc thực thi ràng buộc ở mỗi lần cập nhật. Thực nghiệm chứng minh, thuật toán của bài báo nâng cao hiệu năng khi xử lý các bài toán lớn hơn.
+Cập nhật $`\theta _{new}=\theta _{old}-\lambda A(\theta _{old})^{-1} \nabla _{\theta }L(\theta )|_{\theta =\theta _{old}}`$, trong đó nhân tử Lagrange $`\lambda`$ là tham số thuật toán. Cập nhật của thuật toán này khác với TRPO của bài báo, TRPO bắt buộc thực thi ràng buộc ở mỗi lần cập nhật. Thực nghiệm chứng minh, thuật toán của bài báo nâng cao hiệu năng khi xử lý các bài toán lớn hơn.
 
-Bằng cách dùng ràng buộc hoặc phạt $l_{2}$, TRPO cũng thu được cập nhật gradient chính sách tiêu chuẩn:
+Bằng cách dùng ràng buộc hoặc phạt $`l_{2}`$, TRPO cũng thu được cập nhật gradient chính sách tiêu chuẩn:
 
 ![Mô tả hình ảnh](img/TRPO-19.png)
 
-Bằng cách giải bài toán không ràng buộc $minimize_{\pi}L_{\pi_{old}}(\pi)$ cũng có thể được cập nhật lặp chính sách.
+Bằng cách giải bài toán không ràng buộc $`minimize_{\pi}L_{\pi_{old}}(\pi)`$ cũng có thể được cập nhật lặp chính sách.
 
-Tìm kiếm chính sách entropy tương đối (REPS) ràng buộc biên trạng thái-hành động $p{s,a}$, còn TRPO ràng buộc điều kiện $p(s,a)$, không cần tối ưu phi tuyến trong vòng lặp trong.
+Tìm kiếm chính sách entropy tương đối (REPS) ràng buộc biên trạng thái-hành động $`p{s,a}`$, còn TRPO ràng buộc điều kiện $`p(s,a)`$, không cần tối ưu phi tuyến trong vòng lặp trong.
 
 Levine and Abbeel (2014) dùng ràng buộc độ phân kỳ KL, TRPO không ước lượng tường minh động lực học của hệ thống. 
 
@@ -282,6 +282,6 @@ Phương pháp của bài báo có khả năng mở rộng và có nền tảng 
 
 #### Hiểu biết cá nhân
 
-Khi dùng hàm giá trị để giải bài toán không gian trạng thái liên tục, chính sách chọn hành động thường là chính sách tất định không đổi. Một số bài toán thực tế cần chính sách tối ưu không phải tất định, mà là chính sách ngẫu nhiên, gradient chính sách chính là để giải bài toán sinh chính sách ngẫu nhiên. Phương pháp gradient chính sách Monte Carlo cổ điển dựa trên lấy mẫu, cho trước chính sách $\pi$, để tác tử tương tác với môi trường, sẽ được nhiều quỹ đạo, mỗi quỹ đạo có lợi tức tương ứng. Lấy trung bình lợi tức của các quỹ đạo, là biết được giá trị của trạng thái dưới một chính sách. Trong thuật toán PG, vì chính sách là một xác suất, không thể dùng trực tiếp để lặp, nên chuyển chính sách thành dạng hàm. Dùng hàm có tham số $\theta$ để xấp xỉ chính sách, tiến gần chính sách tối ưu bằng cách cập nhật $\theta$. Nội dung nghiên cứu của tôi không phải bản thân thuật toán RL, chỉ xem xét ứng dụng thuật toán gradient chính sách, chưa làm dự án liên quan, nên hiểu biết về bài báo này còn nông, rất mong được giao lưu thảo luận.
+Khi dùng hàm giá trị để giải bài toán không gian trạng thái liên tục, chính sách chọn hành động thường là chính sách tất định không đổi. Một số bài toán thực tế cần chính sách tối ưu không phải tất định, mà là chính sách ngẫu nhiên, gradient chính sách chính là để giải bài toán sinh chính sách ngẫu nhiên. Phương pháp gradient chính sách Monte Carlo cổ điển dựa trên lấy mẫu, cho trước chính sách $`\pi`$, để tác tử tương tác với môi trường, sẽ được nhiều quỹ đạo, mỗi quỹ đạo có lợi tức tương ứng. Lấy trung bình lợi tức của các quỹ đạo, là biết được giá trị của trạng thái dưới một chính sách. Trong thuật toán PG, vì chính sách là một xác suất, không thể dùng trực tiếp để lặp, nên chuyển chính sách thành dạng hàm. Dùng hàm có tham số $`\theta`$ để xấp xỉ chính sách, tiến gần chính sách tối ưu bằng cách cập nhật $`\theta`$. Nội dung nghiên cứu của tôi không phải bản thân thuật toán RL, chỉ xem xét ứng dụng thuật toán gradient chính sách, chưa làm dự án liên quan, nên hiểu biết về bài báo này còn nông, rất mong được giao lưu thảo luận.
 
 Wang Lijuan (汪莉娟): nghiên cứu sinh Đại học Thiên Tân, chuyên ngành khoa học và kỹ thuật điều khiển, hướng nghiên cứu chính là tối ưu giao thông và điều khiển thông minh.
