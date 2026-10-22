@@ -13,6 +13,7 @@
 - [Dự án 1 Dùng Q-learning giải bài toán tìm đường bên vách đá](chapter3/project1_vi)
 - [Chương 4 Gradient chính sách](chapter4/chapter4_vi)
 - [Chương 4 Bài tập](chapter4/chapter4_questions&keywords_vi)
+- [🧠 Chương 4 Ôn tập (flashcard + quiz)](review/index.html?ch=4 ':ignore :target=_self')
 - [Chương 5 Thuật toán tối ưu chính sách cận kề (PPO)](chapter5/chapter5_vi)
 - [Chương 5 Bài tập](chapter5/chapter5_questions&keywords_vi)
 - [Chương 6 DQN (Khái niệm cơ bản)](chapter6/chapter6_vi)

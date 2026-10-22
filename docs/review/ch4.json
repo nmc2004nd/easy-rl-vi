@@ -1,0 +1,739 @@
+{
+ "chapter": 4,
+ "title": "Chương 4 · Gradient chính sách",
+ "chapterLink": "../#/chapter4/chapter4_vi",
+ "exerciseLink": "../#/chapter4/chapter4_questions&keywords_vi",
+ "extras": "ch4-extras.js",
+ "cards": [
+  {
+   "id": "c4-parts",
+   "tag": "Khái niệm",
+   "ref": "4.1 · Bài tập 4-1",
+   "front": "Học tăng cường có 3 thành phần nào? Thành phần nào ta **điều chỉnh được**?",
+   "back": "**Diễn viên** (actor), **môi trường**, **hàm phần thưởng**.\nMôi trường và hàm phần thưởng được cho trước, ta **không** kiểm soát. Việc duy nhất ta làm là điều chỉnh **chính sách bên trong diễn viên** để nhận phần thưởng lớn nhất.\nVí dụ trò chơi điện tử: diễn viên = người điều khiển cần điều khiển; môi trường = máy chơi game; hàm phần thưởng = luật tính điểm."
+  },
+  {
+   "id": "c4-policy-net",
+   "tag": "Khái niệm",
+   "ref": "4.1 · Hình 4.2",
+   "front": "Mạng chính sách (policy network) nhận gì, đưa ra gì?",
+   "back": "**Đầu vào**: quan sát của tác tử (ví dụ ảnh trò chơi dạng điểm ảnh, biểu diễn bằng vectơ hoặc ma trận).\n**Đầu ra**: mỗi hành động một nơ-ron, cho **xác suất** chọn hành động đó, ví dụ trái $0{,}7$, phải $0{,}2$, bắn $0{,}1$.\nDiễn viên **lấy mẫu** hành động theo phân phối này. Tham số của mạng ký hiệu là $\\theta$."
+  },
+  {
+   "id": "c4-traj",
+   "tag": "Khái niệm",
+   "ref": "4.1",
+   "front": "Quỹ đạo (trajectory) $\\tau$ là gì? Lợi tức $R(\\tau)$ là gì?",
+   "back": "Quỹ đạo: dãy trạng thái và hành động của một ván chơi\n$$\\tau = \\{s_1, a_1, s_2, a_2, \\ldots, s_T, a_T\\}$$\n$R(\\tau) = \\sum_t r_t$: tổng phần thưởng của cả ván (tổng phần thưởng, lợi tức)."
+  },
+  {
+   "id": "c4-p-tau",
+   "tag": "Công thức",
+   "ref": "4.1",
+   "front": "Viết xác suất của một quỹ đạo $p_\\theta(\\tau)$.",
+   "back": "$$p_\\theta(\\tau) = p(s_1)\\prod_{t=1}^{T} p_\\theta(a_t \\mid s_t)\\,p(s_{t+1} \\mid s_t, a_t)$$\n$p(s_1)$, $p(s_{t+1} \\mid s_t, a_t)$: do **môi trường** quyết định.\n$p_\\theta(a_t \\mid s_t)$: do **diễn viên** quyết định, phụ thuộc $\\theta$."
+  },
+  {
+   "id": "c4-p-tau-dep",
+   "tag": "Vì sao",
+   "ref": "Bài tập 4-2",
+   "front": "Xác suất xuất hiện của một quỹ đạo phụ thuộc vào hai thứ gì? Thứ nào ta kiểm soát được?",
+   "back": "1. **Hành vi của môi trường** $p(s_{t+1} \\mid s_t, a_t)$: tồn tại khách quan, định sẵn, **không** kiểm soát được.\n2. **Hành vi của tác tử** $p_\\theta(a_t \\mid s_t)$: phụ thuộc tham số $\\theta$, **kiểm soát được**.\nCùng một quỹ đạo, diễn viên khác nhau thì xác suất xuất hiện khác nhau."
+  },
+  {
+   "id": "c4-expected",
+   "tag": "Công thức",
+   "ref": "4.1",
+   "front": "Vì sao phải tối đa hóa **phần thưởng kỳ vọng** chứ không phải $R(\\tau)$? Viết $\\bar R_\\theta$.",
+   "back": "$R(\\tau)$ là **biến ngẫu nhiên**: diễn viên lấy mẫu hành động, môi trường cũng ngẫu nhiên. Thứ tính được là kỳ vọng:\n$$\\bar R_\\theta = \\sum_\\tau R(\\tau)\\,p_\\theta(\\tau) = \\mathbb{E}_{\\tau \\sim p_\\theta(\\tau)}\\big[R(\\tau)\\big]$$"
+  },
+  {
+   "id": "c4-ascent",
+   "tag": "Khái niệm",
+   "ref": "4.1 · Bài tập 4-3, 4-5",
+   "front": "Tối đa hóa $\\bar R_\\theta$ bằng phương pháp gì? Viết luật cập nhật.",
+   "back": "**Đi lên theo gradient** (gradient ascent), vì muốn $\\bar R_\\theta$ càng lớn càng tốt:\n$$\\theta \\leftarrow \\theta + \\eta\\,\\nabla \\bar R_\\theta$$\nTốc độ học $\\eta$ có thể điều chỉnh bằng Adam, RMSProp, SGD..."
+  },
+  {
+   "id": "c4-log-trick",
+   "tag": "Công thức",
+   "ref": "4.1 · (4.1)",
+   "front": "Mẹo đạo hàm logarit (log-derivative trick) là gì? Vì sao cần?",
+   "back": "$$\\nabla f(x) = f(x)\\,\\nabla \\log f(x)$$\nVì $\\nabla \\log f = \\frac{\\nabla f}{f}$.\nNhờ nó, $\\sum_\\tau R(\\tau)\\nabla p_\\theta(\\tau)$ thành $\\sum_\\tau p_\\theta(\\tau)\\,R(\\tau)\\nabla\\log p_\\theta(\\tau)$: có trọng số $p_\\theta(\\tau)$ nên viết được thành **kỳ vọng**, ước lượng được bằng **lấy mẫu**."
+  },
+  {
+   "id": "c4-not-diff",
+   "tag": "Vì sao",
+   "ref": "4.1",
+   "front": "Hàm phần thưởng $R(\\tau)$ có cần khả vi không? Vì sao?",
+   "back": "**Không cần**. Trong $\\nabla \\bar R_\\theta = \\sum_\\tau R(\\tau)\\nabla p_\\theta(\\tau)$ chỉ có $p_\\theta(\\tau)$ phụ thuộc $\\theta$; $R(\\tau)$ chỉ là **trọng số** (một con số).\nVí dụ: $R$ có thể là bộ phân biệt của GAN, luật chấm điểm của trò chơi..."
+  },
+  {
+   "id": "c4-pg-formula",
+   "tag": "Công thức",
+   "ref": "4.1 · (4.4)",
+   "front": "Công thức gradient chính sách dạng lấy mẫu (4.4)?",
+   "back": "$$\\nabla \\bar R_\\theta \\approx \\frac{1}{N}\\sum_{n=1}^{N}\\sum_{t=1}^{T_n} R(\\tau^n)\\,\\nabla \\log p_\\theta(a_t^n \\mid s_t^n)$$\nLấy mẫu $N$ quỹ đạo; mỗi cặp $(s_t^n, a_t^n)$ đóng góp gradient của log-xác suất, **nhân trọng số** $R(\\tau^n)$ của cả ván."
+  },
+  {
+   "id": "c4-env-vanish",
+   "tag": "Vì sao",
+   "ref": "4.1",
+   "front": "Vì sao trong $\\nabla \\log p_\\theta(\\tau)$ các số hạng của môi trường biến mất?",
+   "back": "$$\\log p_\\theta(\\tau) = \\log p(s_1) + \\sum_t \\log p_\\theta(a_t \\mid s_t) + \\sum_t \\log p(s_{t+1} \\mid s_t, a_t)$$\n$p(s_1)$ và $p(s_{t+1} \\mid s_t, a_t)$ **không phụ thuộc** $\\theta$ nên gradient bằng 0. Còn lại $\\nabla \\log p_\\theta(\\tau) = \\sum_t \\nabla \\log p_\\theta(a_t \\mid s_t)$.\nHệ quả: **không cần biết mô hình môi trường** vẫn tính được gradient."
+  },
+  {
+   "id": "c4-intuition",
+   "tag": "Khái niệm",
+   "ref": "4.1 · Bài tập 4-4",
+   "front": "Hiểu trực quan công thức gradient chính sách thế nào?",
+   "back": "Lấy mẫu được $(s_t, a_t)$ trong quỹ đạo $\\tau$:\n- $R(\\tau) > 0$: **tăng** xác suất chọn $a_t$ ở $s_t$.\n- $R(\\tau) < 0$: **giảm** xác suất chọn $a_t$ ở $s_t$.\nMức tăng/giảm tỉ lệ với $|R(\\tau)|$."
+  },
+  {
+   "id": "c4-on-policy-once",
+   "tag": "Vì sao",
+   "ref": "4.1",
+   "front": "Vì sao dữ liệu lấy mẫu của gradient chính sách thường **chỉ dùng một lần**?",
+   "back": "Công thức là kỳ vọng theo $\\tau \\sim p_\\theta(\\tau)$ của **chính sách hiện tại**. Sau khi cập nhật, $\\theta$ đã đổi; dữ liệu cũ đến từ $\\theta$ cũ nên không còn là mẫu của $p_\\theta$ mới.\nVì vậy: lấy mẫu → cập nhật → **bỏ** dữ liệu → lấy mẫu lại. (Chương 5, PPO, dùng importance sampling để tái sử dụng dữ liệu.)"
+  },
+  {
+   "id": "c4-classif",
+   "tag": "So sánh",
+   "ref": "4.1 · (4.5) · Hình 4.8",
+   "front": "Gradient chính sách giống và khác bài toán phân loại ở đâu?",
+   "back": "**Giống**: trạng thái = đầu vào, hành động = lớp; hành động lấy mẫu được xem như **nhãn**; tối đa hóa log-likelihood = tối thiểu hóa entropy chéo.\n**Khác**: mỗi mẫu được **nhân trọng số** $R(\\tau)$:\n$$\\frac{1}{N}\\sum_{n}\\sum_{t} R(\\tau^n)\\log p_\\theta(a_t^n \\mid s_t^n)$$\nNhãn chưa chắc đúng, nên trọng số cho biết nên tin nó đến đâu (âm thì đẩy ngược lại)."
+  },
+  {
+   "id": "c4-loss-calc",
+   "tag": "Tính tay",
+   "ref": "4.3 · Hình 4.14",
+   "front": "Mạng ra $\\pi = [0{,}2;\\ 0{,}5;\\ 0{,}3]$, hành động thực tế là hành động thứ 2, $G_t = 2$. Tính mất mát của bước này (log tự nhiên).",
+   "back": "Vectơ one-hot $[0, 1, 0]$ chọn ra $\\log 0{,}5$:\n$$\\text{mất mát} = -G_t \\cdot [0,1,0]\\cdot\\log[0{,}2;\\,0{,}5;\\,0{,}3] = -2\\log 0{,}5 \\approx 1{,}386$$\nTối thiểu hóa mất mát này = tăng $\\log\\pi(a_t \\mid s_t)$, mức độ tỉ lệ với $G_t$."
+  },
+  {
+   "id": "c4-softmax-grad",
+   "tag": "Công thức",
+   "ref": "4.3 (bổ sung)",
+   "front": "Chính sách softmax $\\pi_k = \\frac{e^{\\theta_k}}{\\sum_j e^{\\theta_j}}$ (mỗi hành động một tham số). Tính $\\frac{\\partial \\log \\pi_a}{\\partial \\theta_k}$.",
+   "back": "$$\\frac{\\partial \\log \\pi_a}{\\partial \\theta_k} = [k = a] - \\pi_k \\qquad\\text{tức}\\qquad \\nabla_\\theta \\log \\pi_a = e_a - \\pi$$\n$e_a$ là vectơ one-hot của hành động đã chọn. Gradient **đẩy lên** hành động đã chọn và **kéo xuống** mọi hành động khác, tỉ lệ với xác suất hiện tại của chúng."
+  },
+  {
+   "id": "c4-softmax-calc",
+   "tag": "Tính tay",
+   "ref": "4.3 (bổ sung)",
+   "front": "$\\pi = [0{,}2;\\ 0{,}5;\\ 0{,}3]$, chọn hành động 2, trọng số $G = 2$, $\\eta = 0{,}1$. Logit $\\theta$ thay đổi bao nhiêu?",
+   "back": "$$e_a - \\pi = [0, 1, 0] - [0{,}2;\\ 0{,}5;\\ 0{,}3] = [-0{,}2;\\ 0{,}5;\\ -0{,}3]$$\n$$\\Delta\\theta = \\eta\\,G\\,(e_a - \\pi) = 0{,}2\\cdot[-0{,}2;\\ 0{,}5;\\ -0{,}3] = [-0{,}04;\\ 0{,}1;\\ -0{,}06]$$\nLogit của hành động 2 tăng, hai logit còn lại giảm. Nếu $G < 0$ thì ngược lại."
+  },
+  {
+   "id": "c4-baseline-why",
+   "tag": "Vì sao",
+   "ref": "4.2.1",
+   "front": "Mẹo 1, đường cơ sở: vấn đề gì xảy ra khi phần thưởng **luôn dương**?",
+   "back": "Ví dụ Pong: điểm từ 0 đến 21 nên $R(\\tau) \\ge 0$. Theo (4.5), **mọi** hành động được lấy mẫu đều bị **tăng** xác suất, chỉ khác mức tăng.\nTrong kỳ vọng thì vẫn đúng (hành động tăng nhiều hơn trung bình mới thực sự tăng), nhưng khi **lấy mẫu ít** thì sai lệch lớn (xem thẻ tiếp theo)."
+  },
+  {
+   "id": "c4-unsampled",
+   "tag": "Vì sao",
+   "ref": "4.2.1 · Hình 4.11",
+   "front": "Vì sao một hành động **tốt** có thể bị giảm xác suất chỉ vì **không được lấy mẫu**?",
+   "back": "Phần thưởng luôn dương nên các hành động **được lấy mẫu** (b, c) đều được tăng. Xác suất có tổng bằng 1, nên hành động **không được lấy mẫu** (a) **bị giảm**, dù a chưa chắc tồi.\nCách chữa: làm cho trọng số **có cả dương lẫn âm** bằng cách trừ đường cơ sở $b$."
+  },
+  {
+   "id": "c4-baseline",
+   "tag": "Công thức",
+   "ref": "4.2.1",
+   "front": "Gradient chính sách có đường cơ sở. Chọn $b$ thế nào?",
+   "back": "$$\\nabla \\bar R_\\theta \\approx \\frac{1}{N}\\sum_{n}\\sum_{t}\\big(R(\\tau^n) - b\\big)\\nabla\\log p_\\theta(a_t^n \\mid s_t^n)$$\n$R(\\tau) > b$: tăng xác suất; $R(\\tau) < b$: giảm, **dù $R(\\tau)$ dương**.\nChọn $b \\approx \\mathbb{E}[R(\\tau)]$: ghi lại các $R(\\tau)$ trong lúc huấn luyện và lấy **trung bình chạy**."
+  },
+  {
+   "id": "c4-baseline-unbiased",
+   "tag": "Vì sao",
+   "ref": "4.2.1 (bổ sung)",
+   "front": "Trừ đường cơ sở $b$ có làm **sai lệch** (chệch) gradient không?",
+   "back": "**Không**, nếu $b$ không phụ thuộc hành động:\n$$\\mathbb{E}_{a \\sim \\pi_\\theta}\\big[b\\,\\nabla\\log\\pi_\\theta(a \\mid s)\\big] = b\\,\\nabla\\sum_a \\pi_\\theta(a \\mid s) = b\\,\\nabla 1 = 0$$\nKỳ vọng của gradient giữ nguyên; thứ thay đổi là **phương sai** (giảm, nếu $b$ chọn tốt). Xem tab Chứng minh."
+  },
+  {
+   "id": "c4-credit-why",
+   "tag": "Vì sao",
+   "ref": "4.2.2",
+   "front": "Mẹo 2, gán điểm phù hợp: vì sao dùng chung $R(\\tau)$ cho mọi bước là **không công bằng**?",
+   "back": "Trong cùng một ván có hành động tốt, có hành động tồi. Ván thắng không có nghĩa mọi hành động đều tốt, và ngược lại.\nNếu lấy mẫu **rất nhiều** thì trung bình sẽ đúng, nhưng thực tế số mẫu **không đủ**, nên cần gán cho mỗi cặp $(s_t, a_t)$ một trọng số phản ánh **đóng góp thật** của nó."
+  },
+  {
+   "id": "c4-credit-calc",
+   "tag": "Tính tay",
+   "ref": "4.2.2 · Hình 4.12",
+   "front": "Ván (a): $(s_a, a_1) \\to +5$, $(s_b, a_2) \\to 0$, $(s_c, a_3) \\to -2$. Ván (b): $(s_a, a_2) \\to -5$, $(s_b, a_2) \\to 0$, $(s_c, a_3) \\to -2$. Trọng số của $(s_b, a_2)$ ở mỗi ván là bao nhiêu nếu dùng $R(\\tau)$, và nếu chỉ cộng phần thưởng **từ bước đó trở đi**?",
+   "back": "Dùng $R(\\tau)$: ván (a) $= +3$, ván (b) $= -7$.\nChỉ cộng từ bước đó: cả hai ván đều $0 + (-2) = -2$.\n$+5$ và $-5$ xảy ra **trước** $(s_b, a_2)$ nên không phải công hay lỗi của nó."
+  },
+  {
+   "id": "c4-reward-to-go",
+   "tag": "Công thức",
+   "ref": "4.2.2",
+   "front": "Viết gradient chính sách với **phần thưởng từ thời điểm $t$ trở đi** và có chiết khấu.",
+   "back": "$$\\nabla \\bar R_\\theta \\approx \\frac{1}{N}\\sum_{n}\\sum_{t}\\Big(\\sum_{t'=t}^{T_n}\\gamma^{t'-t} r_{t'}^n - b\\Big)\\nabla\\log p_\\theta(a_t^n \\mid s_t^n)$$\nBỏ $\\gamma$ (tức $\\gamma = 1$) là bản không chiết khấu."
+  },
+  {
+   "id": "c4-discount-why",
+   "tag": "Vì sao",
+   "ref": "4.2.2",
+   "front": "Vì sao chiết khấu phần thưởng tương lai khi gán điểm? $\\gamma = 0$ và $\\gamma = 1$ nghĩa là gì?",
+   "back": "Hành động ảnh hưởng tới kết quả sau nó, nhưng **càng xa thì ảnh hưởng càng nhỏ**: phần thưởng ở bước 3 có thể nhờ hành động ở bước 2, phần thưởng sau bước 100 thì khó nói.\n$\\gamma = 0$: chỉ quan tâm phần thưởng tức thời. $\\gamma = 1$: tương lai quan trọng ngang hiện tại. Thường $\\gamma = 0{,}9$ hoặc $0{,}99$."
+  },
+  {
+   "id": "c4-discount-calc",
+   "tag": "Tính tay",
+   "ref": "4.2.2",
+   "front": "Hiệp hai: $(s_t, a_t) \\to +1$, $(s_{t+1}, a_{t+1}) \\to +3$, $(s_{t+2}, a_{t+2}) \\to -5$, rồi kết thúc. Điểm của $a_t$ với $\\gamma = 0{,}9$?",
+   "back": "$$1 + \\gamma \\cdot 3 + \\gamma^2 \\cdot (-5) = 1 + 2{,}7 - 4{,}05 = -0{,}35$$\nDù bước đầu được $+1$, hành động $a_t$ bị đánh giá hơi tồi vì dẫn tới $-5$ ở sau."
+  },
+  {
+   "id": "c4-advantage",
+   "tag": "Khái niệm",
+   "ref": "4.2.2 · Bài tập 4-6",
+   "front": "Hàm lợi thế (advantage function) $A^\\theta(s_t, a_t)$ là gì? Ý nghĩa?",
+   "back": "$$A^\\theta(s_t, a_t) = \\sum_{t'=t}^{T}\\gamma^{t'-t} r_{t'} - b$$\nKết hợp hai mẹo. Đo xem làm $a_t$ ở $s_t$ **tốt hơn các hành động khác bao nhiêu**: **lợi thế tương đối**, không phải tốt tuyệt đối.\nChỉ số trên $\\theta$: dùng mô hình $\\theta$ để tương tác thu phần thưởng."
+  },
+  {
+   "id": "c4-critic",
+   "tag": "Khái niệm",
+   "ref": "4.2.2",
+   "front": "Đường cơ sở $b$ phụ thuộc gì trong thực tế? Mạng ước lượng $A^\\theta$ gọi là gì?",
+   "back": "$b$ có thể **phụ thuộc trạng thái** (state-dependent), thường là đầu ra của một mạng.\nMạng ước lượng $A^\\theta(s_t, a_t)$ gọi là **nhà phê bình** (critic) → nền của phương pháp **diễn viên-nhà phê bình** (actor-critic, chương 9)."
+  },
+  {
+   "id": "c4-mc-td",
+   "tag": "So sánh",
+   "ref": "4.3 · Bài tập 4-7",
+   "front": "Gradient chính sách theo Monte Carlo và theo sai phân thời gian khác nhau thế nào?",
+   "back": "**Monte Carlo**: chờ hết tập, có phần thưởng từng bước, tính $G_t$ thật rồi cập nhật **một lần mỗi tập**.\n**Sai phân thời gian**: cập nhật **mỗi bước**, dùng hàm $Q$ để xấp xỉ $G_t$; tần suất cập nhật cao, nhanh và linh hoạt hơn.\nVí dụ lái xe đi làm: TD sửa dự đoán ngay ở mỗi ngã tư; MC đợi tới công ty mới sửa."
+  },
+  {
+   "id": "c4-reinforce",
+   "tag": "Khái niệm",
+   "ref": "4.3",
+   "front": "REINFORCE là gì? Nó dùng trọng số gì?",
+   "back": "Thuật toán gradient chính sách **đơn giản và kinh điển nhất**, cập nhật **theo tập** (Monte Carlo).\nTrọng số của mỗi bước là lợi tức $G_t$ từ bước đó:\n$$\\nabla \\bar R_\\theta \\approx \\frac{1}{N}\\sum_{n}\\sum_{t} G_t^n\\,\\nabla\\log\\pi_\\theta(a_t^n \\mid s_t^n)$$"
+  },
+  {
+   "id": "c4-gt",
+   "tag": "Công thức",
+   "ref": "4.3 · (4.8)",
+   "front": "Tính $G_t$ cho mọi bước của một tập thế nào cho nhanh?",
+   "back": "$$G_t = \\sum_{k=t+1}^{T}\\gamma^{k-t-1} r_k = r_{t+1} + \\gamma G_{t+1}$$\n**Suy ngược** từ cuối: $G_T = 0$, rồi $G_{T-1}$, ..., cho tới $G_0$. Mỗi bước chỉ một phép nhân và một phép cộng."
+  },
+  {
+   "id": "c4-gt-calc",
+   "tag": "Tính tay",
+   "ref": "4.3 · (4.8)",
+   "front": "Một tập có $r_1 = 1$, $r_2 = 0$, $r_3 = 2$ (kết thúc sau $r_3$), $\\gamma = 0{,}5$. Tính $G_2, G_1, G_0$.",
+   "back": "$G_3 = 0$.\n$$G_2 = r_3 + \\gamma G_3 = 2$$\n$$G_1 = r_2 + \\gamma G_2 = 0 + 0{,}5\\cdot 2 = 1$$\n$$G_0 = r_1 + \\gamma G_1 = 1 + 0{,}5\\cdot 1 = 1{,}5$$"
+  },
+  {
+   "id": "c4-reinforce-update",
+   "tag": "Công thức",
+   "ref": "4.3 · Hình 4.14",
+   "front": "Luật cập nhật trong mã giả REINFORCE (hình 4.14)?",
+   "back": "Sinh một tập $S_0, A_0, R_1, \\ldots, S_{T-1}, A_{T-1}, R_T$ theo $\\pi(\\cdot \\mid \\cdot, \\theta)$. Với mỗi $t = 0, \\ldots, T-1$:\n$$G \\leftarrow \\sum_{k=t+1}^{T}\\gamma^{k-t-1}R_k, \\qquad \\theta \\leftarrow \\theta + \\alpha\\,\\gamma^t\\,G\\,\\nabla\\log\\pi(A_t \\mid S_t, \\theta)$$"
+  },
+  {
+   "id": "c4-sample-learn",
+   "tag": "Khái niệm",
+   "ref": "4.3 · Hình 4.20",
+   "front": "Trong sơ đồ REINFORCE, hàm `sample()` và `learn()` làm gì?",
+   "back": "`sample()`: lấy **một hành động cụ thể** từ xác suất do mô hình chính sách đưa ra, để tương tác với môi trường.\n`learn()`: sau khi có dữ liệu **cả tập**, dựng hàm mất mát $-\\sum_t G_t\\log\\pi(a_t \\mid s_t)$ rồi đưa cho bộ tối ưu (Adam) cập nhật mô hình."
+  },
+  {
+   "id": "c4-ce",
+   "tag": "So sánh",
+   "ref": "4.3 · Hình 4.15–4.18",
+   "front": "So sánh hàm mất mát của nhận dạng chữ số viết tay và của gradient chính sách.",
+   "back": "**Có giám sát**: entropy chéo $-\\sum_i Y_i'\\log Y_i$; nhãn $Y'$ (one-hot) **chắc chắn đúng**.\n**Gradient chính sách**: $-G_t\\sum_i [a_t]_i\\log\\pi_i$; \\\"nhãn\\\" là hành động đã lấy mẫu, **chưa chắc đúng**, nên nhân thêm $G_t$ để đánh giá nó: $G_t$ lớn thì coi trọng, $G_t$ nhỏ hoặc âm thì giảm hoặc đẩy ngược."
+  },
+  {
+   "id": "c4-stochastic",
+   "tag": "So sánh",
+   "ref": "4 (bổ sung)",
+   "front": "Một ưu điểm của phương pháp dựa trên chính sách so với $\\varepsilon$-tham lam theo $Q$ (chương 3)?",
+   "back": "Học được **chính sách ngẫu nhiên tối ưu**. Ví dụ hành lang ngắn (Sutton & Barto, ví dụ 13.1): các trạng thái trông giống nhau, chính sách tốt nhất là đi phải với xác suất $\\approx 0{,}59$ ($J \\approx -11{,}7$).\n$\\varepsilon$-tham lam chỉ chọn được \\\"gần như luôn phải\\\" hoặc \\\"gần như luôn trái\\\" ($J \\approx -44$ hoặc $-82$). Xem tab Thí nghiệm.\nNgoài ra chính sách thay đổi **mượt** theo $\\theta$, và dùng được cho **hành động liên tục**."
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Trong $p_\\theta(\\tau) = p(s_1)\\prod_t p_\\theta(a_t \\mid s_t)\\,p(s_{t+1} \\mid s_t, a_t)$, số hạng nào phụ thuộc tham số $\\theta$?",
+   "options": [
+    "Chỉ $p_\\theta(a_t \\mid s_t)$",
+    "Chỉ $p(s_{t+1} \\mid s_t, a_t)$",
+    "$p(s_1)$ và $p(s_{t+1} \\mid s_t, a_t)$",
+    "Cả ba"
+   ],
+   "answer": 0,
+   "explain": "Trạng thái đầu và chuyển trạng thái do môi trường quyết định; chỉ chính sách của diễn viên phụ thuộc $\\theta$.",
+   "ref": "4.1"
+  },
+  {
+   "q": "Vì sao phải dùng mẹo $\\nabla p_\\theta(\\tau) = p_\\theta(\\tau)\\nabla\\log p_\\theta(\\tau)$?",
+   "options": [
+    "Để viết gradient thành một kỳ vọng theo $p_\\theta(\\tau)$ và ước lượng bằng lấy mẫu",
+    "Để $R(\\tau)$ khả vi",
+    "Để bỏ được đường cơ sở",
+    "Để gradient luôn dương"
+   ],
+   "answer": 0,
+   "explain": "Có trọng số $p_\\theta(\\tau)$ thì tổng theo $\\tau$ là kỳ vọng $\\mathbb{E}_{\\tau\\sim p_\\theta}[R(\\tau)\\nabla\\log p_\\theta(\\tau)]$, xấp xỉ được bằng trung bình trên các quỹ đạo lấy mẫu.",
+   "ref": "4.1 · (4.2)"
+  },
+  {
+   "q": "Hàm phần thưởng $R(\\tau)$ phải thỏa điều kiện gì để dùng gradient chính sách?",
+   "options": [
+    "Không cần khả vi",
+    "Phải khả vi theo $\\theta$",
+    "Phải luôn dương",
+    "Phải bị chặn trong $[0, 1]$"
+   ],
+   "answer": 0,
+   "explain": "$R(\\tau)$ chỉ đóng vai trò trọng số; gradient chỉ lấy theo $p_\\theta(\\tau)$.",
+   "ref": "4.1"
+  },
+  {
+   "q": "Một quỹ đạo có $R(\\tau) = -4$ (không dùng đường cơ sở). Cập nhật gradient chính sách làm gì với các cặp $(s_t, a_t)$ trong quỹ đạo?",
+   "options": [
+    "Giảm xác suất chọn $a_t$ ở $s_t$",
+    "Tăng xác suất chọn $a_t$ ở $s_t$",
+    "Không đổi",
+    "Chỉ giảm xác suất của bước cuối"
+   ],
+   "answer": 0,
+   "explain": "Trọng số âm đẩy $\\log p_\\theta(a_t \\mid s_t)$ xuống.",
+   "ref": "4.1 · Bài tập 4-4"
+  },
+  {
+   "q": "Sau khi cập nhật $\\theta$, vì sao gradient chính sách thường **bỏ** dữ liệu đã lấy mẫu?",
+   "options": [
+    "Dữ liệu đến từ chính sách cũ, không còn là mẫu của $p_\\theta$ mới",
+    "Vì bộ nhớ không đủ",
+    "Vì phần thưởng đã được chiết khấu",
+    "Vì dữ liệu đã bị chuẩn hóa"
+   ],
+   "answer": 0,
+   "explain": "Công thức là kỳ vọng theo quỹ đạo của **chính sách hiện tại** (on-policy).",
+   "ref": "4.1"
+  },
+  {
+   "q": "Khi cài đặt, gradient chính sách khác bài toán phân loại thông thường ở điểm nào?",
+   "options": [
+    "Mỗi mẫu nhân thêm trọng số $R(\\tau)$ (hoặc $G_t$)",
+    "Không dùng entropy chéo",
+    "Không có đầu vào",
+    "Dùng hàm kích hoạt khác"
+   ],
+   "answer": 0,
+   "explain": "Hàm mục tiêu (4.5): $\\frac{1}{N}\\sum_n\\sum_t R(\\tau^n)\\log p_\\theta(a_t^n \\mid s_t^n)$, tức log-likelihood có trọng số.",
+   "ref": "4.1 · (4.5)"
+  },
+  {
+   "q": "Mọi phần thưởng đều dương và chỉ lấy mẫu được hành động b, c (không có a). Không dùng đường cơ sở, sau một lần cập nhật thì xác suất của a...",
+   "options": [
+    "Giảm, dù a chưa chắc là hành động tồi",
+    "Tăng",
+    "Không đổi",
+    "Bằng 0"
+   ],
+   "answer": 0,
+   "explain": "b và c đều được tăng, tổng xác suất bằng 1 nên a bị giảm (hình 4.11).",
+   "ref": "4.2.1"
+  },
+  {
+   "q": "Đường cơ sở $b$ thường được chọn là gì?",
+   "options": [
+    "Trung bình chạy của $R(\\tau)$, tức $b \\approx \\mathbb{E}[R(\\tau)]$",
+    "Phần thưởng lớn nhất từng thấy",
+    "Hằng số 0",
+    "$\\gamma$"
+   ],
+   "answer": 0,
+   "explain": "Ghi lại $R(\\tau)$ trong lúc huấn luyện và lấy trung bình; khi đó $R(\\tau) - b$ có cả dương lẫn âm.",
+   "ref": "4.2.1"
+  },
+  {
+   "q": "Trừ một đường cơ sở $b$ không phụ thuộc hành động thì kỳ vọng của gradient...",
+   "options": [
+    "Không đổi, vì $\\mathbb{E}_{a\\sim\\pi}[\\nabla\\log\\pi(a\\mid s)] = 0$",
+    "Giảm đi $b$",
+    "Đổi dấu",
+    "Nhân với $b$"
+   ],
+   "answer": 0,
+   "explain": "$\\sum_a \\pi\\nabla\\log\\pi = \\sum_a\\nabla\\pi = \\nabla 1 = 0$. Chỉ phương sai thay đổi.",
+   "ref": "4.2.1 (bổ sung)"
+  },
+  {
+   "q": "Ván chơi: $(s_a, a_1) \\to +5$, $(s_b, a_2) \\to 0$, $(s_c, a_3) \\to -2$. Trọng số của $(s_b, a_2)$ khi gán điểm phù hợp (không chiết khấu, $b = 0$)?",
+   "options": [
+    "$-2$",
+    "$+3$",
+    "$0$",
+    "$+5$"
+   ],
+   "answer": 0,
+   "explain": "Chỉ cộng phần thưởng từ bước đó trở đi: $0 + (-2) = -2$.",
+   "ref": "4.2.2 · Hình 4.12"
+  },
+  {
+   "q": "Phần thưởng từ bước $t$: $+1, +3, -5$. Với $\\gamma = 0{,}9$, điểm của $a_t$ là:",
+   "options": [
+    "$-0{,}35$",
+    "$-1$",
+    "$1{,}55$",
+    "$-4{,}05$"
+   ],
+   "answer": 0,
+   "explain": "$1 + 0{,}9\\cdot 3 + 0{,}81\\cdot(-5) = 1 + 2{,}7 - 4{,}05 = -0{,}35$.",
+   "ref": "4.2.2"
+  },
+  {
+   "q": "Hàm lợi thế $A^\\theta(s_t, a_t)$ đo điều gì?",
+   "options": [
+    "Hành động $a_t$ tốt hơn các hành động khác ở $s_t$ bao nhiêu (tương đối)",
+    "Tổng phần thưởng tuyệt đối của cả ván",
+    "Xác suất chọn $a_t$",
+    "Sai số TD"
+   ],
+   "answer": 0,
+   "explain": "Vì đã trừ đường cơ sở nên chỉ đo **lợi thế tương đối**; thường được ước lượng bởi một mạng nhà phê bình.",
+   "ref": "4.2.2"
+  },
+  {
+   "q": "REINFORCE cập nhật tham số khi nào?",
+   "options": [
+    "Sau khi kết thúc mỗi tập",
+    "Sau mỗi bước",
+    "Sau mỗi $n$ bước cố định",
+    "Chỉ một lần khi huấn luyện xong"
+   ],
+   "answer": 0,
+   "explain": "REINFORCE là gradient chính sách Monte Carlo: cần cả tập để tính $G_t$ thật.",
+   "ref": "4.3"
+  },
+  {
+   "q": "Tập có $r_1 = 1, r_2 = 0, r_3 = 2$, $\\gamma = 0{,}5$. $G_0$ bằng:",
+   "options": [
+    "$1{,}5$",
+    "$3$",
+    "$2$",
+    "$1$"
+   ],
+   "answer": 0,
+   "explain": "Suy ngược: $G_2 = 2$, $G_1 = 0 + 0{,}5\\cdot 2 = 1$, $G_0 = 1 + 0{,}5\\cdot 1 = 1{,}5$.",
+   "ref": "4.3 · (4.8)"
+  },
+  {
+   "q": "Chính sách softmax với logit $\\theta$: $\\nabla_\\theta\\log\\pi(a)$ bằng:",
+   "options": [
+    "$e_a - \\pi$",
+    "$\\pi - e_a$",
+    "$e_a$",
+    "$\\pi(a)\\,e_a$"
+   ],
+   "answer": 0,
+   "explain": "$\\log\\pi_a = \\theta_a - \\log\\sum_j e^{\\theta_j}$, đạo hàm theo $\\theta_k$ là $[k=a] - \\pi_k$.",
+   "ref": "4.3 (bổ sung)"
+  },
+  {
+   "q": "So với gradient chính sách Monte Carlo, phiên bản sai phân thời gian (dùng $Q$ thay $G_t$)...",
+   "options": [
+    "Cập nhật mỗi bước, tần suất cao hơn",
+    "Phải đợi hết tập",
+    "Không cần ước lượng gì",
+    "Không dùng được cho trò chơi"
+   ],
+   "answer": 0,
+   "explain": "TD cập nhật ngay khi biết một bước, dùng $Q$ xấp xỉ tổng phần thưởng tương lai.",
+   "ref": "4.3 · Bài tập 4-7"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p4-log-trick",
+   "ref": "4.1 · (4.1)",
+   "title": "Mẹo đạo hàm logarit",
+   "start": "$f(x) > 0$ khả vi.",
+   "goal": "$$\\nabla f(x) = f(x)\\,\\nabla\\log f(x)$$",
+   "steps": [
+    {
+     "tex": "\\nabla\\log f(x)"
+    },
+    {
+     "tex": "= \\frac{1}{f(x)}\\,\\nabla f(x)",
+     "why": {
+      "options": [
+       "Quy tắc dây chuyền với $(\\log u)' = \\frac{1}{u}$",
+       "Tuyến tính của gradient",
+       "Tích phân từng phần",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "$\\nabla \\log u(x) = \\frac{1}{u}\\nabla u$ với $u = f(x)$."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ f(x)\\,\\nabla\\log f(x) = \\nabla f(x)",
+     "why": {
+      "options": [
+       "Nhân hai vế với $f(x) > 0$",
+       "Lấy $\\exp$ hai vế",
+       "Cho $f(x) = 1$",
+       "Lấy kỳ vọng hai vế"
+      ],
+      "answer": 0,
+      "explain": "$f(x) \\cdot \\frac{1}{f(x)}\\nabla f(x) = \\nabla f(x)$."
+     }
+    }
+   ],
+   "hints": [
+    "Bắt đầu từ vế có $\\log$.",
+    "Đạo hàm của $\\log u$ là $\\frac{1}{u}$ nhân đạo hàm của $u$."
+   ],
+   "note": "Áp dụng cho $f = p_\\theta(\\tau)$: $\\nabla p_\\theta(\\tau) = p_\\theta(\\tau)\\nabla\\log p_\\theta(\\tau)$. Thừa số $p_\\theta(\\tau)$ chính là thứ biến tổng thành kỳ vọng."
+  },
+  {
+   "id": "p4-pg",
+   "ref": "4.1 · (4.2)",
+   "title": "Gradient của phần thưởng kỳ vọng",
+   "start": "$\\bar R_\\theta = \\sum_\\tau R(\\tau)\\,p_\\theta(\\tau)$; $R(\\tau)$ không phụ thuộc $\\theta$.",
+   "goal": "$$\\nabla\\bar R_\\theta = \\mathbb{E}_{\\tau\\sim p_\\theta(\\tau)}\\big[R(\\tau)\\,\\nabla\\log p_\\theta(\\tau)\\big]$$",
+   "steps": [
+    {
+     "tex": "\\nabla\\bar R_\\theta = \\nabla\\sum_\\tau R(\\tau)\\,p_\\theta(\\tau)"
+    },
+    {
+     "tex": "= \\sum_\\tau R(\\tau)\\,\\nabla p_\\theta(\\tau)",
+     "why": {
+      "options": [
+       "Đưa $\\nabla$ vào trong tổng; $R(\\tau)$ không phụ thuộc $\\theta$",
+       "Vì $R(\\tau)$ khả vi",
+       "Mẹo đạo hàm logarit",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Gradient của tổng là tổng các gradient; $R(\\tau)$ là hằng số đối với $\\theta$."
+     }
+    },
+    {
+     "tex": "= \\sum_\\tau R(\\tau)\\,p_\\theta(\\tau)\\,\\frac{\\nabla p_\\theta(\\tau)}{p_\\theta(\\tau)}",
+     "why": {
+      "options": [
+       "Nhân và chia cho $p_\\theta(\\tau)$",
+       "Tuyến tính của kỳ vọng",
+       "Định nghĩa $\\bar R_\\theta$",
+       "Quy tắc dây chuyền"
+      ],
+      "answer": 0,
+      "explain": "Nhân rồi chia cho cùng một số dương không đổi giá trị, nhưng làm xuất hiện trọng số $p_\\theta(\\tau)$."
+     }
+    },
+    {
+     "tex": "= \\sum_\\tau R(\\tau)\\,p_\\theta(\\tau)\\,\\nabla\\log p_\\theta(\\tau)",
+     "why": {
+      "options": [
+       "Mẹo đạo hàm logarit: $\\frac{\\nabla p}{p} = \\nabla\\log p$",
+       "Định nghĩa kỳ vọng",
+       "Bỏ số hạng môi trường",
+       "Trừ đường cơ sở"
+      ],
+      "answer": 0,
+      "explain": "(4.1): $\\nabla\\log p = \\frac{1}{p}\\nabla p$."
+     }
+    },
+    {
+     "tex": "= \\mathbb{E}_{\\tau\\sim p_\\theta(\\tau)}\\big[R(\\tau)\\,\\nabla\\log p_\\theta(\\tau)\\big]",
+     "why": {
+      "options": [
+       "Tổng có trọng số $p_\\theta(\\tau)$ chính là kỳ vọng theo $p_\\theta$",
+       "Luật số lớn",
+       "Lấy mẫu $N$ quỹ đạo",
+       "Tính chất Markov"
+      ],
+      "answer": 0,
+      "explain": "$\\sum_\\tau p(\\tau) g(\\tau) = \\mathbb{E}_{\\tau\\sim p}[g(\\tau)]$."
+     }
+    }
+   ],
+   "hints": [
+    "Chỉ $p_\\theta(\\tau)$ phụ thuộc $\\theta$.",
+    "Làm xuất hiện $p_\\theta(\\tau)$ làm trọng số bằng cách nhân chia.",
+    "Tổng có trọng số xác suất là gì?"
+   ],
+   "note": "Kỳ vọng không tính được trực tiếp nên lấy mẫu: $\\nabla\\bar R_\\theta \\approx \\frac{1}{N}\\sum_n R(\\tau^n)\\nabla\\log p_\\theta(\\tau^n)$, rồi dùng chứng minh tiếp theo để khai triển $\\nabla\\log p_\\theta(\\tau^n)$."
+  },
+  {
+   "id": "p4-logp-tau",
+   "ref": "4.1",
+   "title": "Số hạng môi trường biến mất",
+   "start": "$p_\\theta(\\tau) = p(s_1)\\prod_{t=1}^{T}p_\\theta(a_t \\mid s_t)\\,p(s_{t+1} \\mid s_t, a_t)$.",
+   "goal": "$$\\nabla\\log p_\\theta(\\tau) = \\sum_{t=1}^{T}\\nabla\\log p_\\theta(a_t \\mid s_t)$$",
+   "steps": [
+    {
+     "tex": "\\log p_\\theta(\\tau) = \\log p(s_1) + \\sum_{t=1}^{T}\\log p_\\theta(a_t \\mid s_t) + \\sum_{t=1}^{T}\\log p(s_{t+1} \\mid s_t, a_t)"
+    },
+    {
+     "tex": "\\nabla\\log p_\\theta(\\tau) = \\nabla\\log p(s_1) + \\nabla\\sum_{t}\\log p_\\theta(a_t \\mid s_t) + \\nabla\\sum_{t}\\log p(s_{t+1} \\mid s_t, a_t)",
+     "why": {
+      "options": [
+       "Gradient của tổng bằng tổng các gradient",
+       "Mẹo đạo hàm logarit",
+       "Tính chất Markov",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Tuyến tính của toán tử $\\nabla$."
+     }
+    },
+    {
+     "tex": "= 0 + \\nabla\\sum_{t}\\log p_\\theta(a_t \\mid s_t) + 0",
+     "why": {
+      "options": [
+       "$p(s_1)$ và $p(s_{t+1} \\mid s_t, a_t)$ do môi trường quyết định, không phụ thuộc $\\theta$",
+       "Vì $\\log 1 = 0$",
+       "Vì môi trường tất định",
+       "Vì $R(\\tau)$ không khả vi"
+      ],
+      "answer": 0,
+      "explain": "Gradient theo $\\theta$ của một đại lượng không chứa $\\theta$ bằng 0, kể cả khi môi trường ngẫu nhiên."
+     }
+    },
+    {
+     "tex": "= \\sum_{t=1}^{T}\\nabla\\log p_\\theta(a_t \\mid s_t)",
+     "why": {
+      "options": [
+       "Đưa $\\nabla$ vào trong tổng",
+       "Bỏ đường cơ sở",
+       "Chiết khấu",
+       "Chuẩn hóa xác suất"
+      ],
+      "answer": 0,
+      "explain": "Lại là tính tuyến tính của $\\nabla$."
+     }
+    }
+   ],
+   "hints": [
+    "Log của tích là tổng các log.",
+    "Số hạng nào chứa $\\theta$?"
+   ],
+   "note": "Đây là lý do gradient chính sách **không cần mô hình môi trường**: chỉ cần tính được $\\nabla\\log\\pi_\\theta(a_t \\mid s_t)$ của mạng chính sách. Thay vào chứng minh trước được (4.3)–(4.4)."
+  },
+  {
+   "id": "p4-baseline",
+   "ref": "4.2.1 (bổ sung)",
+   "title": "Đường cơ sở không làm chệch gradient",
+   "start": "Bổ sung của người dịch. $b$ là hằng số (hoặc chỉ phụ thuộc trạng thái $s$), không phụ thuộc hành động $a$; $\\sum_a\\pi_\\theta(a \\mid s) = 1$ với mọi $\\theta$.",
+   "goal": "$$\\mathbb{E}_{a\\sim\\pi_\\theta(\\cdot\\mid s)}\\big[b\\,\\nabla\\log\\pi_\\theta(a \\mid s)\\big] = 0$$",
+   "steps": [
+    {
+     "tex": "\\mathbb{E}_{a\\sim\\pi_\\theta}\\big[b\\,\\nabla\\log\\pi_\\theta(a \\mid s)\\big] = \\sum_a \\pi_\\theta(a \\mid s)\\,b\\,\\nabla\\log\\pi_\\theta(a \\mid s)"
+    },
+    {
+     "tex": "= b\\sum_a \\pi_\\theta(a \\mid s)\\,\\frac{\\nabla\\pi_\\theta(a \\mid s)}{\\pi_\\theta(a \\mid s)}",
+     "why": {
+      "options": [
+       "Đưa $b$ ra ngoài (không phụ thuộc $a$) và dùng $\\nabla\\log\\pi = \\frac{\\nabla\\pi}{\\pi}$",
+       "Tính chất Markov",
+       "Vì $b = \\mathbb{E}[R]$",
+       "Chiết khấu"
+      ],
+      "answer": 0,
+      "explain": "$b$ không đổi theo $a$ nên ra khỏi tổng theo $a$; rồi áp dụng mẹo đạo hàm logarit ngược lại."
+     }
+    },
+    {
+     "tex": "= b\\sum_a \\nabla\\pi_\\theta(a \\mid s) = b\\,\\nabla\\sum_a \\pi_\\theta(a \\mid s)",
+     "why": {
+      "options": [
+       "Rút gọn $\\pi$ rồi đổi thứ tự $\\sum$ và $\\nabla$",
+       "Luật số lớn",
+       "Bất đẳng thức Jensen",
+       "Vì $\\pi$ là softmax"
+      ],
+      "answer": 0,
+      "explain": "$\\pi\\cdot\\frac{\\nabla\\pi}{\\pi} = \\nabla\\pi$; tổng hữu hạn nên đổi thứ tự với $\\nabla$ được."
+     }
+    },
+    {
+     "tex": "= b\\,\\nabla 1 = 0",
+     "why": {
+      "options": [
+       "Xác suất có tổng bằng 1 với mọi $\\theta$, đạo hàm của hằng số bằng 0",
+       "Vì $b = 0$",
+       "Vì $\\pi$ không đổi",
+       "Vì gradient luôn dương"
+      ],
+      "answer": 0,
+      "explain": "$\\sum_a\\pi_\\theta(a \\mid s) = 1$ là hằng số theo $\\theta$."
+     }
+    }
+   ],
+   "hints": [
+    "Viết kỳ vọng thành tổng có trọng số $\\pi_\\theta(a \\mid s)$.",
+    "$b$ có phụ thuộc $a$ không?",
+    "Tổng các xác suất bằng bao nhiêu?"
+   ],
+   "note": "Vì vậy $\\mathbb{E}[(R - b)\\nabla\\log\\pi] = \\mathbb{E}[R\\nabla\\log\\pi]$: đường cơ sở **không đổi hướng trung bình** của gradient, chỉ làm từng mẫu bớt dao động. Nếu $b$ phụ thuộc $a$ thì lập luận hỏng (bước 2)."
+  },
+  {
+   "id": "p4-softmax",
+   "ref": "4.3 (bổ sung)",
+   "title": "Gradient của log-softmax",
+   "start": "Bổ sung của người dịch. Chính sách softmax trên logit $\\theta = (\\theta_1, \\ldots, \\theta_K)$: $\\pi_k = \\dfrac{e^{\\theta_k}}{\\sum_j e^{\\theta_j}}$. Hành động đã chọn là $a$.",
+   "goal": "$$\\frac{\\partial\\log\\pi_a}{\\partial\\theta_k} = [k = a] - \\pi_k$$",
+   "steps": [
+    {
+     "tex": "\\log\\pi_a = \\log\\frac{e^{\\theta_a}}{\\sum_j e^{\\theta_j}}"
+    },
+    {
+     "tex": "= \\theta_a - \\log\\sum_j e^{\\theta_j}",
+     "why": {
+      "options": [
+       "$\\log\\frac{x}{y} = \\log x - \\log y$ và $\\log e^{\\theta_a} = \\theta_a$",
+       "Quy tắc dây chuyền",
+       "Chuẩn hóa xác suất",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Tách log của thương."
+     }
+    },
+    {
+     "tex": "\\frac{\\partial\\log\\pi_a}{\\partial\\theta_k} = [k = a] - \\frac{1}{\\sum_j e^{\\theta_j}}\\cdot e^{\\theta_k}",
+     "why": {
+      "options": [
+       "Đạo hàm $\\theta_a$ theo $\\theta_k$ là $[k=a]$; đạo hàm $\\log\\sum_j e^{\\theta_j}$ dùng quy tắc dây chuyền",
+       "Mẹo đạo hàm logarit",
+       "Tính chất Markov",
+       "Tuyến tính của kỳ vọng"
+      ],
+      "answer": 0,
+      "explain": "$\\frac{\\partial}{\\partial\\theta_k}\\log u = \\frac{1}{u}\\frac{\\partial u}{\\partial\\theta_k}$ với $u = \\sum_j e^{\\theta_j}$, và $\\frac{\\partial u}{\\partial\\theta_k} = e^{\\theta_k}$."
+     }
+    },
+    {
+     "tex": "= [k = a] - \\pi_k",
+     "why": {
+      "options": [
+       "Định nghĩa $\\pi_k$",
+       "Vì $\\pi_k = 1$",
+       "Bỏ số hạng hằng",
+       "Vì $\\theta_k = 0$"
+      ],
+      "answer": 0,
+      "explain": "$\\frac{e^{\\theta_k}}{\\sum_j e^{\\theta_j}} = \\pi_k$."
+     }
+    }
+   ],
+   "hints": [
+    "Viết $\\log\\pi_a$ thành hiệu của hai số hạng.",
+    "Đạo hàm của $\\log\\sum_j e^{\\theta_j}$ theo $\\theta_k$ là gì?"
+   ],
+   "note": "Dạng vectơ: $\\nabla_\\theta\\log\\pi_a = e_a - \\pi$. Đây chính là phép \\\"one-hot nhân log\\\" ở hình 4.14: mất mát $-G_t\\,e_{a_t}\\cdot\\log\\pi$ có gradient theo logit là $-G_t(e_{a_t} - \\pi)$. Tab Thí nghiệm dùng đúng công thức này."
+  }
+ ]
+}
