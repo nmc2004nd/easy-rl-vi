@@ -138,14 +138,14 @@ Thông qua hạn chế độ phân kỳ KL để hạn chế chênh lệch giữ
 
 ```math
 \begin{gathered}
-\mathop{\mathrm{maximize}}\limits_\theta\,\,\,{\hat {\mathbb{E}}_t[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'(a_t|s_t)}}\hat A_t]}\\subject\,\,\,to\,\,\,\hat{\mathbb{E}}_t[KL[\pi_{\theta_{old}}(·|s_t),\pi_\theta(·|s_t)]]\leq\delta \tag{8}
-\end{gathered}
+\mathop{\mathrm{maximize}}\limits_\theta\,\,\,{\hat {\mathbb{E}}_t[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t]}\\ \text{subject to};;\hat{\mathbb{E}}_t[KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]]\leq\delta
+\end{gathered}\tag{8}
 ```
 
 Tương đương với bài toán tối ưu không ràng buộc:
 
 ```math
-\mathop{\mathrm{maximize}}\limits_\theta\,\,\,{\hat {\mathbb{E}}_t[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'(a_t|s_t)}}\hat A_t}-\beta KL[\pi_{\theta_{old}}(·|s_t),\pi_\theta(·|s_t)]] \tag{9}
+\mathop{\mathrm{maximize}}\limits_\theta\,\,\,\hat{\mathbb{E}}_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t-\beta\, KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]\right] \tag{9}
 ```
 
  Thực nghiệm về sau cho thấy, chỉ đơn giản chọn một hệ số phạt cố định β, dùng SGD để tối ưu phương trình mục tiêu phạt $`(9)`$ là không đủ; còn cần thực hiện các sửa đổi khác.
@@ -188,11 +188,11 @@ Kế thừa ý tưởng của TRPO, dùng độ phân kỳ KL để đo chênh l
   L^{KLPEN}(\theta)=\hat{\mathbb{E}}_t\left[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t-\beta\, KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]\right]\tag{12}
   ```
 
-  > Ghi chú của người dịch: công thức (12) ở bản gốc viết $`\pi_{\theta'(a_t|s_t)}`$ (đặt nhầm $`(a_t|s_t)`$ vào chỉ số dưới) và thừa một dấu ngoặc vuông; bản dịch đã sửa thành $`\pi_{\theta'}(a_t|s_t)`$ và cân lại dấu ngoặc.
+  > Ghi chú của người dịch: các công thức (8), (9) và (12) ở bản gốc viết $`\pi_{\theta'(a_t|s_t)}`$ (đặt nhầm $`(a_t|s_t)`$ vào chỉ số dưới) và ở (9), (12) thừa một dấu ngoặc vuông; bản dịch đã sửa thành $`\pi_{\theta'}(a_t|s_t)`$ và cân lại dấu ngoặc.
 
   để tối ưu cập nhật chính sách, và chỉ định trước một độ phân kỳ KL mục tiêu $`d_{targ}`$
 
-- Tính $`d=\hat{\mathbb{E}}_t[KL[\pi_{\theta_{old}}(·|s_t),\pi_\theta(·|s_t)]]`$ để cập nhật giá trị hệ số phạt $`\beta`$:
+- Tính $`d=\hat{\mathbb{E}}_t[KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]]`$ để cập nhật giá trị hệ số phạt $`\beta`$:
 
   - Nếu $`d<d_{targ}/1.5,\beta=\beta/2`$
   - Nếu $`d>d_{targ}×1.5,\beta=\beta×2`$
