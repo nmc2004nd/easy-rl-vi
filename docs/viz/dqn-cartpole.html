@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DQN trên CartPole · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  :root { --c3: #1f9d6b; --c4: #8b5cf6; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c3: #3cc28d; --c4: #a78bfa; } }
+  :root[data-theme="dark"] { --c3: #3cc28d; --c4: #a78bfa; }
+  .stage { position: relative; width: 100%; max-width: 620px; margin: 0 auto; }
+  .stage canvas { width: 100%; height: auto; display: block; border-radius: 12px; background: var(--surface-2); }
+  .qbars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-width: 360px; margin: 10px auto 0; }
+  .qbars div { background: var(--surface-2); border-radius: 10px; padding: 6px 8px; text-align: center; font-size: .86rem; border: 2px solid transparent; }
+  .qbars div.best { border-color: var(--s1); }
+  .qbars b { display: block; font-size: 1.05rem; font-variant-numeric: tabular-nums; }
+  table.res { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+  table.res th, table.res td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: center; }
+  table.res th:first-child, table.res td:first-child { text-align: left; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>DQN trên CartPole</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter6/chapter6_vi?id=_66-mạng-q-sâu">Mục 6.6</a></div>
+    </div>
+    <p class="lead">Bài toán xe đẩy giữ gậy, giống notebook DQN của repo. Trạng thái là 4 số thực (vị trí xe, vận tốc xe, góc gậy, vận tốc góc), nên <b>không thể</b> dùng bảng $Q$. Mỗi bước giữ được gậy nhận $+1$; gậy nghiêng quá $12°$ hoặc xe ra khỏi đường thì tập kết thúc; tối đa 200 bước. Mạng $Q$ học ngay trong trình duyệt.</p>
+  </div>
+  <div class="only-embed open-full"><a href="dqn-cartpole.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <span class="lb">Phát lại kinh nghiệm</span>
+      <div class="seg" id="rp"><button type="button" data-v="1" aria-pressed="true">Bật</button><button type="button" data-v="0" aria-pressed="false">Tắt (học từ các bước vừa đi)</button></div>
+      <span class="lb">Mạng mục tiêu</span>
+      <div class="seg" id="tg"><button type="button" data-v="1" aria-pressed="true">Bật ($C = 200$)</button><button type="button" data-v="0" aria-pressed="false">Tắt</button></div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="fast">+20 tập (nhanh)</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="4">
+    </div>
+    <p class="note" style="margin:4px 0">Mạng $4 \to 32 \to 32 \to 2$ (ReLU), Adam với tốc độ học $10^{-3}$; $\gamma = 0{,}99$; bộ đệm 5000 mẫu, lô 32; $\varepsilon$ giảm từ 1 xuống $0{,}05$ trong 4000 bước đầu; mỗi bước một lần cập nhật. Đầu vào được chia tỉ lệ về cỡ $[-1, 1]$.</p>
+    <div class="stats"><span>Tập <b id="ev">1</b></span><span>Bước <b id="sv">0</b></span><span>$\varepsilon$ = <b id="epsv"></b></span><span>Tập này <b id="rv">0</b></span><span>TB 10 tập <b id="mv">–</b></span><span>Sao chép <b id="cv">0</b></span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="stage"><canvas id="stagecv" width="620" height="230" aria-label="Xe đẩy và gậy"></canvas></div>
+        <div class="qbars" id="qbars"></div>
+        <div class="calc" id="calc"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Tổng thưởng mỗi tập (lần chạy này)</h2>
+    <div class="legend"><span class="li"><span class="sw" style="background:var(--muted)"></span>từng tập</span><span class="li"><span class="sw" style="background:var(--s1)"></span>trung bình 10 tập</span></div>
+    <div id="chart"></div>
+  </div>
+
+  <div class="blk">
+    <h2>Bật/tắt hai mẹo: so sánh nhiều lần chạy</h2>
+    <p class="note" style="margin:0 0 6px">Kết quả <b>tính sẵn</b> bằng đúng mã của trang này (<code>nn.js</code>, <code>dqn-agent.js</code>), 5 lần chạy với 5 hạt giống ngẫu nhiên × 300 tập cho mỗi cấu hình. Mỗi lần chạy mất khoảng 15 giây nên không đặt nút chạy lại ở đây; bạn có thể tự chạy từng cấu hình ở phần trên. Đường là trung bình 5 lần chạy (làm trơn 10 tập).</p>
+    <div class="legend" id="cmp-legend"></div>
+    <div id="cmp-chart"></div>
+    <div class="tscroll"><table class="res" id="cmp-tab"></table></div>
+    <div class="insight" id="cmp-ins"></div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script src="nn.js"></script>
+<script src="dqn-agent.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, CP = DQN.CP, CAPSTEP = 200, DECAY = 4000;
+  // __PRE__ (kết quả tính sẵn, xem ghi chú trên trang)
+  var PRE = {"both":{"ma":[15.8,21.6,19.2,18.7,19.8,19.4,20,20.1,19.6,21.6,23,22,22.8,22.9,22.9,23.3,23.4,23.4,23.6,21.5,20.7,21.9,21.6,22.2,22.1,21.6,21,20.7,20.7,21,20.7,19.3,19.1,19.5,19.4,19.4,19.4,19.7,19.1,19.2,19.6,20.8,20.7,20.2,21.2,21,21.1,20.4,21.2,21.1,22.9,22,23.8,24.1,23.1,24.8,26.6,29.4,31.2,32.2,32.7,34.2,33.9,36.1,38.7,43.5,45.1,50.5,53.7,63.2,69.2,78.3,90,98.1,110.9,115.3,125.6,135.1,146,149.8,158.8,166.3,171.5,178.7,180.9,188.4,192.8,193.7,195.9,199.5,199.8,199.8,199.8,199.2,199.4,199.4,199.3,198.8,198.8,198.8,198.2,197.5,196.4,196,194.9,193.9,193,192.5,191.3,189.4,189.8,189.5,189.2,189.1,187.3,185.6,183.9,183.4,182.5,182.6,181.1,180.5,180.2,179.5,179.7,179.5,178,176.2,174.7,172.7,171.4,171.2,169.6,166.2,165.6,164.7,163.8,163.5,162,161,158.7,154.6,153.5,154.1,153.8,154.8,156.1,156.8,158.6,157.1,158.7,161.4,162.3,163.5,163,161.2,159.9,157.8,155.5,155.4,152.8,150,147.7,145.9,144.7,143.1,142,142.2,142,142.5,141.3,141.7,142.5,142.6,145,147.2,150.1,151.8,154.1,155.9,158.3,157.4,156.1,155.7,153,151.8,149.4,148.2,146.3,143.8,143.2,143.9,143.9,144.4,145.7,147.8,151.1,151.6,153,156.2,159,161.8,164.1,164.6,164.8,164,163.3,163.7,164.8,165.2,165.2,165.3,166.4,168.6,170.5,172.3,173.4,175.1,175.5,176.7,177.4,178.1,178.9,179.4,179.2,177.8,173.9,172.1,169.7,169,169,168.6,168.3,167.3,167.5,169.1,173.1,175.4,178.1,179.2,179.1,178.3,177.9,177.8,178.2,175,171.2,169.1,168.1,165,163.8,163.9,164.8,165.3,165.1,167.8,171.5,173.2,172.8,174.8,176,176.7,176,176.5,176.8,178,178.4,178.2,179.8,180.6,179.5,179.3,180.1,178.9,178.3,177.6,177.7,178.4,180.2,181.3,182.4,184.2,183.2,183.1,183.5,182.5,181.4,178.6,175,171.7,170.1,168.1,168.7,168.7,167.8,167.9,167.4,168.1,168,168.6],"last100":[147,191,196,174,158],"solved":[79,87,81,87,90]},"noreplay":{"ma":[15.8,17.2,16.7,18.4,18.8,19.6,19.6,20.2,20.9,20.9,21.8,22.2,22.5,22.4,22.2,21.6,21.3,21.7,21.9,22.2,21.9,20.9,20.7,21.2,21.6,21.6,21.6,20.6,19.7,19.1,19.5,20.2,20.8,19.7,19.7,20.2,20.7,21.1,21.5,22.5,21.9,22.1,21.3,21.2,21.5,22.4,22.3,21.5,21.5,20.4,20.7,20.8,22,22.4,21.7,20.9,20.8,23,23.9,24.2,23.8,24.8,24.3,24.8,25.9,25,25.6,24,22.2,22.7,22.9,23.6,24.5,25.9,25.8,30.6,35.6,37.6,43.5,48.5,56.2,62.3,68.4,73.9,82,84.4,86.8,89.6,89,87.3,81.8,79.4,79.7,80.2,79.7,82.6,82,88.7,91.3,99.3,107.3,113.1,110.1,107.2,104.8,101.9,105.1,97.8,91.5,87.3,85.7,82.6,80.9,80.6,78.1,78.7,76.4,78,82.2,79.2,77.8,73.2,73.2,75,79.3,78.3,80.9,85.8,91.5,98.7,101.9,110.7,119.4,121.1,122.6,121.2,114.4,105.4,95.7,86.1,82.2,76.5,73.2,72.3,70.2,72.7,77.3,82.7,84.6,90.1,92.4,96,95.3,92,91.9,91.2,88.4,89.3,93.6,89.9,91,89.6,93,100.7,106.4,112,117.9,120.6,123,129.3,131.9,133.4,136.6,136.9,134,134.3,133.6,133.3,134.4,134.7,133.4,132.8,128.6,127.3,130.8,132.7,135.9,139.5,142,145.7,148.5,150.3,152,153.2,151.7,148.7,146.4,144.8,142.6,139.9,139.4,138.7,135.5,132.7,130,127.1,123.8,118.9,114.5,109.7,103.1,98.5,98.7,99.2,97.4,97.3,98.9,99.9,102.4,105.2,107.3,109.6,109.8,109.5,110.3,110.6,109.9,104.5,99.7,94.7,90.1,90.4,88,85.6,86.7,86.1,87.9,90.5,93.2,99.4,100.3,97.2,95.5,96.5,99.4,103,102.4,107.8,111.3,110.6,116.7,121.6,126.4,127.3,124,122.4,121,121.6,121.8,126.9,128.3,126.7,126.7,127.7,125.6,124.5,124.5,120.8,118.1,110.7,106.6,106.4,105.4,106.9,113.2,117.6,121.1,125.1,129,134.6,138,140.5,143.4,142.9,140,136.2,132.6,130.3,128.5,125,124.1,122.9,118.5,114.3,109.7,105.5,101.2,100,97.8,91.9],"last100":[149,56,84,130,136],"solved":[191,200,null,169,260]},"notarget":{"ma":[15.8,21.6,19.2,18.6,19.5,19,20.5,20.5,19.6,20.7,20.5,19.1,21.1,21.3,20.4,20,19.1,19.8,20.8,19.7,20.4,21.3,20.3,20.3,20.4,20.9,20.7,19.6,19.8,19.8,19.3,19.6,19.9,20.1,21.3,22.4,22.1,22.9,22,21.9,22.9,22.8,22,22.1,22.6,22.6,23.2,22.8,25.1,26.6,26.8,28.4,29.3,29.9,29.2,30.6,31.7,34.5,32.7,32.3,33.9,34.6,36.5,41,41.9,45.4,48.7,51.3,57.5,63,67.2,67.9,69.3,71.3,75.6,75.5,76.8,78.3,79.1,81.5,83.2,88.1,92.9,93.4,96,99.7,102.9,104.6,108.3,111.5,114.7,119.3,123.2,128.3,133.7,138,142.1,147.8,151.1,154.5,158,159.9,162.5,164,163.9,163.8,167.6,170.5,173.5,174.8,176.7,178.8,180.6,182.8,183.8,186.9,186.1,186.3,185.4,183.4,180.8,180.5,179.2,174.7,170,163.5,157.1,150.2,143.2,138.6,134.4,127.3,121.7,119.4,122.2,122.2,122.5,121.8,122.1,122,124.1,126.7,128.4,130.2,129.7,131.4,132.5,134.4,136,139.5,141.2,142.5,144.6,148.1,151.2,155.1,159.1,163.6,168.4,171.6,174.9,177.6,180.8,182.4,184,185.7,187.4,188.3,189.1,189.9,190.3,191.1,191.5,192,192.1,192.5,192.1,192.4,192.8,192.1,192.2,191.4,191.4,191.4,191.6,191.4,192.4,192.4,188.9,185.4,181.6,177.8,173.8,170.7,167.3,165.1,162.4,159.2,159.5,160.2,162.8,165.7,168.5,170.6,172.9,174.5,175.6,176.6,179,181.3,180.8,180.7,180.3,179.7,175.6,170.1,165.3,162,157.3,153.4,150.5,147.2,142.6,136.9,135.6,133.4,131.7,129.1,126.5,123.1,119,116.3,114.5,113.9,113.3,114,114.3,114.8,117,118.2,120.4,121.2,122.5,124,124.7,125.7,126.3,126.6,125.8,127.1,128,130.6,133.1,137.3,140.4,145.9,152.4,158.2,164.7,171.3,175.5,176.8,176.1,172.8,171,163.3,151.4,142.2,130.5,120.5,111.2,105.8,105.9,102.8,98.5,98.2,100.4,101,101.6,99.4,98.8,95.7,89.2,86.3,83.7,81,79.8,78.7,80.7,84.1,87.8,92.2,96.3,100.4,104.6,109.5,113,116.5,121.1,125.1],"last100":[151,132,102,145,123],"solved":[101,98,205,136,104]},"none":{"ma":[15.8,17.2,16.7,18.4,18.8,19.6,19.6,19.5,20.2,20.3,20.7,20.7,21.1,21.7,21.7,21.1,21.5,21.2,21.1,20.9,20.9,21.1,21.7,20.8,20.4,20.8,20.3,20.4,19,19.9,20.1,19.9,18.8,20.1,21.5,21.7,22,21.8,22.7,23.1,23.7,23.5,23.7,23.2,21.9,21.6,21.6,23,22.3,21.9,21,21.2,20.9,22.3,21.9,21.6,21.4,20.9,20.9,20.9,20.6,22.1,22.6,21.3,21.8,21.8,21.3,21.4,22.7,21.7,21.9,20.1,23.9,24.1,23.7,24.8,26.2,26.3,27.2,29.2,29.9,29.6,27.6,29.8,32.4,32.7,30.9,31.8,29.4,28.3,30.3,30.7,29.7,25.9,24.2,22.2,23.1,24.9,27.1,30.4,30.1,31.1,32.1,33.7,33.5,36.4,38.1,35.7,36.9,38.1,39.9,39,38.9,40.1,39.6,40.2,40.6,44.7,45.7,43.8,44.8,49.5,52.4,55.2,61.8,62.5,63.3,64.4,64.5,63.1,60.9,59.6,58.3,59.3,61.3,64.6,68.5,71.9,80.3,92.2,99.6,103.2,109.2,112.5,111.1,110.3,106.3,99.8,94.9,94.6,95.4,97.7,99.6,97.6,101,105.4,112.9,120.4,127.3,124.6,124,128.5,127.5,130.5,131.6,135.5,137.7,137.3,136,137.9,139.8,136.1,135.8,132.2,131.3,127.4,125.3,128.5,127.4,129.6,129.7,130.4,129.2,132.5,129,125.9,121.8,118.6,111.7,101.9,90.6,88.3,89.7,88.4,92.8,99.8,106.5,110.6,118.5,125.3,135.8,138.6,141.3,146.2,147.7,142.8,140.3,135.2,134.7,137.3,139.4,138.5,134.9,134.4,132.4,134.1,137,138.3,136.8,135.8,132.4,132.3,132.7,127.2,124.8,123,119,117.6,116.1,112.9,112.2,111.7,112,115.8,121.3,126.6,131.4,136.7,141.6,145.1,149.5,154.9,158.5,159.3,159.2,159.2,159.1,157.7,157.7,158.2,158.4,157.5,156.8,154.9,151.2,147.3,146.9,144.5,140.9,137.1,133.3,128.3,122.6,120.8,117.3,116,116.1,116.7,120.3,124.2,126,131.1,138.7,143,148.6,150.4,150.8,154.1,154.2,154.2,156.3,156.3,154.8,152.4,150.3,151.7,147.9,142.5,134.8,127,123.2,121.5,123.2,127.3,131.3,133.3,137,142.5,150.1,157.8],"last100":[159,15,180,171,170],"solved":[181,null,127,171,145]}};
+  function useRp() { return V_.$('#rp [aria-pressed=true]').dataset.v === '1'; }
+  function useTg() { return V_.$('#tg [aria-pressed=true]').dataset.v === '1'; }
+  var st, player, busy = false;
+  function newAgent() { return new DQN.Agent({ sizes: [4, 32, 32, 2], lr: 1e-3, gamma: 0.99, buf: 5000, batch: 32, C: 200, replay: useRp(), target: useTg(), rand: NN.seeded(101) }); }
+  function reset() { player && player.stop(); st = { ag: newAgent(), s: CP.reset(NN.seeded(5)), steps: 0, ep: 1, R: 0, rets: [], last: null }; st.envRand = NN.seeded(9); buildPseudo(); pseudo.hl('init'); render(); }
+  function eps() { return Math.max(0.05, 1 - st.steps / DECAY); }
+  function envStep(keep) {
+    var ag = st.ag, x = CP.norm(st.s), e = eps(), act = ag.act(x, e), o = CP.step(st.s, act.a);
+    ag.store({ x: x, a: act.a, r: 1, x2: CP.norm(o.s), done: o.done });
+    var L = ag.buf.length >= 32 ? ag.learn(keep) : null;
+    st.steps++; st.R++;
+    st.last = { a: act.a, rnd: act.rnd, q: act.q || ag.q(x), e: e, L: L, done: o.done };
+    if (o.done || st.R >= CAPSTEP) { st.rets.push(st.R); st.R = 0; st.ep++; st.s = CP.reset(st.envRand); st.last.end = true; }
+    else st.s = o.s;
+  }
+
+  // ---------- mã giả ----------
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  var pseudo, pKey = null;
+  function buildPseudo() {
+    var key = '' + useRp() + useTg(); if (key === pKey) return; pKey = key;
+    var lines = [
+      ['init', 0, 'Khởi tạo mạng $Q$' + (useTg() ? '; $\\hat Q \\leftarrow Q$' : '') + '; bộ đệm rỗng'],
+      ['ep', 0, KW('với mỗi tập') + ', ' + KW('với mỗi bước') + ':'],
+      ['act', 1, 'chọn $a_t$ (trái/phải) theo $Q$, $\\varepsilon$-tham lam; nhận $r_t = 1$, $s_{t+1}$'],
+      ['store', 1, 'lưu $(s_t, a_t, r_t, s_{t+1})$ vào bộ đệm'],
+      ['samp', 1, useRp() ? 'lấy <b>ngẫu nhiên</b> một lô 32 mẫu từ bộ đệm' : 'lấy <b>32 bước vừa đi</b> làm lô <span class="cm">(tắt phát lại)</span>'],
+      ['y', 1, '$y_i \\leftarrow r_i + \\gamma\\max_a ' + (useTg() ? '\\hat Q' : 'Q') + '(s_{i+1}, a)$' + (useTg() ? '' : ' <span class="cm">(tắt mạng mục tiêu: dùng chính $Q$)</span>')],
+      ['upd', 1, 'một bước Adam giảm $\\tfrac12\\sum_i\\big(y_i - Q(s_i, a_i)\\big)^2$']
+    ];
+    if (useTg()) lines.push(['copy', 1, KW('cứ sau') + ' $C = 200$ lần cập nhật: $\\hat Q \\leftarrow Q$']);
+    var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
+    box.innerHTML = '';
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: 'DQN (hình 6.14)', lines: lines, open: open });
+  }
+
+  // ---------- vẽ ----------
+  var cv = V_.$("#stagecv"), g = cv.getContext('2d');
+  function drawStage() {
+    var W = cv.width, H = cv.height, s = st.s, txt = V_.cssVar('--text'), mut = V_.cssVar('--muted');
+    g.clearRect(0, 0, W, H);
+    var sc = (W - 60) / (2 * CP.XLIM), cx = W / 2 + s[0] * sc, ty = H - 50;
+    g.strokeStyle = mut; g.lineWidth = 2; g.beginPath(); g.moveTo(20, ty); g.lineTo(W - 20, ty); g.stroke();
+    [-CP.XLIM, CP.XLIM].forEach(function (lx) { var px = W / 2 + lx * sc; g.strokeStyle = V_.cssVar('--s2'); g.beginPath(); g.moveTo(px, ty - 12); g.lineTo(px, ty + 12); g.stroke(); });
+    g.fillStyle = V_.cssVar('--s1'); g.fillRect(cx - 30, ty - 22, 60, 22);
+    var plen = 120, ang = s[2], px2 = cx + Math.sin(ang) * plen, py2 = ty - 22 - Math.cos(ang) * plen;
+    var bad = Math.abs(ang) > CP.TLIM * 0.75;
+    g.strokeStyle = bad ? V_.cssVar('--s2') : V_.cssVar('--hl'); g.lineWidth = 8; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx, ty - 22); g.lineTo(px2, py2); g.stroke();
+    g.fillStyle = txt; g.beginPath(); g.arc(cx, ty - 22, 5, 0, 2 * Math.PI); g.fill();
+    // giới hạn góc
+    g.strokeStyle = mut; g.lineWidth = 1; g.setLineDash([4, 4]);
+    [-CP.TLIM, CP.TLIM].forEach(function (a) { g.beginPath(); g.moveTo(cx, ty - 22); g.lineTo(cx + Math.sin(a) * plen, ty - 22 - Math.cos(a) * plen); g.stroke(); });
+    g.setLineDash([]);
+    g.fillStyle = mut; g.font = '13px "Be Vietnam Pro", sans-serif';
+    g.fillText('x = ' + s[0].toFixed(2) + '   góc = ' + (s[2] * 180 / Math.PI).toFixed(1) + '°', 16, 22);
+    if (st.last) { g.fillStyle = txt; g.fillText('đẩy ' + (st.last.a ? 'phải →' : '← trái') + (st.last.rnd ? ' (ngẫu nhiên)' : ''), W - 190, 22); }
+  }
+  function render() {
+    drawStage();
+    V_.$('#ev').textContent = st.ep; V_.$('#sv').textContent = st.steps; V_.$('#epsv').textContent = V_.fmt(eps(), 2); V_.$('#rv').textContent = st.R;
+    var l10 = st.rets.slice(-10); V_.$('#mv').textContent = l10.length ? V_.fmt(l10.reduce(function (a, b) { return a + b; }, 0) / l10.length, 1) : '–';
+    V_.$('#cv').textContent = st.ag.copies;
+    var q = st.ag.q(CP.norm(st.s)), b = q[1] > q[0] ? 1 : 0;
+    V_.$('#qbars').innerHTML = ['← trái', 'phải →'].map(function (n, k) { return '<div class="' + (k === b ? 'best' : '') + '">$Q(s, \\text{' + n + '})$<b>' + V_.fmt(q[k], 2) + '</b></div>'; }).join('');
+    V_.texAll(V_.$('#qbars'));
+    var el = V_.$('#calc'), L = st.last && st.last.L;
+    if (!L || !L.rows.length) el.innerHTML = '<span class="hint">' + (!st.steps ? 'Bấm “Phát”, hoặc “Bước tiếp” để xem từng bước.' : !L ? 'Chờ bộ đệm có đủ 32 mẫu rồi mới bắt đầu cập nhật.' : 'Vừa chạy nhanh nên không ghi lại lô; bấm “Bước tiếp” để xem phép tính của một bước.') + '</span>';
+    else {
+      var o = L.rows[0];
+      V_.tex(el, '\\begin{aligned}&\\text{Mẫu 1 của lô: } y_1 = ' + (o.e.done ? 'r_1 = 1\\ (\\text{gậy đổ})' : '1 + 0.99\\cdot\\max_a ' + (useTg() ? '\\hat Q' : 'Q') + '(s_2, a) = 1 + 0.99\\cdot ' + V_.tz(Math.max.apply(null, o.qn), 3) + ' = ' + V_.tz(o.y, 3)) + ',\\quad Q(s_1, a_1) = ' + V_.tz(o.q, 3) + '\\\\&\\text{Mất mát của lô} = ' + V_.tz(L.loss, 4) + '\\end{aligned}', true);
+      if (L.copied) el.insertAdjacentHTML('beforeend', '<p class="hint"><b>Vừa sao chép $\\hat Q \\leftarrow Q$.</b></p>');
+      V_.texAll(el);
+    }
+    var m = l10.length ? l10.reduce(function (a, b2) { return a + b2; }, 0) / l10.length : 0, ins;
+    if (st.ep <= 3) ins = 'Lúc đầu $\\varepsilon$ gần 1: tác tử đẩy ngẫu nhiên, gậy đổ sau khoảng 10–30 bước. Mỗi bước giữ được gậy là $+1$, nên $Q(s, a)$ học “còn giữ được thêm bao nhiêu bước”, với $\\gamma = 0{,}99$ tối đa khoảng 100.';
+    else if (m >= 195) ins = 'Trung bình 10 tập gần nhất đạt ' + V_.fmt(m, 0) + '/200: đã giữ được gậy gần như trọn tập. Để ý $Q(s, \\cdot)$ của hành động tốt thường lớn hơn hẳn khi gậy bắt đầu nghiêng.';
+    else ins = 'Trung bình 10 tập gần nhất: ' + V_.fmt(m, 0) + ' bước. Với cả hai mẹo bật, thường cần khoảng 80–150 tập (vài phút ở tốc độ cao nhất, hoặc bấm “+20 tập”). Tắt phát lại kinh nghiệm để thấy học chậm và chập chờn hơn.';
+    V_.$('#insight').innerHTML = ins; V_.texAll(V_.$('#insight'));
+    var ma = st.rets.map(function (_, i) { var s2 = 0, n = 0; for (var j = Math.max(0, i - 9); j <= i; j++) { s2 += st.rets[j]; n++; } return s2 / n; });
+    chart.set([st.rets, ma]);
+    V_.postHeight();
+  }
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'Tập', color: '--muted' }, { name: 'TB 10 tập', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 0, yMin: 0, yMax: 200, refs: [{ y: 195, label: '195' }], aria: 'Tổng thưởng mỗi tập' });
+
+  // ---------- phát ----------
+  var PER = [1, 1, 2, 6, 25];
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: function () {
+    var k = PER[+V_.$('#speed').value - 1];
+    for (var i = 0; i < k; i++) envStep(i === k - 1);
+    if (st.last) pseudo.hl(st.last.L ? (st.last.L.copied ? ['act', 'store', 'samp', 'y', 'upd', 'copy'] : ['act', 'store', 'samp', 'y', 'upd']) : ['act', 'store']);
+    render(); return true;
+  } });
+  V_.$('#step').addEventListener('click', function () { player.stop(); envStep(true); pseudo.hl(st.last.L ? (st.last.L.copied ? ['act', 'store', 'samp', 'y', 'upd', 'copy'] : ['act', 'store', 'samp', 'y', 'upd']) : ['act', 'store']); render(); });
+  V_.$('#fast').addEventListener('click', function () {
+    if (busy) return; player.stop(); busy = true;
+    var btn = V_.$('#fast'), target = st.ep + 20;
+    (function chunk() {
+      var t0 = Date.now();
+      while (st.ep < target && Date.now() - t0 < 60) envStep(false);
+      btn.textContent = 'Đang chạy… tập ' + st.ep; render();
+      if (st.ep < target) setTimeout(chunk, 0); else { busy = false; btn.textContent = '+20 tập (nhanh)'; }
+    })();
+  });
+  V_.$('#reset').addEventListener('click', function () { if (!busy) reset(); });
+  ['#rp', '#tg'].forEach(function (id) {
+    V_.$(id).addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b || busy) return;
+      V_.$$(id + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+      reset();
+    });
+  });
+  V_.onTheme(render);
+
+  // ---------- phần so sánh tính sẵn ----------
+  var CFG = [['both', 'Cả hai mẹo', '--s1'], ['noreplay', 'Tắt phát lại', '--s2'], ['notarget', 'Tắt mạng mục tiêu', '--c3'], ['none', 'Tắt cả hai', '--c4']];
+  if (PRE) {
+    V_.$('#cmp-legend').innerHTML = CFG.map(function (c) { return '<span class="li"><span class="sw" style="background:var(' + c[2] + ')"></span>' + c[1] + '</span>'; }).join('');
+    var cc = V_.LineChart(V_.$('#cmp-chart'), { series: CFG.map(function (c) { return { name: c[1], color: c[2] }; }), xName: 'Tập', xLabel: 'Tập', dec: 0, yMin: 0, yMax: 200, aria: 'So sánh bốn cấu hình' });
+    cc.set(CFG.map(function (c) { return PRE[c[0]].ma; }));
+    V_.$('#cmp-tab').innerHTML = '<thead><tr><th>Cấu hình</th><th>TB tập 201–300 (5 lần chạy)</th><th>Tập đầu tiên đạt TB 10 tập ≥ 195</th></tr></thead><tbody>' +
+      CFG.map(function (c) { var p = PRE[c[0]]; return '<tr><td>' + c[1] + '</td><td>' + p.last100.join(' · ') + '</td><td>' + p.solved.map(function (x) { return x == null ? '–' : x; }).join(' · ') + '</td></tr>'; }).join('') + '</tbody>';
+    V_.$('#cmp-ins').innerHTML = '<b>Cả hai mẹo</b>: cả 5 lần chạy đạt trung bình 10 tập ≥ 195 sớm nhất (tập 79–90). <b>Tắt phát lại kinh nghiệm</b> (học từ 32 bước vừa đi, rất tương quan) chậm hẳn: tập 169–260, một lần không đạt trong 300 tập. <b>Tắt mạng mục tiêu</b> vẫn đạt (tập 98–205) nhưng muộn hơn và về sau thấp hơn. <b>Tắt cả hai</b> thì rất may rủi: có lần học được, có lần sụp hẳn (trung bình tập 201–300 chỉ 15). Lưu ý trung thực: kể cả khi bật cả hai mẹo, DQN trên CartPole vẫn có lúc “quên” sau khi đã giữ được gậy (trung bình tập 201–300 từ 147 tới 196), đây là hiện tượng thường gặp; các chương 7 trở đi giới thiệu thêm các cải tiến.';
+    V_.texAll(V_.$('#cmp-ins'));
+  }
+
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

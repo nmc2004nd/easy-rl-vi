@@ -16,7 +16,7 @@
 <div class="wrap">
   <div class="top">
     <h1>Mô phỏng thuật toán</h1>
-    <div class="crumbs"><a href="../#/">Sách</a> · <a href="../review/index.html?ch=2">Ôn tập chương 2</a> · <a href="../review/index.html?ch=3">Ôn tập chương 3</a> · <a href="../review/index.html?ch=4">Ôn tập chương 4</a> · <a href="../review/index.html?ch=5">Ôn tập chương 5</a></div>
+    <div class="crumbs"><a href="../#/">Sách</a> · <a href="../review/index.html?ch=2">Ôn tập chương 2</a> · <a href="../review/index.html?ch=3">Ôn tập chương 3</a> · <a href="../review/index.html?ch=4">Ôn tập chương 4</a> · <a href="../review/index.html?ch=5">Ôn tập chương 5</a> · <a href="../review/index.html?ch=6">Ôn tập chương 6</a></div>
   </div>
   <p class="lead">Các thuật toán trong sách được chạy từng bước, kèm phép tính bằng số thật ở mỗi ô. Mỗi mô phỏng cũng được nhúng ngay dưới hình tương ứng trong chương.</p>
 
@@ -46,6 +46,12 @@
   <div class="cards">
     <a class="card" href="ppo.html"><div class="ref">Mục 5.2 · (5.7), (5.8)</div><h3>PPO từng bước</h3><p>Lấy mẫu một lô, $K$ epoch trên cùng lô với tỉ số $r_t$ và mẫu bị cắt; PPO-clip, PPO-penalty với $\beta$ thích nghi; so sánh hiệu quả dữ liệu với REINFORCE.</p></a>
     <a class="card" href="ppo-trust.html"><div class="ref">Mục 5.2 · TRPO</div><h3>Mục tiêu thay thế và vùng tin cậy</h3><p>Bản đồ cải thiện thật và mục tiêu thay thế cạnh nhau; đường viền $\mathrm{KL} = \delta$; không cắt, PPO-clip, PPO-penalty, TRPO đi đâu sau $K$ epoch.</p></a>
+  </div>
+
+  <h2 id="ch6" style="font-size:1.05rem;margin:26px 0 10px">Chương 6 · Mạng Q sâu</h2>
+  <div class="cards">
+    <a class="card" href="dqn.html"><div class="ref">Mục 6.6 · hình 6.14</div><h3>DQN từng bước</h3><p>Mạng nơ-ron nhỏ nhận tọa độ ô; bộ đệm phát lại, lô, mục tiêu $y = r + \gamma\max_a\hat Q(s', a)$; mạng mục tiêu chỉ đổi khi sao chép.</p></a>
+    <a class="card" href="dqn-cartpole.html"><div class="ref">Mục 6.3–6.6</div><h3>DQN trên CartPole</h3><p>Huấn luyện ngay trong trình duyệt; bật/tắt phát lại kinh nghiệm và mạng mục tiêu; so sánh nhiều lần chạy.</p></a>
   </div>
 </div>
 <script src="viz.js"></script>

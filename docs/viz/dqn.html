@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DQN từng bước · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  .grids2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+  .grids2 .cap { text-align: center; font-size: .86rem; font-weight: 600; margin-bottom: 4px; }
+  .grids2 .cap small { display: block; font-weight: 500; color: var(--muted); }
+  .grids2 .gq { max-width: 330px; margin: 0 auto; }
+  .grids2 .gq.flash svg { animation: copyflash 1s ease-out; }
+  @keyframes copyflash { 0% { box-shadow: 0 0 0 4px var(--s2); border-radius: 8px; } 100% { box-shadow: 0 0 0 0 transparent; } }
+  .qgrid .qc.unv rect { stroke: var(--muted); stroke-width: 1.2; stroke-dasharray: 3 2; }
+  @media (max-width: 560px) { .grids2 { grid-template-columns: minmax(0, 1fr); } }
+  .buf { display: flex; flex-wrap: wrap; gap: 3px; margin: 6px 0; }
+  .buf span { width: 14px; height: 14px; border-radius: 3px; background: var(--surface-2); position: relative; }
+  .buf span.pos { background: var(--pos); }
+  .buf span.neg { background: var(--neg); }
+  .buf span.pick { box-shadow: 0 0 0 2px var(--s2); }
+  .buf span.new::after { content: ""; position: absolute; inset: 4px; border-radius: 50%; background: var(--hl); }
+  .tscroll { max-height: 250px; }
+  table.tr td.y { font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>DQN từng bước</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter6/chapter6_vi?id=_66-mạng-q-sâu">Mục 6.6</a></div>
+    </div>
+    <p class="lead">Hình 6.14 chạy trên lưới 5×5. Khác các chương trước: không có bảng $Q$. Mạng nơ-ron nhận <b>tọa độ</b> $(\text{hàng}, \text{cột})$ của ô và đưa ra 4 giá trị $Q$, nên mọi ô, kể cả ô chưa từng đi qua (viền đứt nét), đều có giá trị nhờ <b>tổng quát hóa</b>. Bên trái là mạng $Q$ đang học, bên phải là mạng mục tiêu $\hat Q$ chỉ đổi khi được sao chép.</p>
+  </div>
+  <div class="only-embed open-full"><a href="dqn.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="fast">+200 bước</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <div class="ctrl">
+      <span class="lb">Sao chép $\hat Q \leftarrow Q$ sau $C$ =</span>
+      <div class="seg" id="csel"><button type="button" data-v="25" aria-pressed="false">25</button><button type="button" data-v="50" aria-pressed="true">50</button><button type="button" data-v="100" aria-pressed="false">100</button></div>
+      <span class="lb">lần cập nhật</span>
+    </div>
+    <p class="note" style="margin:4px 0">Mỗi bước $-0{,}04$; đích $G$: $+1$, hố: $-1$ (đều kết thúc); hai ô tường; $\gamma = 0{,}9$; tập bị cắt sau 30 bước. Mạng $2 \to 16 \to 16 \to 4$ (ReLU), Adam với tốc độ học $0{,}01$; bộ đệm 1000 mẫu, lô 16; $\varepsilon$ giảm từ 1 xuống $0{,}05$ trong 900 bước đầu. Mỗi bước tương tác có một lần cập nhật.</p>
+    <div class="stats"><span>Bước <b id="sv">0</b></span><span>Tập <b id="ev">1</b></span><span>$\varepsilon$ = <b id="epsv"></b></span><span>Bộ đệm <b id="bv">0</b>/1000</span><span>Sao chép <b id="cv">0</b> lần</span><span>Mất mát <b id="lv">–</b></span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="grids2">
+          <div><div class="cap">Mạng $Q$ (đang học)<small>tam giác: $Q(s, a)$; mũi tên: $\arg\max_a Q$</small></div><div class="gq" id="g1"></div></div>
+          <div><div class="cap">Mạng mục tiêu $\hat Q$<small id="tinfo">đứng yên tới lần sao chép tới</small></div><div class="gq" id="g2"></div></div>
+        </div>
+        <div class="scale" id="scale"></div>
+        <div class="rxs note" style="margin:8px 0 0">Bộ đệm phát lại, 60 mẫu gần nhất (xanh: $r > 0$, cam: $r < 0$, xám: $r = -0{,}04$; viền cam: nằm trong lô vừa lấy; chấm vàng: mẫu mới nhất):</div>
+        <div class="buf" id="buf"></div>
+        <div class="tscroll"><table class="tr"><thead><tr><th>#</th><th>$s_i$</th><th>$a_i$</th><th>$r_i$</th><th>$s_{i+1}$</th><th>$\max_a\hat Q(s_{i+1}, a)$</th><th>$y_i$</th><th>$Q(s_i, a_i)$</th></tr></thead><tbody id="rows"></tbody></table></div>
+        <div class="calc" id="calc"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div class="blk">
+      <h2>Số bước tới đích mỗi tập</h2>
+      <div id="chart"></div>
+      <p class="note">Tập không tới đích (rơi hố hoặc bị cắt) tính là 30. Đường ngắn nhất là 8 bước.</p>
+    </div>
+    <div class="blk">
+      <h2>Mất mát hồi quy</h2>
+      <div id="lchart"></div>
+      <p class="note">Trung bình 20 lần cập nhật. Mất mát thường nhảy lên ngay sau mỗi lần sao chép: mục tiêu vừa đổi, bài toán hồi quy mới bắt đầu.</p>
+    </div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script src="nn.js"></script>
+<script src="dqn-agent.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, R = 5, C = 5, N = 25, START = 20, GOAL = 4, PIT = 12, WALL = { 7: 1, 17: 1 }, GAMMA = 0.9, CAP = 30, DECAY = 900;
+  var DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1], AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'], AW = ['↑', '→', '↓', '←'];
+  function mv(s, a) { var r = Math.floor(s / C) + DR[a], c = s % C + DC[a]; if (r < 0 || c < 0 || r >= R || c >= C) return s; var t = r * C + c; return WALL[t] ? s : t; }
+  function isTerm(s) { return s === GOAL || s === PIT; }
+  function rew(s2) { return s2 === GOAL ? 1 : s2 === PIT ? -1 : -0.04; }
+  function feat(s) { return [Math.floor(s / C) / (R - 1) * 2 - 1, (s % C) / (C - 1) * 2 - 1]; }
+  function rc(s) { return '(' + Math.floor(s / C) + ',' + s % C + ')'; }
+  function Csel() { return +V_.$('#csel [aria-pressed=true]').dataset.v; }
+  function num(x, d) { return V_.tz(x, d == null ? 3 : d); }
+  function numP(x, d) { return V_.tz(x, d == null ? 3 : d, true); }
+
+  var st, g1, g2, player;
+  function reset() {
+    player && player.stop();
+    st = { ag: new DQN.Agent({ sizes: [2, 16, 16, 4], lr: 0.01, gamma: GAMMA, buf: 1000, batch: 16, C: Csel(), replay: true, target: true, rand: NN.seeded(7) }),
+      s: START, steps: 0, ep: 1, len: 0, visited: {}, last: null, lens: [], losses: [], lossAcc: [] };
+    st.visited[START] = 1;
+    pseudo.hl('init');
+    render();
+  }
+  function eps() { return Math.max(0.05, 1 - st.steps / DECAY); }
+  function step() {
+    var ag = st.ag, s = st.s, e = eps(), act = ag.act(feat(s), e), a = act.a, s2 = mv(s, a), r = rew(s2), done = isTerm(s2);
+    ag.store({ x: feat(s), a: a, r: r, x2: feat(s2), done: done, s: s, s2: s2 });
+    var L = ag.learn(true);
+    st.steps++; st.len++; st.visited[s2] = 1;
+    st.lossAcc.push(L.loss); if (st.lossAcc.length >= 20) { st.losses.push(st.lossAcc.reduce(function (p, q) { return p + q; }, 0) / st.lossAcc.length); st.lossAcc = []; }
+    st.last = { s: s, a: a, rnd: act.rnd, r: r, s2: s2, done: done, eps: e, L: L };
+    var end = done || st.len >= CAP;
+    if (end) { st.lens.push(s2 === GOAL ? st.len : CAP); st.s = START; st.len = 0; st.ep++; st.last.end = true; }
+    else st.s = s2;
+    var ids = ['act', 'store', 'samp', 'y', 'upd']; if (L.copied) ids.push('copy'); if (end) ids.push('ep');
+    pseudo.hl(ids);
+  }
+
+  // ---------- mã giả ----------
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  var pseudo = V_.Pseudo(V_.$('#pseudo'), { strip: V_.$('#pstrip'), title: 'DQN (hình 6.14)', lines: [
+    ['init', 0, 'Khởi tạo mạng $Q$; $\\hat Q \\leftarrow Q$; bộ đệm rỗng'],
+    ['ep', 0, KW('với mỗi tập') + ': $s_t \\leftarrow S$; ' + KW('với mỗi bước') + ':'],
+    ['act', 1, 'chọn $a_t$ theo $Q$, $\\varepsilon$-tham lam; nhận $r_t$, $s_{t+1}$'],
+    ['store', 1, 'lưu $(s_t, a_t, r_t, s_{t+1})$ vào bộ đệm <span class="cm">(đầy thì bỏ mẫu cũ nhất)</span>'],
+    ['samp', 1, 'lấy ngẫu nhiên một lô $(s_i, a_i, r_i, s_{i+1})$'],
+    ['y', 1, '$y_i \\leftarrow r_i + \\gamma\\max_a\\hat Q(s_{i+1}, a)$ <span class="cm">($s_{i+1}$ kết thúc: $y_i = r_i$)</span>'],
+    ['upd', 1, 'cập nhật $Q$ để $Q(s_i, a_i)$ gần $y_i$: một bước giảm $\\tfrac12\\sum_i\\big(y_i - Q(s_i, a_i)\\big)^2$'],
+    ['copy', 1, KW('cứ sau') + ' $C$ lần cập nhật: $\\hat Q \\leftarrow Q$']
+  ] });
+
+  // ---------- vẽ ----------
+  function paint(view, net, mark) {
+    var mx = 1;
+    for (var s = 0; s < N; s++) {
+      var kind = WALL[s] ? 'wall' : isTerm(s) ? 'term' : '';
+      var q = kind ? null : net.forward(feat(s));
+      view.set(s, { kind: kind, q: q, maxAbs: mx, nums: true, dec: 'auto', arrow: !!q, label: s === START ? 'S' : s === GOAL ? '+1' : s === PIT ? '−1' : '', value: s === GOAL ? 1 : s === PIT ? -1 : null, aria: 'ô ' + rc(s) });
+      view.cls(s, 'unv', !kind && !st.visited[s]);
+    }
+    if (mark) { view.agent(st.s); if (st.last) view.mark(st.last.s, st.last.a); else view.mark(null); }
+  }
+  function render() {
+    paint(g1, st.ag.net, true); paint(g2, st.ag.tgt, false);
+    V_.scaleBar(V_.$('#scale'), 1, false);
+    V_.$('#sv').textContent = st.steps; V_.$('#ev').textContent = st.ep; V_.$('#epsv').textContent = V_.fmt(eps(), 2);
+    V_.$('#bv').textContent = st.ag.buf.length; V_.$('#cv').textContent = st.ag.copies; V_.$('#lv').textContent = st.ag.lastLoss == null ? '–' : st.ag.lastLoss.toFixed(4);
+    var toNext = Csel() - (st.ag.updates % Csel());
+    V_.$('#tinfo').textContent = st.ag.copies ? 'sao chép lần ' + st.ag.copies + '; còn ' + toNext + ' lần cập nhật tới lần sau' : 'giống Q lúc khởi tạo; còn ' + toNext + ' lần cập nhật tới lần sao chép đầu';
+    if (st.last && st.last.L.copied) { var g = V_.$('#g2'); g.classList.remove('flash'); void g.offsetWidth; g.classList.add('flash'); }
+    // bộ đệm
+    var buf = st.ag.buf, n = buf.length, from = Math.max(0, n - 60), picks = {};
+    if (st.last) st.last.L.idx.forEach(function (i) { picks[i] = 1; });
+    var html = '';
+    for (var i = from; i < n; i++) html += '<span class="' + (buf[i].r > 0 ? 'pos' : buf[i].r < -0.5 ? 'neg' : '') + (picks[i] ? ' pick' : '') + (i === n - 1 ? ' new' : '') + '" title="' + rc(buf[i].s) + ' ' + AW[buf[i].a] + ' r=' + buf[i].r + '"></span>';
+    V_.$('#buf').innerHTML = html || '<span style="width:auto;background:none;color:var(--muted)">trống</span>';
+    // bảng lô
+    var rows = st.last ? st.last.L.rows : [];
+    V_.$('#rows').innerHTML = rows.map(function (o, k) {
+      var e = o.e;
+      return '<tr' + (e === buf[n - 1] ? ' class="now"' : '') + '><td>' + (k + 1) + '</td><td>' + rc(e.s) + '</td><td>' + AW[e.a] + '</td><td>' + V_.fmt(e.r, 2) + '</td><td>' + (e.done ? (e.s2 === GOAL ? 'đích' : 'hố') : rc(e.s2)) + '</td><td>' + (o.qn ? V_.fmt(Math.max.apply(null, o.qn), 3) : '–') + '</td><td class="y">' + V_.fmt(o.y, 3) + '</td><td>' + V_.fmt(o.q, 3) + '</td></tr>';
+    }).join('') || '<tr><td colspan="8" style="color:var(--muted)">Chưa có lô nào.</td></tr>';
+    showCalc(); insight();
+    chart.set([smooth(st.lens, 10)]); lchart.set([st.losses]);
+    V_.postHeight();
+  }
+  function smooth(h, w) { return h.map(function (_, i) { var s = 0, n = 0; for (var j = Math.max(0, i - w + 1); j <= i; j++) { s += h[j]; n++; } return s / n; }); }
+  function showCalc() {
+    var el = V_.$('#calc'), L = st.last;
+    if (!L) { el.innerHTML = '<span class="hint">Bấm “Bước tiếp”: mỗi bước gồm một lần tương tác, một lần lưu vào bộ đệm và một lần cập nhật trên lô 16 mẫu.</span>'; return; }
+    var o = L.L.rows[0], e = o.e, src = '\\begin{aligned}&\\text{Bước vừa đi: } s = ' + rc(L.s) + ',\\ a = ' + AN[L.a] + (L.rnd ? '\\ (\\text{ngẫu nhiên, } \\varepsilon = ' + num(L.eps, 2) + ')' : '\\ (\\arg\\max_a Q)') + ',\\ r = ' + num(L.r, 2) + '\\\\' +
+      '&\\text{Mẫu 1 của lô: } y_1 = ' + (e.done ? 'r_1 = ' + num(e.r, 2) + '\\ (\\text{kết thúc})' : 'r_1 + \\gamma\\max_a\\hat Q(s_2, a) = ' + numP(e.r, 2) + ' + 0.9\\cdot' + numP(Math.max.apply(null, o.qn), 3) + ' = ' + num(o.y, 3)) + ',\\quad Q(s_1, a_1) = ' + num(o.q, 3) + '\\\\' +
+      '&\\text{Mất mát của lô: } \\tfrac{1}{16}\\textstyle\\sum_i \\tfrac12\\big(y_i - Q(s_i, a_i)\\big)^2 = ' + num(L.L.loss, 4) + '\\end{aligned}';
+    V_.tex(el, src, true);
+    if (L.L.copied) el.insertAdjacentHTML('beforeend', '<p class="hint"><b>Vừa sao chép $\\hat Q \\leftarrow Q$</b> (lần cập nhật thứ ' + st.ag.updates + '): mục tiêu $y$ của mọi mẫu đổi theo. Lưới bên phải nháy viền.</p>');
+    V_.texAll(el);
+  }
+  function greedyLen() { var s = START, n = 0; while (!isTerm(s) && n < 20) { var q = st.ag.net.forward(feat(s)), b = 0; for (var i = 1; i < 4; i++) if (q[i] > q[b]) b = i; s = mv(s, b); n++; } return s === GOAL ? n : null; }
+  function insight() {
+    var el = V_.$('#insight'), nv = 0; for (var s = 0; s < N; s++) if (!WALL[s] && !isTerm(s) && !st.visited[s]) nv++;
+    var gl = greedyLen(), h;
+    if (!st.steps) h = 'Mạng khởi tạo ngẫu nhiên nên $Q$ đã có giá trị khác 0 ở mọi ô. Ban đầu $\\varepsilon = 1$: tác tử đi hoàn toàn ngẫu nhiên để lấp bộ đệm.';
+    else if (st.steps < DECAY) h = 'Còn đang khám phá nhiều ($\\varepsilon = ' + V_.tz(eps(), 2) + '$). ' + (nv ? nv + ' ô chưa đi qua (viền đứt nét) vẫn có $Q$ do mạng suy ra từ tọa độ.' : 'Mọi ô đều đã được đi qua.') + ' Viền cam trên dải bộ đệm cho thấy lô được lấy rải khắp, không chỉ các bước vừa đi.';
+    else h = 'Đi theo $\\arg\\max_a Q$ từ $S$: ' + (gl == null ? '<b>chưa</b> tới đích.' : 'tới đích sau <b>' + gl + '</b> bước' + (gl === 8 ? ' (ngắn nhất).' : '.')) + ' So sánh hai lưới: $\\hat Q$ chỉ đổi theo bậc, mỗi $' + Csel() + '$ lần cập nhật một lần.';
+    el.innerHTML = h; V_.texAll(el);
+  }
+
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'Số bước', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 1, yMin: 0, yMax: 30, aria: 'Số bước tới đích mỗi tập' });
+  var lchart = V_.LineChart(V_.$('#lchart'), { series: [{ name: 'Mất mát', color: '--s2' }], xName: '×20 cập nhật', xLabel: 'Cập nhật (×20)', dec: 4, yMin: 0, aria: 'Mất mát theo cập nhật' });
+  g1 = V_.QGrid(V_.$('#g1'), R, C, { aria: 'Giá trị Q của mạng đang học' });
+  g2 = V_.QGrid(V_.$('#g2'), R, C, { aria: 'Giá trị Q của mạng mục tiêu' });
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: function () { step(); render(); return true; } });
+  V_.$('#step').addEventListener('click', function () { player.stop(); step(); render(); });
+  V_.$('#fast').addEventListener('click', function () { player.stop(); for (var i = 0; i < 200; i++) step(); render(); });
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#csel').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    V_.$$('#csel button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    reset();
+  });
+  V_.onTheme(render);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

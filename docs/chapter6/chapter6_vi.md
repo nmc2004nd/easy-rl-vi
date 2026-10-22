@@ -354,10 +354,28 @@ $$
 
 > **Ghi chú của người dịch:** hình gốc (và công thức ở trên) bỏ qua hệ số chiết khấu, tức ngầm lấy $\gamma = 1$. Dạng đầy đủ thường gặp là $y = r_i + \gamma \max_a \hat{Q}(s_{i+1}, a)$, và nếu $s_{i+1}$ là trạng thái kết thúc thì $y = r_i$.
 
+<details class="viz-box">
+<summary>🎬 Mô phỏng DQN từng bước <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: chạy đúng hình 6.14 trên lưới 5×5 với một mạng nơ-ron nhỏ nhận tọa độ ô. Xem từng bước: chọn hành động $\varepsilon$-tham lam, lưu vào bộ đệm, lấy lô, tính $y = r + \gamma\max_a\hat Q(s', a)$, cập nhật $Q$, và mạng mục tiêu $\hat Q$ chỉ đổi khi được sao chép. [Mở trang riêng](viz/dqn.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/dqn.html?embed" style="height:1974px" title="Mô phỏng DQN từng bước" loading="lazy"></iframe>
+
+</details>
+
 
 Q: Mạng Q sâu và Q-learning khác nhau thế nào?
 
 A: Nhìn chung, giá trị mục tiêu và cách cập nhật giá trị của mạng Q sâu và Q-learning rất giống nhau. Điểm khác chính là: mạng Q sâu kết hợp Q-learning với học sâu, dùng mạng sâu để xấp xỉ hàm giá trị hành động, còn Q-learning thì dùng bảng để lưu trữ; mạng Q sâu dùng phương pháp huấn luyện phát lại kinh nghiệm, lấy mẫu ngẫu nhiên từ dữ liệu lịch sử, còn Q-learning dùng trực tiếp dữ liệu của trạng thái tiếp theo để học.
+
+<details class="viz-box">
+<summary>🎬 Mô phỏng DQN trên CartPole <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: huấn luyện DQN ngay trong trình duyệt trên bài toán xe đẩy giữ gậy (giống notebook DQN của repo), bật/tắt phát lại kinh nghiệm và mạng mục tiêu, kèm kết quả so sánh nhiều lần chạy. [Mở trang riêng](viz/dqn-cartpole.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/dqn-cartpole.html?embed" style="height:2307px" title="Mô phỏng DQN trên CartPole" loading="lazy"></iframe>
+
+</details>
 
 ## Tài liệu tham khảo
 * [Intro to Reinforcement Learning (强化学习纲要 - Đại cương học tăng cường)](https://github.com/zhoubolei/introRL)
