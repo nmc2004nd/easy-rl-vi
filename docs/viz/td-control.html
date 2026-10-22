@@ -66,6 +66,7 @@
     <div id="grids"></div>
     <div class="scale" id="scale"></div>
     <div class="insight" id="insight"></div>
+    <div class="pseudo-two" id="pseudo"></div>
   </div>
 
   <div class="layout">
@@ -193,6 +194,11 @@
       var v = V_.QGrid(d.querySelector('.g'), M.rows, M.cols, { aria: 'Bảng Q của ' + (L.alg === 'sarsa' ? 'Sarsa' : 'Q-learning'), onClick: function (s) { sel = s; render(); } });
       views.push({ v: v, st: d.querySelector('.st'), selq: d.querySelector('.selq') });
     });
+    var pbox = V_.$('#pseudo'), open = pseudos.length ? pseudos[0].el.open : true;
+    pbox.innerHTML = '';
+    pseudos = learners.map(function (L) {
+      return V_.Pseudo(pbox, { title: L.alg === 'sarsa' ? 'Sarsa (Sutton & Barto, mục 6.4)' : 'Q-learning (Sutton & Barto, mục 6.5)', lines: PSEUDO[L.alg], open: open });
+    });
     chart = null; V_.$('#chart').innerHTML = '';
     chart = V_.LineChart(V_.$('#chart'), { series: learners.map(function (L) { return { name: L.alg === 'sarsa' ? 'Sarsa' : 'Q-learning', color: L.alg === 'sarsa' ? '--s1' : '--s2' }; }),
       xLabel: 'Tập', xName: 'Tập', dec: 1, aria: 'Kết quả mỗi tập', yMin: M.metric === 'ret' ? -200 : 0 });
@@ -210,8 +216,43 @@
     learners.forEach(function (L) { L.Q.forEach(function (q) { q.forEach(function (v) { mx = Math.max(mx, Math.abs(v)); }); }); });
     return mx;
   }
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  var PSEUDO = {
+    sarsa: [
+      ['init', 0, 'Khởi tạo $Q(s,a)=0$ với mọi $s,a$'],
+      ['ep', 0, KW('với mỗi tập') + ':'],
+      ['s0', 1, '$s\\leftarrow S$; chọn $a$ từ $s$ theo $\\varepsilon$-tham lam với $Q$'],
+      ['loop', 1, KW('lặp') + ' mỗi bước:'],
+      ['act', 2, 'thực hiện $a$, nhận $r$ và $s\'$'],
+      ['a2', 2, 'chọn $a\'$ từ $s\'$ theo $\\varepsilon$-tham lam với $Q$ <span class="cm">(hành động sẽ đi thật)</span>'],
+      ['upd', 2, '$Q(s,a)\\leftarrow Q(s,a)+\\alpha\\big[r+\\gamma Q(s\',a\')-Q(s,a)\\big]$'],
+      ['mv', 2, '$s\\leftarrow s\'$; $\\;a\\leftarrow a\'$'],
+      ['until', 1, KW('cho tới khi') + ' $s$ là trạng thái kết thúc']
+    ],
+    q: [
+      ['init', 0, 'Khởi tạo $Q(s,a)=0$ với mọi $s,a$'],
+      ['ep', 0, KW('với mỗi tập') + ':'],
+      ['s0', 1, '$s\\leftarrow S$'],
+      ['loop', 1, KW('lặp') + ' mỗi bước:'],
+      ['a', 2, 'chọn $a$ từ $s$ theo $\\varepsilon$-tham lam với $Q$'],
+      ['act', 2, 'thực hiện $a$, nhận $r$ và $s\'$'],
+      ['upd', 2, '$Q(s,a)\\leftarrow Q(s,a)+\\alpha\\big[r+\\gamma\\max_{a\'}Q(s\',a\')-Q(s,a)\\big]$ <span class="cm">(không cần biết hành động kế tiếp)</span>'],
+      ['mv', 2, '$s\\leftarrow s\'$'],
+      ['until', 1, KW('cho tới khi') + ' $s$ là trạng thái kết thúc']
+    ]
+  };
+  var pseudos = [];
+  function hlFor(L) {
+    var r = L.last;
+    if (!r) return 'init';
+    if (r.start) return ['ep', 's0'];
+    var ids = L.alg === 'sarsa' ? ['act', 'a2', 'upd', 'mv'] : ['a', 'act', 'upd', 'mv'];
+    if (r.end) ids.push('until');
+    return ids;
+  }
   function render() {
     var mx = curMax();
+    learners.forEach(function (L, k) { if (pseudos[k]) pseudos[k].hl(hlFor(L)); });
     learners.forEach(function (L, k) {
       var vw = views[k], v = vw.v;
       for (var s = 0; s < M.rows * M.cols; s++) {

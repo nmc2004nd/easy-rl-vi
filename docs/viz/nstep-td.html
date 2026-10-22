@@ -70,6 +70,7 @@
     <div class="tline" id="tline"></div>
     <div class="calc" id="calc"></div>
     <div class="insight" id="insight"></div>
+    <div id="pseudo"></div>
   </div>
 
   <div class="blk">
@@ -112,9 +113,24 @@
   }
 
   var n, V, st, view, epi;
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  var pseudo = V_.Pseudo(V_.$('#pseudo'), { title: 'TD $n$ bước ước lượng $V$ (Sutton & Barto, mục 7.1)', lines: [
+    ['init', 0, 'Khởi tạo $V(s)=0$ với mọi $s$; chọn $n$ và $\\alpha$'],
+    ['ep', 0, KW('với mỗi tập') + ': $s_0\\leftarrow S$; $\\;T\\leftarrow\\infty$'],
+    ['loop', 1, KW('lặp') + ' $t=0,1,2,\\dots$:'],
+    ['act', 2, KW('nếu') + ' $t<T$: đi một bước, nhận $r_{t+1}$ và $s_{t+1}$; nếu $s_{t+1}$ là đích thì $T\\leftarrow t+1$'],
+    ['tau', 2, '$\\tau\\leftarrow t-n+1$ <span class="cm">(thời điểm của ô được cập nhật, trễ $n$ bước)</span>'],
+    ['wait', 2, KW('nếu') + ' $\\tau<0$: chưa đủ $n$ phần thưởng, chưa cập nhật gì'],
+    ['if', 2, KW('nếu') + ' $\\tau\\ge 0$:'],
+    ['G', 3, '$G\\leftarrow\\sum_{i=\\tau+1}^{\\min(\\tau+n,\\,T)}\\gamma^{\\,i-\\tau-1}\\,r_i$'],
+    ['boot', 3, KW('nếu') + ' $\\tau+n<T$: $\\;G\\leftarrow G+\\gamma^{n}V(s_{\\tau+n})$ <span class="cm">(bootstrapping)</span>'],
+    ['upd', 3, '$V(s_\\tau)\\leftarrow V(s_\\tau)+\\alpha\\big[G-V(s_\\tau)\\big]$'],
+    ['until', 1, KW('cho tới khi') + ' $\\tau=T-1$']
+  ] });
   function nVal() { return +V_.$('#nsel [aria-pressed=true]').dataset.v; }
   function resetEp() {
     st = { t: 0, T: path.length - 1, tau: null, last: null, done: false };
+    pseudo.hl('ep');
   }
   function resetAll() { player && player.stop(); V = new Array(N).fill(0); epi = 1; resetEp(); render(); }
 
@@ -138,6 +154,11 @@
       st.tau = tau; st.last = { s: s, old: old, nw: V[s], G: G, terms: terms, boot: boot, bootV: boot == null ? null : V[boot] };
       if (tau === T - 1) st.done = true;
     }
+    var ids = t < T ? ['loop', 'act', 'tau'] : ['loop', 'tau'];
+    if (tau >= 0) { ids.push('if', 'G'); if (st.last.boot != null) ids.push('boot'); ids.push('upd'); }
+    else ids.push('wait');
+    if (st.done) ids.push('until');
+    pseudo.hl(ids);
     if (!st.done) st.t = t + 1;
     render();
     return !st.done;

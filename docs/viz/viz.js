@@ -1,7 +1,8 @@
 /* Thư viện dùng chung cho các trang mô phỏng (docs/viz/*.html).
  * window.Viz cung cấp: định dạng số, KaTeX, màu theo giá trị, lưới ô vuông,
- * bộ phát (phát/dừng/tốc độ), biểu đồ max|ΔV|, mô hình thế giới lưới,
- * lưới Q (4 tam giác mỗi ô) và biểu đồ đường nhiều chuỗi.
+ * bộ phát (phát/dừng/tốc độ), biểu đồ Δ_k, mô hình thế giới lưới,
+ * lưới Q (4 tam giác mỗi ô), biểu đồ đường nhiều chuỗi, mã giả có tô sáng
+ * dòng đang chạy và bản đồ |ΔV(s)| của một vòng quét.
  * Khi trang được nhúng trong chương (iframe hoặc ?embed), trang báo chiều cao
  * cho trang cha để iframe tự giãn, và luôn dùng nền sáng cho khớp docsify.
  */
@@ -30,6 +31,8 @@
   function fmt(x, d) { if (d === undefined) d = 1; return round(x, d).toFixed(d).replace('-', '−'); }
   // Trong KaTeX: số âm được đặt trong ngoặc khi cần (p)
   function tn(x, d, p) { if (d === undefined) d = 1; var s = round(x, d).toFixed(d); return p && s.charAt(0) === '-' ? '(' + s + ')' : s; }
+  // Như tn nhưng bỏ số 0 thừa ở cuối: 1.500 → 1.5, −1.000 → −1
+  function tz(x, d, p) { var s = tn(x, d, p); return s.indexOf('.') < 0 ? s : s.replace(/0+(\)?)$/, '$1').replace(/\.(\)?)$/, '$1'); }
   function tex(el, s, display) {
     if (!window.katex) { el.textContent = s; return; }
     try { katex.render(s, el, { displayMode: !!display, throwOnError: false, strict: 'ignore' }); }
@@ -144,7 +147,85 @@
     return self;
   }
 
-  // ---------- biểu đồ max|ΔV| (thang log) ----------
+  // ---------- Δ_k = max_s |V_k(s) − V_{k−1}(s)| ----------
+  // Số Δ trong KaTeX: số rất nhỏ viết dạng a × 10^b
+  function dtex(d) {
+    if (d == null) return '\\text{–}';
+    if (d === 0) return '0';
+    if (d < 1e-3) {
+      var e = Math.floor(Math.log10(d)), m = d / Math.pow(10, e);
+      if (m >= 9.95) { m = 1; e++; }
+      return m.toFixed(1) + '\\times 10^{' + e + '}';
+    }
+    return String(round(d, 3));
+  }
+  // Ngưỡng θ: 1e-4 → 10^{-4}
+  function ttex(t) { var e = Math.round(Math.log10(t)); return Math.abs(Math.pow(10, e) - t) < 1e-15 ? '10^{' + e + '}' : String(t); }
+  // Số chữ số thập phân đủ để thấy hiệu hai giá trị có độ lớn d
+  function ddec(d) { return d >= 1e-3 || d === 0 ? 3 : Math.min(9, 2 - Math.floor(Math.log10(d))); }
+  // Giải thích Δ_k của một vòng quét. o: { k, Vn, Vo (tên bảng), s (tên ô), vNew, vOld, d, theta, stop, cont }
+  function deltaTex(o) {
+    var dc = ddec(o.d);
+    var L = '\\Delta_{' + o.k + '}&=\\max_s\\big\\lvert ' + o.Vn + '(s)-' + o.Vo + '(s)\\big\\rvert' +
+      '\\\\&=\\big\\lvert ' + o.Vn + '(' + o.s + ')-' + o.Vo + '(' + o.s + ')\\big\\rvert' +
+      '=\\big\\lvert ' + tz(o.vNew, dc) + '-' + tz(o.vOld, dc, true) + '\\big\\rvert=' + dtex(o.d);
+    if (o.theta != null) {
+      var stop = o.d < o.theta;
+      L += '\\\\[3pt]&\\Rightarrow\\ ' + dtex(o.d) + (stop ? '<' : '\\ge') + '\\theta=' + ttex(o.theta) +
+        '\\ \\text{ nên ' + (stop ? (o.stop || 'dừng') : (o.cont || 'quét tiếp')) + '}';
+    }
+    return '\\begin{aligned}' + L + '\\end{aligned}';
+  }
+
+  // ---------- mã giả, tô sáng dòng đang chạy ----------
+  // lines: [[id, mức thụt lề, nội dung (có thể chứa $...$)], ...]; nhiều dòng có thể cùng id
+  function Pseudo(container, opt) {
+    var d = document.createElement('details');
+    d.className = 'pseudo'; d.open = opt.open !== false;
+    d.innerHTML = '<summary>📜 Mã giả' + (opt.title ? ': ' + opt.title : '') + '</summary><ol>' +
+      opt.lines.map(function (l) { return '<li data-id="' + l[0] + '" style="--ind:' + l[1] + '">' + l[2] + '</li>'; }).join('') + '</ol>' +
+      (opt.note ? '<p class="note">' + opt.note + '</p>' : '');
+    container.appendChild(d);
+    texAll(d);
+    d.addEventListener('toggle', postHeight);
+    var lis = $$('li', d);
+    return {
+      el: d,
+      hl: function (ids) {
+        ids = ids == null ? [] : [].concat(ids);
+        lis.forEach(function (li) { li.classList.toggle('on', ids.indexOf(li.dataset.id) >= 0); });
+      }
+    };
+  }
+
+  // ---------- bản đồ |ΔV(s)| của một vòng quét ----------
+  function DeltaMap(container, rows, cols) {
+    var g = document.createElement('div');
+    g.className = 'dmap';
+    g.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(0, 1fr))';
+    g.style.maxWidth = Math.min(320, cols * 44) + 'px';
+    var cells = [];
+    for (var i = 0; i < rows * cols; i++) { var c = document.createElement('span'); g.appendChild(c); cells.push(c); }
+    container.appendChild(g);
+    return {
+      // vals[s]: số | null (ô không cập nhật: tường, kết thúc) | undefined (chưa tính trong vòng này)
+      set: function (vals, arg, dec) {
+        var mx = 0;
+        vals.forEach(function (v) { if (v != null) mx = Math.max(mx, v); });
+        cells.forEach(function (c, s) {
+          var v = vals[s];
+          c.className = (v === null ? 'x' : v === undefined ? 'pend' : '') + (s === arg ? ' arg' : '');
+          if (v == null) { c.textContent = v === null ? '' : '·'; c.style.background = ''; c.style.color = ''; return; }
+          var t = mx > 0 ? Math.sqrt(v / mx) : 0, bg = mix(cssVar('--surface-2'), cssVar('--s2'), t * 0.9);
+          c.style.background = bg; c.style.color = lum(bg) < 0.33 ? '#ffffff' : '#1d2430';
+          c.textContent = v === 0 ? '0' : v < 0.005 ? '≈0' : fmt(v, dec == null ? 2 : dec);
+        });
+      }
+    };
+  }
+
+  // ---------- biểu đồ Δ_k (thang log) ----------
+  function supNum(e) { return String(e).replace(/./g, function (ch) { return '⁻⁰¹²³⁴⁵⁶⁷⁸⁹'.charAt('-0123456789'.indexOf(ch)); }); }
   function DeltaChart(container, opt) {
     opt = opt || {};
     var W = 480, H = 150, m = { l: 44, r: 12, t: 10, b: 24 };
@@ -159,7 +240,7 @@
       lo = Math.max(lo, -8);
       var x = function (k) { return m.l + (W - m.l - m.r) * k / kmax; };
       var y = function (d) { var l = d > 0 ? Math.max(lo, Math.log10(d)) : lo; return m.t + (H - m.t - m.b) * (hi - l) / (hi - lo); };
-      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + (opt.aria || 'max |ΔV| theo vòng lặp') + '"><g class="gl">';
+      var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + (opt.aria || 'Δ_k theo vòng lặp') + '"><g class="gl">';
       var step = Math.max(1, Math.ceil((hi - lo) / 4));
       for (var e = hi; e >= lo; e -= step) {
         s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + y(Math.pow(10, e)) + '" y2="' + y(Math.pow(10, e)) + '"/>';
@@ -175,7 +256,7 @@
         s += '<circle cx="' + x(last.k) + '" cy="' + y(last.d) + '" r="4" fill="' + cssVar('--s1') + '" stroke="' + cssVar('--surface') + '" stroke-width="2"/>';
       }
       if (opt.theta) s += '<line x1="' + m.l + '" x2="' + (W - m.r) + '" y1="' + y(opt.theta) + '" y2="' + y(opt.theta) + '" stroke="' + cssVar('--muted') + '" stroke-dasharray="4 4"/>' +
-        '<text x="' + (W - m.r) + '" y="' + (y(opt.theta) - 4) + '" text-anchor="end">θ = ' + opt.theta + '</text>';
+        '<text x="' + (W - m.r) + '" y="' + (y(opt.theta) - 4) + '" text-anchor="end">θ = 10' + supNum(Math.round(Math.log10(opt.theta))) + '</text>';
       s += '<rect class="hit" x="' + m.l + '" y="0" width="' + (W - m.l - m.r) + '" height="' + H + '" fill="transparent"/></svg>';
       wrap.innerHTML = s; wrap.appendChild(tip);
       var svg = wrap.querySelector('svg');
@@ -185,7 +266,7 @@
         var kk = Math.round((px - m.l) / (W - m.l - m.r) * kmax), best = pts[0];
         pts.forEach(function (p) { if (Math.abs(p.k - kk) < Math.abs(best.k - kk)) best = p; });
         tip.style.display = 'block';
-        tip.innerHTML = 'vòng ' + best.k + ': max|ΔV| = <b>' + (best.d === 0 ? '0' : best.d < 1e-3 ? best.d.toExponential(1) : best.d.toFixed(3)) + '</b>';
+        tex(tip, '\\Delta_{' + best.k + '}=' + dtex(best.d));
         var tx = x(best.k) * r.width / W, ty = y(best.d) * r.height / H;
         tip.style.left = Math.min(r.width - tip.offsetWidth, Math.max(0, tx - tip.offsetWidth / 2)) + 'px';
         tip.style.top = Math.max(0, ty - 34) + 'px';
@@ -414,10 +495,11 @@
 
   window.Viz = {
     embed: embed, postHeight: postHeight,
-    round: round, fmt: fmt, tn: tn, tex: tex, texAll: texAll, $: $, $$: $$,
+    round: round, fmt: fmt, tn: tn, tz: tz, tex: tex, texAll: texAll, $: $, $$: $$,
     cssVar: cssVar, mix: mix, valueColor: valueColor, scaleBar: scaleBar, onTheme: onTheme,
     ARW: ARW, GridView: GridView, Player: Player, DeltaChart: DeltaChart,
     GridMDP: GridMDP, greedy: greedy, samePolicy: samePolicy, solve: solve,
-    QGrid: QGrid, LineChart: LineChart, seeded: seeded
+    QGrid: QGrid, LineChart: LineChart, seeded: seeded,
+    dtex: dtex, ttex: ttex, ddec: ddec, deltaTex: deltaTex, Pseudo: Pseudo, DeltaMap: DeltaMap
   };
 })();

@@ -51,10 +51,17 @@
     <div class="ctrl">
       <label><input type="checkbox" id="tmp"> Hiện chính sách tạm thời $\arg\max_a Q_k(s,a)$ ở mỗi vòng</label>
     </div>
-    <div class="stats"><span>Đang hiển thị <b id="k"></b></span><span>Số ô vừa đổi giá trị <b id="nch">–</b></span><span id="status" class="phase"></span></div>
+    <div class="stats"><span>Đang hiển thị <b id="k"></b></span><span>Số ô vừa đổi giá trị <b id="nch">–</b></span><span>Thay đổi lớn nhất <b id="delta">–</b></span><span id="status" class="phase"></span></div>
     <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
     <div class="scale" id="scale"></div>
     <div class="insight" id="insight"></div>
+    <div id="pseudo"></div>
+  </div>
+
+  <div class="blk">
+    <h2>$\Delta_k$ được tính thế nào?</h2>
+    <p class="note" style="margin:0 0 8px">Sau mỗi vòng, so từng ô với vòng trước: $\lvert V_k(s)-V_{k-1}(s)\rvert$ (bản đồ bên trái, đậm = đổi nhiều). $\Delta_k$ là số lớn nhất trong bản đồ; ô đạt giá trị đó được viền cam ở đây và viền nét đứt trên lưới. Ở bài toán này mọi giá trị là số nguyên nên thuật toán dừng khi $\Delta_k=0$ (tổng quát: khi $\Delta_k<\theta$).</p>
+    <div class="dwrap"><div class="dm" id="dmap"></div><div class="calc" id="dcalc"></div></div>
   </div>
 
   <div class="layout">
@@ -80,7 +87,7 @@
   function rc(s) { return '(' + Math.floor(s / n) + ',' + s % n + ')'; }
 
   function build() {
-    n = size(); N = n * n;
+    n = size(); N = n * n; makeDmap();
     if (goal >= N) goal = 0;
     var term = {}; term[goal] = 1;
     mdp = new V_.GridMDP({ rows: n, cols: n, term: term, R: new Array(N).fill(-1).map(function (r, i) { return i === goal ? 0 : r; }) });
@@ -93,22 +100,27 @@
     player && player.stop(); stopAgent();
     st = { V: new Array(N).fill(0), k: 0, hist: [new Array(N).fill(0)], changed: [], conv: false, policy: null };
     render(); showCalc(); snaps();
+    pseudo && pseudo.hl('init');
   }
 
   function sweep() {
-    var Vn = st.V.slice(), ch = [];
+    var Vn = st.V.slice(), ch = [], dcell = [], d = 0, arg = null;
     for (var s = 0; s < N; s++) {
-      if (s === goal) continue;
-      var v = Math.max.apply(null, mdp.qs(st.V, s, 1));
-      if (Math.abs(v - st.V[s]) > 1e-12) ch.push(s);
+      if (s === goal) { dcell.push(null); continue; }
+      var v = Math.max.apply(null, mdp.qs(st.V, s, 1)), dv = Math.abs(v - st.V[s]);
+      if (dv > 1e-12) ch.push(s);
+      if (arg === null || dv > d) { d = dv; arg = s; }
+      dcell.push(dv);
       Vn[s] = v;
     }
     st.V = Vn; st.k++; st.changed = ch; st.hist.push(Vn.slice());
+    st.delta = d; st.dArg = arg; st.dcell = dcell;
     if (!ch.length) st.conv = true;
   }
   function step() {
     if (st.conv) return false;
     sweep();
+    pseudo.hl(st.conv ? ['for', 'upd', 'd', 'until'] : ['for', 'upd', 'd']);
     render(); showCalc(); snaps();
     st.changed.forEach(function (s) { view.flash(s); });
     return !st.conv;
@@ -118,6 +130,7 @@
     var guard = 0; while (!st.conv && guard++ < 500) sweep();
     st.policy = [];
     for (var s = 0; s < N; s++) st.policy.push(s === goal ? null : V_.greedy(mdp.qs(st.V, s, 1), 1e-9));
+    pseudo.hl(['until', 'ext']);
     render(); showCalc(); snaps();
   }
 
@@ -135,6 +148,9 @@
       view.cls(s, 'term', s === goal);
     }
     view.clear('sel'); view.cls(sel, 'sel', true);
+    view.clear('dmax'); if (st.k) view.cls(st.dArg, 'dmax', true);
+    V_.tex(V_.$('#delta'), st.k ? '\\Delta_{' + st.k + '}=' + V_.dtex(st.delta) : '\\text{–}');
+    renderDelta();
     V_.tex(V_.$('#k'), 'V_{' + st.k + '}');
     V_.$('#nch').textContent = st.k ? st.changed.length : '–';
     var stt = V_.$('#status');
@@ -150,6 +166,23 @@
     else if (showTmp) ins.innerHTML = 'Chính sách tạm thời ở các ô <b>chưa được sóng chạm tới</b> có đủ 4 mũi tên: mọi hành động đều cho $-1+V_k(s\')=-' + (st.k + 1) + '$ như nhau. Đó là lý do sách nói chính sách ở bước trung gian của lặp giá trị không có ý nghĩa.';
     else ins.innerHTML = 'Sau vòng ' + st.k + ', các ô cách đích không quá ' + st.k + ' bước đã có giá trị cuối cùng; các ô xa hơn mới chỉ là $-' + st.k + '$ (chưa biết đích ở đâu). Thử bật “chính sách tạm thời”.';
     V_.texAll(ins);
+  }
+
+  function renderDelta() {
+    var el = V_.$('#dcalc');
+    if (!st.k) {
+      dmap.set(new Array(N).fill(undefined).map(function (_, s) { return s === goal ? null : undefined; }), null);
+      el.innerHTML = '<p class="hint">Bấm “Vòng tiếp”: sau mỗi vòng, bản đồ cho biết mỗi ô đã đổi bao nhiêu so với vòng trước.</p>';
+      return;
+    }
+    dmap.set(st.dcell, st.dArg, 0);
+    var prev = st.hist[st.k - 1], ch = st.changed.length;
+    var t = V_.deltaTex({ k: st.k, Vn: 'V_{' + st.k + '}', Vo: 'V_{' + (st.k - 1) + '}', s: 's^{*}', vNew: st.V[st.dArg], vOld: prev[st.dArg], d: st.delta });
+    t = t.replace('\\end{aligned}', '\\\\[3pt]&\\Rightarrow\\ \\Delta_{' + st.k + '}' + (st.delta > 0 ? '>0\\ \\text{ nên quét tiếp}' : '=0\\ \\text{ nên dừng: }V_{' + (st.k - 1) + '}=V^*') + '\\end{aligned}');
+    el.innerHTML = '<div class="t"></div><p class="hint">$s^{*}=' + rc(st.dArg) + '$ là ô đầu tiên (theo thứ tự hàng) đạt giá trị lớn nhất. ' +
+      (st.delta > 0 ? 'Có ' + ch + ' ô đổi đúng $1$: đó là các ô cách đích từ ' + st.k + ' bước trở lên (sóng vừa chạm tới, hoặc chưa chạm tới nên chỉ trừ thêm $1$). Các ô gần đích hơn đổi $0$ vì đã có giá trị cuối cùng từ vòng trước. Vùng số $0$ lan dần ra từ đích.' : 'Không ô nào đổi nữa, bản đồ toàn $0$.') + '</p>';
+    V_.tex(el.querySelector('.t'), t, true);
+    V_.texAll(el);
   }
 
   function showCalc() {
@@ -168,7 +201,11 @@
     V_.tex(el, tex, true);
     if (st.k > 0) {
       var nq = mdp.qs(st.V, s, 1);
-      el.insertAdjacentHTML('beforeend', '<p class="hint">Số trong ngoặc là $V_{' + (st.k - 1) + '}$ của ô kề theo thứ tự lên, phải, xuống, trái. Vòng tiếp theo ô này sẽ thành $' + V_.tn(Math.max.apply(null, nq), 0) + '$.</p>');
+      var dv = Math.abs(st.V[s] - src[s]);
+      el.insertAdjacentHTML('beforeend', '<div class="t2"></div>');
+      V_.tex(el.lastChild, '\\lvert V_{' + st.k + '}(s)-V_{' + (st.k - 1) + '}(s)\\rvert=\\lvert ' + V_.tz(st.V[s], 0) + '-' + V_.tz(src[s], 0, true) + '\\rvert=' + V_.dtex(dv) +
+        (s === st.dArg ? '=\\Delta_{' + st.k + '}\\ \\text{(chính ô }s^{*}\\text{)}' : '\\le\\Delta_{' + st.k + '}=' + V_.dtex(st.delta)), true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">Số trong ngoặc là $V_{' + (st.k - 1) + '}$ của ô kề theo thứ tự lên, phải, xuống, trái. Dòng cuối là độ thay đổi của ô này, góp vào $\\Delta_{' + st.k + '}=\\max_s\\lvert V_{' + st.k + '}(s)-V_{' + (st.k - 1) + '}(s)\\rvert$. Vòng tiếp theo ô này sẽ thành $' + V_.tn(Math.max.apply(null, nq), 0) + '$.</p>');
       V_.texAll(el);
     }
     V_.postHeight();
@@ -196,6 +233,17 @@
     }, 380);
   }
 
+  var pseudo = V_.Pseudo(V_.$('#pseudo'), { title: 'lặp giá trị (Sutton & Barto, mục 4.4)', lines: [
+    ['init', 0, 'Khởi tạo $V_0(s)=0$ với mọi $s$; $k\\leftarrow 0$'],
+    ['loop', 0, '<span class="kw">lặp</span>'],
+    ['for', 1, '<span class="kw">với mỗi</span> $s\\in\\mathcal S$ (trừ đích):'],
+    ['upd', 2, '$V_{k+1}(s)\\leftarrow\\max_a\\big[R(s,a)+\\gamma\\sum_{s\'}p(s\'\\mid s,a)\\,V_k(s\')\\big]$'],
+    ['d', 1, '$\\Delta_{k+1}\\leftarrow\\max_s\\lvert V_{k+1}(s)-V_k(s)\\rvert$; $\\;k\\leftarrow k+1$'],
+    ['until', 0, '<span class="kw">cho tới khi</span> $\\Delta_k<\\theta$ <span class="cm">(ở đây: $\\Delta_k=0$)</span>'],
+    ['ext', 0, 'Rút trích $\\pi(s)=\\arg\\max_a\\big[R(s,a)+\\gamma\\sum_{s\'}p(s\'\\mid s,a)\\,V(s\')\\big]$']
+  ] });
+  var dmap, dmapN = 0;
+  function makeDmap() { if (dmapN === n) return; dmapN = n; V_.$('#dmap').innerHTML = ''; dmap = V_.DeltaMap(V_.$('#dmap'), n, n); }
   var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
   V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
   V_.$('#extract').addEventListener('click', extract);

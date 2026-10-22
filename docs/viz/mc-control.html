@@ -62,6 +62,7 @@
     </div>
     <div class="calc" id="calc"></div>
     <div class="insight" id="insight"></div>
+    <div id="pseudo"></div>
   </div>
 
   <div class="blk">
@@ -89,8 +90,53 @@
   function argmax(q) { var b = 0; for (var a = 1; a < 4; a++) if (q[a] > q[b]) b = a; return b; }
 
   var st, view;
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  var PSEUDO = {
+    es: [
+      ['init', 0, 'Khởi tạo $\\pi(s)$ ngẫu nhiên; $Q(s,a)=0$; $\\text{Returns}(s,a)=[\\,]$'],
+      ['ep', 0, KW('với mỗi tập') + ':'],
+      ['s0', 1, 'chọn ngẫu nhiên cặp $(s_0,a_0)$ <span class="cm">(khởi đầu khám phá)</span>'],
+      ['gen', 1, 'sinh tập theo $\\pi$: $s_0,a_0,r_1,s_1,a_1,\\dots,r_T$'],
+      ['g0', 1, '$G\\leftarrow 0$'],
+      ['back', 1, KW('lặp') + ' $t=T-1,T-2,\\dots,0$:'],
+      ['g', 2, '$G\\leftarrow\\gamma G+r_{t+1}$'],
+      ['first', 2, KW('nếu') + ' cặp $(s_t,a_t)$ chưa xuất hiện trước $t$ trong tập <span class="cm">(lần thăm đầu tiên)</span>:'],
+      ['ret', 3, 'thêm $G$ vào $\\text{Returns}(s_t,a_t)$; $\\;Q(s_t,a_t)\\leftarrow\\text{trung bình}\\big(\\text{Returns}(s_t,a_t)\\big)$'],
+      ['pi', 3, '$\\pi(s_t)\\leftarrow\\arg\\max_a Q(s_t,a)$']
+    ],
+    eg: [
+      ['init', 0, 'Khởi tạo $Q(s,a)=0$; $N(s,a)=0$'],
+      ['ep', 0, KW('với mỗi tập') + ' $k=1,2,\\dots$:'],
+      ['s0', 1, '$\\varepsilon\\leftarrow 1/\\sqrt{k}$ (hoặc $1/k$); $\\;s_0\\leftarrow S$'],
+      ['gen', 1, 'sinh tập, mỗi bước chọn $a$ theo $\\varepsilon$-tham lam với $Q$'],
+      ['g0', 1, '$G\\leftarrow 0$'],
+      ['back', 1, KW('lặp') + ' $t=T-1,T-2,\\dots,0$:'],
+      ['g', 2, '$G\\leftarrow\\gamma G+r_{t+1}$'],
+      ['n', 2, '$N(s_t,a_t)\\leftarrow N(s_t,a_t)+1$ <span class="cm">(mọi lần thăm)</span>'],
+      ['upd', 2, '$Q(s_t,a_t)\\leftarrow Q(s_t,a_t)+\\frac{1}{N(s_t,a_t)}\\big[G-Q(s_t,a_t)\\big]$']
+    ]
+  };
+  var pseudo, pseudoMode = null;
+  function buildPseudo() {
+    if (pseudoMode === mode()) return;
+    pseudoMode = mode();
+    var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
+    box.innerHTML = '';
+    pseudo = V_.Pseudo(box, { title: pseudoMode === 'es' ? 'Monte Carlo khởi đầu khám phá (Sutton & Barto, mục 5.3)' : 'Monte Carlo $\\varepsilon$-tham lam, mọi lần thăm', lines: PSEUDO[pseudoMode], open: open });
+  }
+  function hlIds() {
+    var L = st.last, es = mode() === 'es';
+    if (!L) return 'init';
+    if (L.kind === 'start') return ['ep', 's0'];
+    if (L.kind === 'gen') return st.phase === 'back' ? ['gen', 'g0'] : ['gen'];
+    var ids = ['back', 'g'];
+    if (es) { ids.push('first'); if (!L.skip) ids.push('ret', 'pi'); }
+    else ids.push('n', 'upd');
+    return ids;
+  }
   function reset() {
     player && player.stop();
+    buildPseudo();
     var Q = [], Ret = [], Nn = [], pi = [];
     for (var s = 0; s < N; s++) { Q.push([0, 0, 0, 0]); Ret.push([[], [], [], []]); Nn.push([0, 0, 0, 0]); pi.push(Math.floor(Math.random() * 4)); }
     st = { Q: Q, Ret: Ret, Nn: Nn, pi: pi, k: 1, phase: 'idle', rows: [], s: null, i: -1, G: 0, last: null, hist: [] };
@@ -151,6 +197,7 @@
   }
 
   function render() {
+    pseudo.hl(hlIds());
     var es = mode() === 'es', last = st.last;
     // thang màu cắt ở 30 để hố −100 không làm các ô khác nhạt hết
     var mx = 10; st.Q.forEach(function (q) { q.forEach(function (v) { mx = Math.max(mx, Math.abs(v)); }); }); mx = Math.min(mx, 30);

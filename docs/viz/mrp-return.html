@@ -71,6 +71,7 @@
     <div class="legend" id="legend"></div>
     <div id="chart"></div>
     <div class="insight" id="insight"></div>
+    <div id="pseudo1"></div>
   </div>
 
   <div class="layout">
@@ -79,10 +80,11 @@
       <div class="ctrl">
         <button type="button" class="btn" id="dpstep">Vòng tiếp</button>
         <button type="button" class="btn" id="dpreset">Đặt lại</button>
-        <span class="stats" style="margin:0"><span>$k$ = <b id="dpk">0</b></span><span>max|ΔV| <b id="dpd">–</b></span></span>
+        <span class="stats" style="margin:0"><span>$k$ = <b id="dpk">0</b></span><span>Thay đổi lớn nhất <b id="dpd">–</b></span></span>
       </div>
       <div class="calc" id="dpcalc"></div>
-      <p class="note">Bấm vào một trạng thái trên chuỗi để đổi ô được giải thích.</p>
+      <p class="note">Bấm vào một trạng thái trên chuỗi để đổi ô được giải thích. Ô tô màu trong dòng $\Delta_k$ là trạng thái đổi nhiều nhất.</p>
+      <div id="pseudo2"></div>
     </div>
     <div class="blk">
       <h2>③ So sánh ba cách</h2>
@@ -128,7 +130,7 @@
 
   function sampleNext(s) { var u = Math.random(), c = 0; for (var t = 0; t < NS; t++) { c += P[s][t]; if (u < c) return t; } return s; }
   function pickStart() { var v = V_.$('#start').value; if (v === 'all') { var s = rot % NS; rot++; return s; } return +v; }
-  function newEpisode() { var s = pickStart(); ep = { states: [s], G: R[s], done: false }; }
+  function newEpisode() { var s = pickStart(); ep = { states: [s], G: R[s], done: false }; pseudo1.hl(['ep', 'g']); }
   // Tiến một bước trong tập hiện tại; trả về true khi tập vừa kết thúc
   function epStep() {
     if (!ep || ep.done) newEpisode();
@@ -136,10 +138,12 @@
       var s = sampleNext(ep.states[ep.states.length - 1]);
       ep.G += Math.pow(gamma(), ep.states.length) * R[s];
       ep.states.push(s);
+      pseudo1.hl(['gen', 'g']);
     }
     if (ep.states.length >= H()) {
       ep.done = true;
       mc.sum[ep.states[0]] += ep.G; mc.cnt[ep.states[0]]++;
+      pseudo1.hl(['until', 'avg']);
       return true;
     }
     return false;
@@ -229,15 +233,25 @@
   function renderDP() {
     var g = gamma(), s = sel, prev = dp.prevV || new Array(NS).fill(0);
     V_.$('#dpk').textContent = dp.k;
-    V_.$('#dpd').textContent = dp.d === null ? '–' : dp.d < 1e-3 ? dp.d.toExponential(1) : dp.d.toFixed(3);
+    V_.tex(V_.$('#dpd'), dp.d === null ? '\\text{–}' : '\\Delta_{' + dp.k + '}=' + V_.dtex(dp.d));
     var el = V_.$('#dpcalc');
-    if (!dp.k) { V_.tex(el, 'V_0=[0,0,0,0,0,0,0]', true); V_.postHeight(); return; }
+    if (!dp.k) { V_.tex(el, 'V_0=[0,0,0,0,0,0,0]', true); pseudo2.hl('init'); V_.postHeight(); return; }
     var nb = [], num = [];
     for (var t = 0; t < NS; t++) if (P[s][t]) { nb.push(gs(P[s][t]) + 'V_{' + (dp.k - 1) + '}(s_' + (t + 1) + ')'); num.push(gs(P[s][t]) + '\\cdot' + V_.tn(prev[t], 3)); }
     var tex = '\\begin{aligned}V_{' + dp.k + '}(s_' + (s + 1) + ')&=R(s_' + (s + 1) + ')+\\gamma\\big[' + nb.join('+') + '\\big]\\\\&=' + R[s] + '+' + gs(g) + '\\big[' + num.join('+') + '\\big]\\\\&=' + V_.tn(dp.V[s], 3) + '\\end{aligned}';
     V_.tex(el, tex, true);
     el.insertAdjacentHTML('beforeend', '<div class="katex-wrap"></div>');
     V_.tex(el.lastChild, 'V_{' + dp.k + '}=[' + dp.V.map(function (x) { return V_.tn(x, 2); }).join(',\\;') + ']', true);
+    // Δ_k: độ thay đổi của cả 7 trạng thái, lấy số lớn nhất
+    var dv = dp.V.map(function (x, t) { return Math.abs(x - prev[t]); }), arg = 0;
+    dv.forEach(function (x, t) { if (x > dv[arg]) arg = t; });
+    var dc = Math.min(V_.ddec(Math.max(dp.d, 1e-12)), 6);
+    var list = dv.map(function (x, t) { var u = V_.tz(x, dc); return t === arg ? '\\colorbox{' + V_.cssVar('--hl-soft') + '}{$' + u + '$}' : u; }).join(',\\;');
+    el.insertAdjacentHTML('beforeend', '<div class="katex-wrap"></div>');
+    V_.tex(el.lastChild, '\\begin{aligned}\\Delta_{' + dp.k + '}&=\\max_s\\lvert V_{' + dp.k + '}(s)-V_{' + (dp.k - 1) + '}(s)\\rvert\\\\&=\\max\\{' + list + '\\}\\\\&=\\lvert ' + V_.tz(dp.V[arg], dc) + '-' + V_.tz(prev[arg], dc, true) + '\\rvert=' + V_.dtex(dp.d) + '\\quad(\\text{tại }s_' + (arg + 1) + ')\\end{aligned}', true);
+    el.insertAdjacentHTML('beforeend', '<p class="hint">Từ vòng 2 trở đi, $\\Delta_k\\le\\gamma\\,\\Delta_{k-1}$ (ánh xạ Bellman co với hệ số $\\gamma$), nên $\\Delta_k$ giảm ít nhất theo cấp số nhân. Bấm tiếp tới khi $\\Delta_k$ nhỏ hơn ngưỡng $\\theta$ bạn muốn.</p>');
+    V_.texAll(el);
+    pseudo2.hl(['upd', 'd']);
     V_.postHeight();
   }
 
@@ -250,6 +264,22 @@
     V_.postHeight();
     return true;
   }
+
+  var pseudo1 = V_.Pseudo(V_.$('#pseudo1'), { title: 'ước lượng $V(s)$ bằng Monte Carlo (hình 2.6)', lines: [
+    ['init', 0, 'Khởi tạo $N(s)=0$, $\\text{Tổng}(s)=0$ với mọi $s$'],
+    ['ep', 0, '<span class="kw">với mỗi tập</span>: chọn trạng thái đầu $s_0=s$; $\\;G\\leftarrow R(s_0)$; $\\;t\\leftarrow 0$'],
+    ['gen', 1, '<span class="kw">lặp</span>: lấy mẫu $s_{t+1}\\sim P(\\cdot\\mid s_t)$; $\\;t\\leftarrow t+1$'],
+    ['g', 2, '$G\\leftarrow G+\\gamma^{t}R(s_t)$ <span class="cm">(cộng dần từng số hạng)</span>'],
+    ['until', 1, '<span class="kw">cho tới khi</span> đủ $H$ trạng thái'],
+    ['avg', 1, '$N(s)\\leftarrow N(s)+1$; $\\;\\text{Tổng}(s)\\leftarrow\\text{Tổng}(s)+G$; $\\;V(s)\\leftarrow\\text{Tổng}(s)/N(s)$']
+  ] });
+  var pseudo2 = V_.Pseudo(V_.$('#pseudo2'), { title: 'quy hoạch động (hình 2.7)', lines: [
+    ['init', 0, 'Khởi tạo $V_0(s)=0$ với mọi $s$; $k\\leftarrow 0$'],
+    ['loop', 0, '<span class="kw">lặp</span> $k=1,2,\\dots$'],
+    ['upd', 1, '$V_k(s)\\leftarrow R(s)+\\gamma\\sum_{s\'}P(s\'\\mid s)\\,V_{k-1}(s\')$ với mọi $s$'],
+    ['d', 1, '$\\Delta_k\\leftarrow\\max_s\\lvert V_k(s)-V_{k-1}(s)\\rvert$'],
+    ['until', 0, '<span class="kw">cho tới khi</span> $\\Delta_k<\\theta$ <span class="cm">(ở đây bạn tự bấm “Vòng tiếp”)</span>']
+  ] });
 
   // khởi tạo điều khiển
   V_.$('#start').innerHTML = '<option value="all">lần lượt s1…s7</option>' + R.map(function (r, s) { return '<option value="' + s + '"' + (s === 3 ? ' selected' : '') + '>s' + (s + 1) + '</option>'; }).join('');
@@ -267,7 +297,7 @@
     for (var k = 0; k < 100; k++) runEpisodeInstant();
     renderChain(); renderTraj(); renderChart();
   });
-  V_.$('#reset').addEventListener('click', resetMC);
+  V_.$('#reset').addEventListener('click', function () { resetMC(); pseudo1.hl('init'); });
   V_.$('#dpstep').addEventListener('click', function () {
     var Vn = dpIter(dp.V); dp.d = Math.max.apply(null, Vn.map(function (x, k) { return Math.abs(x - dp.V[k]); }));
     dp.prevV = dp.V; dp.V = Vn; dp.k++; renderDP(); renderChart();

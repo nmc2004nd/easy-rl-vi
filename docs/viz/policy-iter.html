@@ -59,9 +59,16 @@
         <button type="button" data-v="1" aria-pressed="false">1 vòng</button>
       </div>
     </div>
-    <div class="stats"><span>Lần cải thiện <b id="it">0</b></span><span>Vòng đánh giá <b id="ev">0</b></span><span>max|ΔV| <b id="delta">–</b></span><span id="status" class="phase"></span></div>
+    <div class="stats"><span>Lần cải thiện <b id="it">0</b></span><span>Vòng đánh giá <b id="ev">0</b></span><span>Thay đổi lớn nhất <b id="delta">–</b></span><span id="status" class="phase"></span></div>
     <div class="gwrap"><div class="gbox main" id="gbox"></div></div>
     <div class="scale" id="scale"></div>
+    <div id="pseudo"></div>
+  </div>
+
+  <div class="blk">
+    <h2>$\Delta$ của vòng đánh giá vừa xong</h2>
+    <p class="note" style="margin:0 0 8px">Mỗi vòng đánh giá cập nhật mọi ô; bản đồ bên trái là độ thay đổi $\lvert V_{\text{mới}}(s)-V(s)\rvert$ của từng ô (đậm = đổi nhiều). $\Delta$ là số lớn nhất; ô đạt giá trị đó được viền cam ở đây và viền nét đứt trên lưới. Khi $\Delta<\theta=10^{-3}$, bước đánh giá kết thúc và chuyển sang cải thiện.</p>
+    <div class="dwrap"><div class="dm" id="dmap"></div><div class="calc" id="dcalc"></div></div>
   </div>
 
   <div class="layout">
@@ -110,17 +117,21 @@
     st = { V: new Array(N).fill(0), pi: [], phase: 'eval', it: 0, ev: 0, evThis: 0, delta: null, done: false, changed: [], hist: [] };
     for (var s = 0; s < N; s++) st.pi.push([0.25, 0.25, 0.25, 0.25]);
     render(); showCalc();
+    pseudo.hl('init');
     V_.$('#insight').textContent = 'Bắt đầu với chính sách ngẫu nhiên đều: mỗi ô có đủ 4 mũi tên.';
   }
 
   function evalSweep() {
-    var g = gamma(), Vn = st.V.slice(), d = 0;
+    var g = gamma(), Vn = st.V.slice(), d = 0, arg = null, dcell = [];
     for (var s = 0; s < N; s++) {
-      if (wall[s]) continue;
+      if (wall[s]) { dcell.push(null); continue; }
       var v = term[s] ? R[s] : 0;
       if (!term[s]) for (var a = 0; a < 4; a++) v += st.pi[s][a] * mdp.q(st.V, s, a, g);
-      d = Math.max(d, Math.abs(v - st.V[s])); Vn[s] = v;
+      var dv = Math.abs(v - st.V[s]);
+      if (arg === null || dv > d) { d = dv; arg = s; }
+      dcell.push(dv); Vn[s] = v;
     }
+    st.dLast = { arg: arg, vOld: st.V[arg], vNew: Vn[arg], dcell: dcell, ev: st.ev + 1, evThis: st.evThis + 1 };
     st.V = Vn; st.delta = d; st.ev++; st.evThis++;
     var k = evalK();
     if (d < THETA || (k && st.evThis >= k)) st.phase = 'imp';
@@ -148,7 +159,8 @@
   }
   function step() {
     if (st.done) return false;
-    if (st.phase === 'eval') evalSweep(); else improve();
+    if (st.phase === 'eval') { evalSweep(); pseudo.hl(st.phase === 'imp' ? ['ev', 'd', 'until'] : ['ev', 'd']); }
+    else { improve(); pseudo.hl(st.done ? ['imp', 'stable', 'stop'] : ['imp', 'stable']); }
     render(); showCalc();
     if (st.phase === 'eval' && st.changed.length && st.evThis === 0) st.changed.forEach(function (s) { view.flash(s); });
     return !st.done;
@@ -167,7 +179,9 @@
     view.clear('sel'); view.cls(sel, 'sel', true);
     V_.$('#it').textContent = st.it;
     V_.$('#ev').textContent = st.ev;
-    V_.$('#delta').textContent = st.delta === null ? '–' : st.delta < 1e-3 ? st.delta.toExponential(1) : st.delta.toFixed(3);
+    V_.tex(V_.$('#delta'), st.delta === null ? '\\text{–}' : '\\Delta=' + V_.dtex(st.delta));
+    view.clear('dmax'); if (st.dLast) view.cls(st.dLast.arg, 'dmax', true);
+    renderDelta();
     V_.$('#ph-eval').className = 'ph' + (st.phase === 'eval' ? ' on' : st.done ? ' ok' : '');
     V_.$('#ph-imp').className = 'ph' + (st.phase === 'imp' ? ' on' : st.done ? ' ok' : '');
     var stt = V_.$('#status');
@@ -178,6 +192,21 @@
       '<tr><td colspan="3" style="text-align:left;color:var(--muted)">Chưa có.</td></tr>';
     V_.$('#step').disabled = V_.$('#finish').disabled = st.done;
     V_.$('#finish').disabled = st.done || st.phase !== 'eval';
+  }
+
+  function renderDelta() {
+    var el = V_.$('#dcalc'), L = st.dLast;
+    if (!L) {
+      dmap.set(R.map(function (_, s) { return wall[s] ? null : undefined; }), null);
+      el.innerHTML = '<p class="hint">Bấm “Bước tiếp” để chạy một vòng đánh giá.</p>'; return;
+    }
+    dmap.set(L.dcell, L.arg);
+    var k = evalK(), t = V_.deltaTex({ k: '', Vn: 'V_{\\text{mới}}', Vo: 'V', s: 's^{*}', vNew: L.vNew, vOld: L.vOld, d: st.delta, theta: THETA,
+      cont: k && L.evThis >= k ? 'chưa hội tụ, nhưng đã đủ ' + k + ' vòng nên vẫn chuyển sang cải thiện' : 'đánh giá tiếp', stop: 'kết thúc đánh giá, chuyển sang cải thiện' });
+    el.innerHTML = '<div class="t"></div><p class="hint">Đây là vòng đánh giá thứ ' + L.evThis + ' của chính sách hiện tại (tổng ' + L.ev + ' vòng). $s^{*}=' + rc(L.arg) + '$. ' +
+      (L.evThis === 1 && st.it > 0 ? 'Ngay sau một lần cải thiện, $\\Delta$ thường tăng vọt vì chính sách mới làm $V$ đổi nhiều.' : 'Qua các vòng, bản đồ nhạt dần: $V$ đang hội tụ về $V_\\pi$.') + '</p>';
+    V_.tex(el.querySelector('.t'), t.replace('\\Delta_{}', '\\Delta'), true);
+    V_.texAll(el);
   }
 
   function showCalc() {
@@ -205,12 +234,25 @@
     V_.postHeight();
   }
 
+  var pseudo = V_.Pseudo(V_.$('#pseudo'), { title: 'lặp chính sách (Sutton & Barto, mục 4.3)', lines: [
+    ['init', 0, 'Khởi tạo $V(s)=0$; $\\pi(a\\mid s)=\\tfrac14$ (ngẫu nhiên đều)'],
+    ['h1', 0, '<span class="kw">① Đánh giá chính sách</span> — lặp:'],
+    ['ev', 1, '$V_{\\text{mới}}(s)\\leftarrow\\sum_a\\pi(a\\mid s)\\big[R(s)+\\gamma V(s\'_a)\\big]$ với mọi $s$'],
+    ['d', 1, '$\\Delta\\leftarrow\\max_s\\lvert V_{\\text{mới}}(s)-V(s)\\rvert$; $\\;V\\leftarrow V_{\\text{mới}}$'],
+    ['until', 1, '<span class="kw">cho tới khi</span> $\\Delta<\\theta$ <span class="cm">(hoặc đủ số vòng đã chọn)</span>'],
+    ['h2', 0, '<span class="kw">② Cải thiện chính sách</span>:'],
+    ['imp', 1, '$\\pi(s)\\leftarrow\\arg\\max_a\\big[R(s)+\\gamma V(s\'_a)\\big]$ với mọi $s$'],
+    ['stable', 1, '<span class="kw">nếu</span> $\\pi$ không đổi (và $\\Delta<\\theta$): <span class="kw">dừng</span>, $\\pi$ tối ưu; <span class="kw">ngược lại</span> quay lại ①'],
+    ['stop', 0, '<span class="cm">Kết quả:</span> $\\pi\\approx\\pi^*$, $V\\approx V^*$']
+  ] });
+  var dmap = V_.DeltaMap(V_.$('#dmap'), ROWS, COLS);
   view = V_.GridView(V_.$('#gbox'), ROWS, COLS, { onClick: function (i) { sel = i; render(); showCalc(); } });
   var player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: step });
   V_.$('#step').addEventListener('click', function () { player.stop(); step(); });
   V_.$('#finish').addEventListener('click', function () {
     player.stop();
     var guard = 0; while (st.phase === 'eval' && guard++ < 5000) evalSweep();
+    pseudo.hl(['ev', 'd', 'until']);
     render(); showCalc();
   });
   V_.$('#reset').addEventListener('click', reset);

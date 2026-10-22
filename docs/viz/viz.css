@@ -202,6 +202,33 @@ table.tr tr.done td { color: var(--muted); }
 .tscroll { max-height: 280px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
 .tscroll thead th { position: sticky; top: 0; background: var(--surface); }
 
+/* mã giả: dòng đang chạy được tô sáng */
+details.pseudo { border: 1px solid var(--border); border-radius: 12px; background: var(--surface-2); margin-top: 10px; }
+details.pseudo > summary { cursor: pointer; padding: 8px 12px; font-weight: 600; list-style: none; user-select: none; }
+details.pseudo > summary::-webkit-details-marker { display: none; }
+details.pseudo > summary::before { content: "▸"; display: inline-block; margin-right: 6px; transition: transform .15s; }
+details.pseudo[open] > summary::before { transform: rotate(90deg); }
+.pseudo ol { margin: 0; padding: 0 10px 10px 2.4em; font-size: .9rem; }
+.pseudo li { padding: 3px 8px 3px calc(8px + var(--ind, 0) * 1.5em); border-radius: 6px; line-height: 1.55; overflow-x: auto; overflow-y: hidden; transition: background .2s; }
+.pseudo li::marker { color: var(--muted); font-size: .78em; font-variant-numeric: tabular-nums; }
+.pseudo li.on { background: var(--hl-soft); box-shadow: inset 3px 0 0 var(--hl); }
+.pseudo .kw { font-weight: 700; }
+.pseudo .cm { color: var(--muted); font-size: .88em; }
+.pseudo .note { margin: 0 12px 10px; }
+.pseudo-two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 0 12px; }
+
+/* bản đồ |ΔV(s)| và ô quyết định Δ */
+.cell.dmax::before { content: ""; position: absolute; inset: 2px; border: 2px dashed var(--s2); border-radius: 5px; pointer-events: none; }
+.dmap { display: grid; gap: 2px; width: 100%; }
+.dmap span { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: .6rem; font-weight: 600; border-radius: 3px;
+             background: var(--surface-2); color: var(--text); font-variant-numeric: tabular-nums; overflow: hidden; }
+.dmap span.x { background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
+.dmap span.pend { color: var(--muted); }
+.dmap span.arg { box-shadow: 0 0 0 2px var(--s2); position: relative; z-index: 1; }
+.dwrap { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: flex-start; }
+.dwrap > .dm { flex: 0 1 260px; min-width: 160px; }
+.dwrap > .calc { flex: 1 1 280px; min-width: 0; }
+
 /* thư viện mô phỏng */
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
 .card { display: block; text-decoration: none; color: var(--text); background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; box-shadow: var(--shadow); }
