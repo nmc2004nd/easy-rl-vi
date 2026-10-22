@@ -138,7 +138,7 @@ Thông qua hạn chế độ phân kỳ KL để hạn chế chênh lệch giữ
 
 ```math
 \begin{gathered}
-\mathop{\mathrm{maximize}}\limits_\theta\,\,\,{\hat {\mathbb{E}}_t[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t]}\\ \text{subject to};;\hat{\mathbb{E}}_t[KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]]\leq\delta
+\mathop{\mathrm{maximize}}\limits_\theta\,\,\,{\hat {\mathbb{E}}_t[\frac{\pi_\theta(a_t|s_t)}{\pi_{\theta'}(a_t|s_t)}\hat A_t]}\\ \text{subject to}\;\;\hat{\mathbb{E}}_t[KL[\pi_{\theta_{old}}(\cdot|s_t),\pi_\theta(\cdot|s_t)]]\leq\delta
 \end{gathered}\tag{8}
 ```
 
