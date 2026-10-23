@@ -1,0 +1,554 @@
+{
+ "chapter": 9,
+ "title": "Chương 9 · Diễn viên-nhà phê bình",
+ "chapterLink": "../#/chapter9/chapter9_vi",
+ "exerciseLink": "../#/chapter9/chapter9_questions&keywords_vi",
+ "extras": "ch9-extras.js",
+ "cards": [
+  {
+   "id": "c9-def",
+   "tag": "Khái niệm",
+   "ref": "9",
+   "front": "Thuật toán **diễn viên-nhà phê bình** là gì? Ai là diễn viên, ai là nhà phê bình?",
+   "back": "Kết hợp **gradient chính sách** và **học TD**.\n**Diễn viên**: chính sách $\\pi_\\theta(a \\mid s)$, chọn hành động, học để lợi tức lớn.\n**Nhà phê bình**: hàm giá trị $V_\\pi(s)$ (hoặc $Q_\\pi$), đánh giá diễn viên tốt hay xấu.\nNhờ nhà phê bình, cập nhật được **từng bước**, không phải đợi hết tập."
+  },
+  {
+   "id": "c9-why-G",
+   "tag": "Vì sao",
+   "ref": "9.1 · Hình 9.1",
+   "front": "Vì sao dùng $G$ lấy mẫu trong gradient chính sách lại bất ổn?",
+   "back": "$G_t = \\sum_{t'\\ge t}\\gamma^{t'-t}r_{t'}$ là **biến ngẫu nhiên**: cùng $(s, a)$, mỗi lần chơi ra một kết quả khác. Phân phối cố định nhưng **phương sai rất lớn**.\nTrước mỗi lần cập nhật chỉ lấy mẫu được ít, nếu xui lấy được $G = 100$ rồi $G = -10$ thì cập nhật rất tệ."
+  },
+  {
+   "id": "c9-EG",
+   "tag": "Công thức",
+   "ref": "9.3",
+   "front": "Giá trị kỳ vọng của $G_t^n$ là gì?",
+   "back": "$$\\mathbb E\\big[G_t^n\\big] = Q_{\\pi_\\theta}(s_t^n, a_t^n)$$\nĐúng định nghĩa hàm $Q$. Thay $G$ (lấy mẫu) bằng $Q$ (kỳ vọng) làm huấn luyện ổn định hơn."
+  },
+  {
+   "id": "c9-baseline-V",
+   "tag": "Công thức",
+   "ref": "9.3",
+   "front": "Đường cơ sở $b$ thường chọn là gì? Số hạng trong ngoặc trở thành gì?",
+   "back": "$b = V_{\\pi_\\theta}(s_t^n)$. Số hạng thành **hàm lợi thế**\n$$A^\\theta(s_t^n, a_t^n) = Q_{\\pi_\\theta}(s_t^n, a_t^n) - V_{\\pi_\\theta}(s_t^n)$$\nVì $V$ là kỳ vọng của $Q$ theo hành động nên $A$ có cả dương lẫn âm."
+  },
+  {
+   "id": "c9-two-critic",
+   "tag": "Khái niệm",
+   "ref": "9.2 · Hình 9.2",
+   "front": "Hai loại nhà phê bình trong DQN?",
+   "back": "$V_\\pi(s)$: vào $s$, ra một số: lợi tức kỳ vọng từ $s$ theo $\\pi$.\n$Q_\\pi(s, a)$: vào $s$ (và $a$), ra giá trị cho mỗi hành động: lợi tức kỳ vọng khi làm $a$ ở $s$ rồi theo $\\pi$."
+  },
+  {
+   "id": "c9-one-net",
+   "tag": "Vì sao",
+   "ref": "9.3",
+   "front": "Vì sao A2C chỉ ước lượng mạng $V$, không ước lượng cả $Q$ và $V$?",
+   "back": "Ước lượng hai mạng thì **rủi ro sai gấp đôi**. Dùng\n$$Q_\\pi(s_t^n, a_t^n) = \\mathbb E\\big[r_t^n + V_\\pi(s_{t+1}^n)\\big] \\approx r_t^n + V_\\pi(s_{t+1}^n)$$\n(bỏ kỳ vọng), nên lợi thế chỉ cần $V$: $r_t^n + V_\\pi(s_{t+1}^n) - V_\\pi(s_t^n)$."
+  },
+  {
+   "id": "c9-drop-E",
+   "tag": "Vì sao",
+   "ref": "9.3",
+   "front": "Bỏ phép lấy kỳ vọng thì thêm biến ngẫu nhiên $r$. Vì sao vẫn hợp lý?",
+   "back": "$r_t$ chỉ là phần thưởng **một bước**, còn $G$ là tổng mọi phần thưởng tương lai. Phương sai của $r$ nhỏ hơn nhiều so với $G$.\nBài báo A3C thử nhiều cách, cách này cho kết quả tốt nhất."
+  },
+  {
+   "id": "c9-td-adv",
+   "tag": "Công thức",
+   "ref": "9.3 · Câu hỏi phỏng vấn 9-6",
+   "front": "Hàm lợi thế viết bằng sai số TD?",
+   "back": "$$A(s, a) = Q(s, a) - V(s) \\approx r + \\gamma V(s') - V(s) = \\delta$$\n$A > 0$: hành động tốt hơn mức trung bình ở $s$, tăng xác suất. $A < 0$: giảm xác suất.\n> Ghi chú: sách viết $r_t^n + V_\\pi(s_{t+1}^n)$, tức ngầm $\\gamma = 1$; dạng tổng quát có $\\gamma$."
+  },
+  {
+   "id": "c9-eq92",
+   "tag": "Công thức",
+   "ref": "9.3 · (9.2)",
+   "front": "Viết gradient của A2C (biểu thức 9.2).",
+   "back": "$$\\nabla\\bar R_\\theta \\approx \\frac1N\\sum_{n=1}^{N}\\sum_{t=1}^{T_n}\\big(r_t^n + V_\\pi(s_{t+1}^n) - V_\\pi(s_t^n)\\big)\\nabla\\log p_\\theta(a_t^n \\mid s_t^n)$$"
+  },
+  {
+   "id": "c9-td-unbiased",
+   "tag": "Vì sao",
+   "ref": "9.3 (bổ sung)",
+   "front": "Nếu nhà phê bình đúng ($V = V_\\pi$), sai số TD có phải ước lượng không chệch của lợi thế không?",
+   "back": "Có: $\\mathbb E[r + \\gamma V_\\pi(s') \\mid s, a] = Q_\\pi(s, a)$ (phương trình Bellman), nên $\\mathbb E[\\delta \\mid s, a] = Q_\\pi(s, a) - V_\\pi(s) = A_\\pi(s, a)$.\nNếu $V$ sai thì $\\delta$ bị **chệch**: đổi phương sai lấy độ chệch (tab Thí nghiệm 1)."
+  },
+  {
+   "id": "c9-loop",
+   "tag": "Khái niệm",
+   "ref": "9.3 · Hình 9.4",
+   "front": "Vòng lặp của A2C?",
+   "back": "1. Diễn viên $\\pi$ tương tác với môi trường, thu thập dữ liệu.\n2. Dùng dữ liệu ước lượng $V_\\pi$ (TD hoặc MC).\n3. Cập nhật $\\pi$ theo (9.2) với lợi thế $r + V(s') - V(s)$.\n4. Lặp lại với $\\pi$ mới."
+  },
+  {
+   "id": "c9-trick1",
+   "tag": "Khái niệm",
+   "ref": "9.3 · Hình 9.5 · Bài tập 9-2",
+   "front": "Mẹo 1 khi cài đặt A2C: dùng chung tầng.",
+   "back": "Diễn viên và nhà phê bình **cùng nhận đầu vào $s$**, nên dùng chung vài tầng đầu (ví dụ các tầng CNN trích đặc trưng ảnh Atari).\nDiễn viên ra phân phối hành động (rời rạc) hoặc vectơ (liên tục); nhà phê bình ra một số $V(s)$."
+  },
+  {
+   "id": "c9-trick2",
+   "tag": "Khái niệm",
+   "ref": "9.3 · Bài tập 9-2",
+   "front": "Mẹo 2 khi cài đặt A2C: khám phá bằng gì?",
+   "back": "Ràng buộc **entropy** của phân phối $\\pi(\\cdot \\mid s)$ không quá nhỏ: thêm $\\beta H\\big(\\pi(\\cdot \\mid s)\\big)$ vào mục tiêu, với\n$$H(\\pi) = -\\sum_a \\pi(a \\mid s)\\log\\pi(a \\mid s)$$\nXác suất các hành động đều hơn, tác tử thử nhiều hành động hơn."
+  },
+  {
+   "id": "c9-entropy-calc",
+   "tag": "Tính tay",
+   "ref": "9.3 (bổ sung)",
+   "front": "Tính entropy của $\\pi = (0{,}5;\\ 0{,}5)$ và $\\pi = (0{,}9;\\ 0{,}1)$ (log tự nhiên).",
+   "back": "$H(0{,}5;\\ 0{,}5) = -2\\cdot 0{,}5\\ln 0{,}5 = \\ln 2 \\approx 0{,}693$ (lớn nhất với 2 hành động).\n$H(0{,}9;\\ 0{,}1) = -0{,}9\\ln 0{,}9 - 0{,}1\\ln 0{,}1 \\approx 0{,}095 + 0{,}230 = 0{,}325$.\nChính sách càng tất định, entropy càng nhỏ."
+  },
+  {
+   "id": "c9-a3c",
+   "tag": "Khái niệm",
+   "ref": "9.4 · Hình 9.6–9.7",
+   "front": "A3C hoạt động thế nào?",
+   "back": "Có một **mạng toàn cục** $\\theta$ (chính sách + giá trị, chung vài tầng đầu). Nhiều **tiến trình** (mỗi cái một CPU, như Ảnh phân thân của Naruto):\n1. sao chép $\\theta$ về;\n2. tương tác với môi trường (mỗi tiến trình khởi đầu khác nhau để dữ liệu đa dạng);\n3. tính gradient, gửi về trung tâm cập nhật $\\theta$.\nKhông chờ nhau: **bất đồng bộ**."
+  },
+  {
+   "id": "c9-a3c-stale",
+   "tag": "Vì sao",
+   "ref": "9.4",
+   "front": "Trong A3C, tiến trình lấy $\\theta_1$ nhưng khi gửi gradient về thì tham số đã là $\\theta_2$. Làm gì?",
+   "back": "**Vẫn áp gradient như thường**. Gradient này hơi \\\"cũ\\\" (tính trên $\\theta_1$), nhưng nhờ chạy song song, tổng lượng kinh nghiệm thu được nhanh hơn nhiều.\nNếu quá nhiều tiến trình và bước học lớn, gradient cũ có thể gây mất ổn định (tab Sơ đồ)."
+  },
+  {
+   "id": "c9-a2c-a3c",
+   "tag": "So sánh",
+   "ref": "9 · 9.4",
+   "front": "A2C và A3C khác nhau ở đâu? A3C là on-policy hay off-policy?",
+   "back": "A3C = A2C + **bất đồng bộ** (nhiều tiến trình cập nhật mạng toàn cục không chờ nhau). Bỏ phần bất đồng bộ thì được A2C.\nA3C là **on-policy**: mỗi tiến trình dùng dữ liệu của chính sách hiện tại (bản sao gần nhất).\nKhông có nhiều CPU thì khó làm A3C, nhưng vẫn làm được A2C."
+  },
+  {
+   "id": "c9-pathwise",
+   "tag": "Khái niệm",
+   "ref": "9.5 · Hình 9.8",
+   "front": "Gradient chính sách **đạo hàm theo đường đi** khác diễn viên-nhà phê bình thường thế nào? (ví dụ Hikaru và Sai)",
+   "back": "Nhà phê bình thường chỉ nói \\\"nước này **tốt hay không tốt**\\\" (một số).\nĐạo hàm theo đường đi: nhà phê bình **chỉ luôn nên đi nước nào** (Sai bảo Hikaru đi phi ngựa lớn): diễn viên đi theo gradient $\\nabla_a Q(s, a)$."
+  },
+  {
+   "id": "c9-pathwise-solver",
+   "tag": "Khái niệm",
+   "ref": "9.5",
+   "front": "Nhìn từ DQN, diễn viên trong đạo hàm theo đường đi đóng vai trò gì?",
+   "back": "Một **bộ giải** bài toán $\\arg\\max$:\n$$\\pi'(s) = \\arg\\max_a Q_\\pi(s, a)$$\nHọc diễn viên $\\pi(s)$ sao cho $Q\\big(s, \\pi(s)\\big)$ lớn nhất: giải được hành động liên tục (phương án 4 của chương 8)."
+  },
+  {
+   "id": "c9-pathwise-chain",
+   "tag": "Công thức",
+   "ref": "9.5 (bổ sung)",
+   "front": "Gradient cập nhật diễn viên trong đạo hàm theo đường đi (quy tắc chuỗi)?",
+   "back": "Cố định $Q$, tối đa hóa $Q\\big(s, \\pi_\\theta(s)\\big)$ theo $\\theta$:\n$$\\nabla_\\theta Q\\big(s, \\pi_\\theta(s)\\big) = \\nabla_a Q(s, a)\\big|_{a = \\pi_\\theta(s)}\\,\\nabla_\\theta\\pi_\\theta(s)$$\nGradient chảy **qua** nhà phê bình vào diễn viên: đó là \\\"đường đi\\\"."
+  },
+  {
+   "id": "c9-4changes",
+   "tag": "Khái niệm",
+   "ref": "9.5 · Hình 9.11 · Bài tập 9-4",
+   "front": "Bốn thay đổi từ DQN sang đạo hàm theo đường đi?",
+   "back": "(1) Chọn hành động bằng diễn viên $\\pi$ thay vì $Q$.\n(2) Mục tiêu $y = r_i + \\hat Q\\big(s_{i+1}, \\hat\\pi(s_{i+1})\\big)$ thay cho $\\max_a\\hat Q(s_{i+1}, a)$.\n(3) Học thêm $\\pi$ để $Q\\big(s_i, \\pi(s_i)\\big)$ lớn nhất.\n(4) Cứ sau $C$ bước cập nhật cả $\\hat\\pi = \\pi$ (diễn viên mục tiêu), ngoài $\\hat Q = Q$."
+  },
+  {
+   "id": "c9-gan",
+   "tag": "So sánh",
+   "ref": "9.5–9.6 · Bảng 9.1",
+   "front": "Đạo hàm theo đường đi giống GAN ở chỗ nào?",
+   "back": "Nhà phê bình $Q$ $\\leftrightarrow$ **bộ phân biệt**; diễn viên $\\leftrightarrow$ **bộ sinh** (GAN có điều kiện, điều kiện là $s$).\nCố định $Q$, chỉnh diễn viên để $Q$ ra càng lớn, giống cố định bộ phân biệt để huấn luyện bộ sinh. Cả hai đều khó huấn luyện, nên có thể mượn mẹo của nhau."
+  },
+  {
+   "id": "c9-adv-pros",
+   "tag": "So sánh",
+   "ref": "Câu hỏi phỏng vấn 9-2",
+   "front": "Ưu điểm của diễn viên-nhà phê bình so với phương pháp dựa trên giá trị và gradient chính sách thuần?",
+   "back": "So với dựa trên giá trị: dùng gradient chính sách nên chọn được hành động trong không gian **liên tục / nhiều chiều**.\nSo với gradient chính sách thuần: có nhà phê bình nên cập nhật **từng bước** thay vì theo tập, hiệu quả hơn."
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Trong diễn viên-nhà phê bình, nhà phê bình là:",
+   "options": [
+    "Hàm giá trị $V_\\pi(s)$ (hoặc $Q_\\pi$)",
+    "Chính sách $\\pi_\\theta(a \\mid s)$",
+    "Môi trường",
+    "Bộ đệm phát lại"
+   ],
+   "answer": 0,
+   "explain": "Diễn viên là chính sách; nhà phê bình đánh giá nó.",
+   "ref": "9"
+  },
+  {
+   "q": "$\\mathbb E\\big[G_t^n\\big]$ bằng:",
+   "options": [
+    "$Q_{\\pi_\\theta}(s_t^n, a_t^n)$",
+    "$V_{\\pi_\\theta}(s_{t+1}^n)$",
+    "$r_t^n$",
+    "$0$"
+   ],
+   "answer": 0,
+   "explain": "Định nghĩa của hàm $Q$.",
+   "ref": "9.3"
+  },
+  {
+   "q": "Hàm lợi thế trong A2C được ước lượng bằng:",
+   "options": [
+    "$r_t + V(s_{t+1}) - V(s_t)$",
+    "$Q(s_t, a_t) + V(s_t)$",
+    "$G_t$",
+    "$\\max_a Q(s_t, a)$"
+   ],
+   "answer": 0,
+   "explain": "Chỉ cần một mạng $V$.",
+   "ref": "9.3"
+  },
+  {
+   "q": "Vì sao thay $G$ bằng $r + V(s')$ giảm phương sai?",
+   "options": [
+    "$r$ chỉ là phần thưởng một bước, ít ngẫu nhiên hơn tổng mọi phần thưởng tương lai",
+    "Vì $V$ luôn bằng 0",
+    "Vì $r$ luôn dương",
+    "Vì không cần lấy mẫu nữa"
+   ],
+   "answer": 0,
+   "explain": "Đổi lại có thể bị chệch nếu $V$ sai.",
+   "ref": "9.3"
+  },
+  {
+   "q": "Nếu $V = V_\\pi$ chính xác thì $\\mathbb E[r + \\gamma V(s') - V(s) \\mid s, a]$ bằng:",
+   "options": [
+    "$A_\\pi(s, a)$",
+    "$0$",
+    "$Q_\\pi(s, a)$",
+    "$V_\\pi(s)$"
+   ],
+   "answer": 0,
+   "explain": "Phương trình Bellman cho $Q_\\pi$.",
+   "ref": "9.3 (bổ sung)"
+  },
+  {
+   "q": "$\\mathbb E_{a \\sim \\pi}\\big[A_\\pi(s, a)\\big]$ bằng:",
+   "options": [
+    "$0$",
+    "$V_\\pi(s)$",
+    "$1$",
+    "$\\max_a Q_\\pi(s, a)$"
+   ],
+   "answer": 0,
+   "explain": "$\\sum_a\\pi(a \\mid s)Q_\\pi(s, a) = V_\\pi(s)$.",
+   "ref": "9.3 (bổ sung)"
+  },
+  {
+   "q": "Vì sao diễn viên và nhà phê bình có thể dùng chung vài tầng đầu?",
+   "options": [
+    "Cả hai cùng nhận đầu vào là trạng thái $s$",
+    "Cả hai cùng đưa ra một số vô hướng",
+    "Để bớt một mạng mục tiêu",
+    "Vì A3C bắt buộc"
+   ],
+   "answer": 0,
+   "explain": "Đặc trưng ảnh dùng được cho cả hai.",
+   "ref": "9.3"
+  },
+  {
+   "q": "Thêm $\\beta H(\\pi)$ vào mục tiêu nhằm:",
+   "options": [
+    "Giữ phân phối hành động không quá tất định để còn khám phá",
+    "Làm chính sách tất định nhanh hơn",
+    "Giảm số tham số",
+    "Thay cho nhà phê bình"
+   ],
+   "answer": 0,
+   "explain": "Entropy lớn thì xác suất các hành động đều hơn.",
+   "ref": "9.3"
+  },
+  {
+   "q": "Entropy của $\\pi = (0{,}5;\\ 0{,}5)$ (log tự nhiên) là:",
+   "options": [
+    "$\\ln 2 \\approx 0{,}693$",
+    "$0$",
+    "$1$",
+    "$0{,}5$"
+   ],
+   "answer": 0,
+   "explain": "Lớn nhất với 2 hành động.",
+   "ref": "9.3 (bổ sung)"
+  },
+  {
+   "q": "Trong A3C, khi gửi gradient về thì tham số toàn cục đã bị tiến trình khác thay đổi. Thuật toán:",
+   "options": [
+    "Vẫn áp gradient như thường",
+    "Bỏ gradient đó",
+    "Tính lại gradient",
+    "Dừng tất cả tiến trình"
+   ],
+   "answer": 0,
+   "explain": "Gradient hơi cũ nhưng không sao.",
+   "ref": "9.4"
+  },
+  {
+   "q": "Trong đạo hàm theo đường đi, nhà phê bình cho diễn viên biết:",
+   "options": [
+    "Nên làm hành động nào (hướng tăng $Q$)",
+    "Chỉ hành động vừa làm tốt hay xấu",
+    "Phần thưởng tức thời",
+    "Xác suất chuyển trạng thái"
+   ],
+   "answer": 0,
+   "explain": "Diễn viên đi theo $\\nabla_a Q$.",
+   "ref": "9.5"
+  },
+  {
+   "q": "Mục tiêu của đạo hàm theo đường đi là:",
+   "options": [
+    "$y = r_i + \\hat Q\\big(s_{i+1}, \\hat\\pi(s_{i+1})\\big)$",
+    "$y = r_i + \\max_a\\hat Q(s_{i+1}, a)$",
+    "$y = G_i$",
+    "$y = r_i$"
+   ],
+   "answer": 0,
+   "explain": "Diễn viên mục tiêu thay phép $\\max$.",
+   "ref": "9.5 · Hình 9.11"
+  },
+  {
+   "q": "Trong liên hệ với GAN, nhà phê bình $Q$ ứng với:",
+   "options": [
+    "Bộ phân biệt",
+    "Bộ sinh",
+    "Nhiễu đầu vào",
+    "Hàm mất mát"
+   ],
+   "answer": 0,
+   "explain": "Diễn viên ứng với bộ sinh.",
+   "ref": "9.5–9.6"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p9-td",
+   "ref": "9.3 (bổ sung)",
+   "title": "Sai số TD là ước lượng không chệch của lợi thế (khi $V$ đúng)",
+   "start": "$V_\\pi$ là hàm giá trị đúng của $\\pi$. Định nghĩa $Q_\\pi(s, a) = \\mathbb E\\big[r + \\gamma V_\\pi(s') \\mid s, a\\big]$ (Bellman), $A_\\pi = Q_\\pi - V_\\pi$, $\\delta = r + \\gamma V_\\pi(s') - V_\\pi(s)$.",
+   "goal": "$$\\mathbb E[\\delta \\mid s, a] = A_\\pi(s, a)$$",
+   "steps": [
+    {
+     "tex": "\\mathbb E[\\delta \\mid s, a] = \\mathbb E\\big[r + \\gamma V_\\pi(s') \\mid s, a\\big] - \\mathbb E\\big[V_\\pi(s) \\mid s, a\\big]"
+    },
+    {
+     "tex": "= \\mathbb E\\big[r + \\gamma V_\\pi(s') \\mid s, a\\big] - V_\\pi(s)",
+     "why": {
+      "options": [
+       "$V_\\pi(s)$ là hằng số khi đã biết $s$",
+       "Vì $V_\\pi(s) = 0$",
+       "Luật số lớn",
+       "Bất đẳng thức Jensen"
+      ],
+      "answer": 0,
+      "explain": "Kỳ vọng của hằng số là chính nó."
+     }
+    },
+    {
+     "tex": "= Q_\\pi(s, a) - V_\\pi(s)",
+     "why": {
+      "options": [
+       "Phương trình Bellman cho $Q_\\pi$",
+       "Định nghĩa entropy",
+       "Quy tắc chuỗi",
+       "Vì $\\gamma = 1$"
+      ],
+      "answer": 0,
+      "explain": "Làm $a$ ở $s$, nhận $r$, đến $s'$, từ đó theo $\\pi$."
+     }
+    },
+    {
+     "tex": "= A_\\pi(s, a)",
+     "why": {
+      "options": [
+       "Định nghĩa hàm lợi thế",
+       "Vì $A = 0$",
+       "Do chuẩn hóa",
+       "Vì $Q = V$"
+      ],
+      "answer": 0,
+      "explain": "$A = Q - V$."
+     }
+    }
+   ],
+   "hints": [
+    "Tách kỳ vọng thành hai phần.",
+    "Số hạng nào không phụ thuộc vào $r$ và $s'$?"
+   ],
+   "note": "Nếu nhà phê bình sai, $\\hat V = V_\\pi + e$, thì $\\mathbb E[\\hat\\delta \\mid s, a] = A_\\pi(s, a) + \\gamma\\,\\mathbb E[e(s') \\mid s, a] - e(s)$. Phần $-e(s)$ chỉ phụ thuộc $s$ nên đóng vai trò đường cơ sở, không làm chệch gradient; phần $\\gamma\\,\\mathbb E[e(s')]$ thì làm chệch. Tab Thí nghiệm 1 cho kéo sai số này."
+  },
+  {
+   "id": "p9-adv0",
+   "ref": "9.3",
+   "title": "Lợi thế trung bình bằng 0: vì sao $A$ có cả dương lẫn âm",
+   "start": "$V_\\pi(s) = \\sum_a\\pi(a \\mid s)Q_\\pi(s, a)$ (giá trị trạng thái là kỳ vọng của $Q$ theo hành động).",
+   "goal": "$$\\mathbb E_{a \\sim \\pi(\\cdot \\mid s)}\\big[A_\\pi(s, a)\\big] = 0$$",
+   "steps": [
+    {
+     "tex": "\\mathbb E_{a \\sim \\pi}\\big[A_\\pi(s, a)\\big] = \\sum_a\\pi(a \\mid s)\\big(Q_\\pi(s, a) - V_\\pi(s)\\big)"
+    },
+    {
+     "tex": "= \\sum_a\\pi(a \\mid s)Q_\\pi(s, a) - V_\\pi(s)\\sum_a\\pi(a \\mid s)",
+     "why": {
+      "options": [
+       "Tách tổng; $V_\\pi(s)$ không phụ thuộc $a$",
+       "Đổi thứ tự kỳ vọng",
+       "Quy tắc chuỗi",
+       "Bất đẳng thức tam giác"
+      ],
+      "answer": 0,
+      "explain": "Đưa hằng số ra ngoài tổng."
+     }
+    },
+    {
+     "tex": "= V_\\pi(s) - V_\\pi(s)\\cdot 1",
+     "why": {
+      "options": [
+       "Định nghĩa $V_\\pi$ và $\\sum_a\\pi(a \\mid s) = 1$",
+       "Vì $Q = V$",
+       "Phương trình Bellman tối ưu",
+       "Vì $\\pi$ đều"
+      ],
+      "answer": 0,
+      "explain": "Xác suất cộng lại bằng 1."
+     }
+    },
+    {
+     "tex": "= 0",
+     "why": {
+      "options": [
+       "Rút gọn",
+       "Do chuẩn hóa entropy",
+       "Vì $\\gamma < 1$",
+       "Vì $r = 0$"
+      ],
+      "answer": 0,
+      "explain": "Nên có hành động lợi thế dương (tăng xác suất), có hành động âm (giảm xác suất)."
+     }
+    }
+   ],
+   "hints": [
+    "Thay định nghĩa $A = Q - V$.",
+    "$\\sum_a \\pi(a \\mid s) = ?$"
+   ],
+   "note": "So với dùng $G$ (luôn dương nếu phần thưởng dương), lợi thế tự động có dấu đúng: đây là lý do sách nói $Q - V$ \\\"sẽ có cả dương lẫn âm\\\"."
+  },
+  {
+   "id": "p9-entropy",
+   "ref": "9.3 (bổ sung)",
+   "title": "Gradient của entropy theo logit đẩy chính sách về phía đều",
+   "start": "Bổ sung của người dịch. Chính sách softmax $p_k = e^{z_k}/\\sum_j e^{z_j}$, nên $\\partial p_j/\\partial z_k = p_j(\\mathbb 1[j = k] - p_k)$. Entropy $H = -\\sum_j p_j\\ln p_j$.",
+   "goal": "$$\\frac{\\partial H}{\\partial z_k} = -p_k\\big(\\ln p_k + H\\big)$$",
+   "steps": [
+    {
+     "tex": "\\frac{\\partial H}{\\partial z_k} = -\\sum_j(\\ln p_j + 1)\\frac{\\partial p_j}{\\partial z_k}"
+    },
+    {
+     "tex": "= -\\sum_j(\\ln p_j + 1)\\,p_j\\big(\\mathbb 1[j = k] - p_k\\big)",
+     "why": {
+      "options": [
+       "Thay đạo hàm của softmax",
+       "Mẹo đạo hàm logarit",
+       "Định nghĩa entropy",
+       "Vì $p$ đều"
+      ],
+      "answer": 0,
+      "explain": "Công thức cho ở đầu bài."
+     }
+    },
+    {
+     "tex": "= -(\\ln p_k + 1)p_k + p_k\\sum_j p_j(\\ln p_j + 1)",
+     "why": {
+      "options": [
+       "Tách hai số hạng; số hạng chỉ báo chỉ còn $j = k$",
+       "Bất đẳng thức Jensen",
+       "Đổi biến",
+       "Vì $p_k = 1$"
+      ],
+      "answer": 0,
+      "explain": "$\\sum_j(\\ln p_j + 1)p_j\\mathbb 1[j = k] = (\\ln p_k + 1)p_k$."
+     }
+    },
+    {
+     "tex": "= -(\\ln p_k + 1)p_k + p_k(-H + 1) = -p_k\\big(\\ln p_k + H\\big)",
+     "why": {
+      "options": [
+       "$\\sum_j p_j\\ln p_j = -H$ và $\\sum_j p_j = 1$",
+       "Định nghĩa lợi thế",
+       "Quy tắc chuỗi",
+       "Vì $H = 0$"
+      ],
+      "answer": 0,
+      "explain": "Rút gọn hai số $p_k$."
+     }
+    }
+   ],
+   "hints": [
+    "Đạo hàm $-p\\ln p$ theo $p$ là $-(\\ln p + 1)$.",
+    "Tách tổng thành phần $j = k$ và phần nhân với $p_k$."
+   ],
+   "note": "Đi lên theo gradient này: logit $z_k$ **tăng** khi $\\ln p_k < -H$ (hành động hiếm hơn mức \\\"điển hình\\\" $e^{-H}$) và **giảm** khi hành động đang chiếm ưu thế. Chính sách bị kéo về phía đều, đúng mục đích \\\"entropy không quá nhỏ\\\". Tab Thí nghiệm 3 dùng đúng công thức này."
+  },
+  {
+   "id": "p9-pathwise",
+   "ref": "9.5 (bổ sung)",
+   "title": "Đạo hàm theo đường đi: gradient của diễn viên qua nhà phê bình",
+   "start": "Bổ sung của người dịch. Diễn viên tất định một chiều $a = \\pi_\\theta(s) = w s + b$, $\\theta = (w, b)$. Nhà phê bình cố định $Q(s, a)$ khả vi theo $a$.",
+   "goal": "$$\\frac{\\partial}{\\partial w}Q\\big(s, \\pi_\\theta(s)\\big) = \\frac{\\partial Q}{\\partial a}\\Big|_{a = \\pi_\\theta(s)}\\cdot s$$",
+   "steps": [
+    {
+     "tex": "J(\\theta) = Q\\big(s, \\pi_\\theta(s)\\big),\\quad a = w s + b"
+    },
+    {
+     "tex": "\\frac{\\partial J}{\\partial w} = \\frac{\\partial Q}{\\partial a}\\Big|_{a = \\pi_\\theta(s)}\\cdot\\frac{\\partial a}{\\partial w}",
+     "why": {
+      "options": [
+       "Quy tắc chuỗi",
+       "Mẹo đạo hàm logarit",
+       "Lấy mẫu quan trọng",
+       "Bất đẳng thức Jensen"
+      ],
+      "answer": 0,
+      "explain": "$J$ phụ thuộc $w$ qua $a$."
+     }
+    },
+    {
+     "tex": "= \\frac{\\partial Q}{\\partial a}\\Big|_{a = \\pi_\\theta(s)}\\cdot s,\\qquad \\frac{\\partial J}{\\partial b} = \\frac{\\partial Q}{\\partial a}\\Big|_{a = \\pi_\\theta(s)}",
+     "why": {
+      "options": [
+       "$\\partial a/\\partial w = s$, $\\partial a/\\partial b = 1$",
+       "Vì $Q$ tuyến tính",
+       "Vì $s = 1$",
+       "Do chuẩn hóa"
+      ],
+      "answer": 0,
+      "explain": "Đạo hàm của $ws + b$."
+     }
+    },
+    {
+     "tex": "\\text{Ví dụ: } Q(s, a) = -(a - 2s)^2,\\ s = 1,\\ w = 0{,}5,\\ b = 0:\\quad a = 0{,}5,\\ \\frac{\\partial Q}{\\partial a} = -2(0{,}5 - 2) = 3",
+     "why": {
+      "options": [
+       "Thay số: $Q$ tăng khi $a$ tăng về 2",
+       "Vì $Q = 0$",
+       "Vì $w = 1$",
+       "Do lấy mẫu"
+      ],
+      "answer": 0,
+      "explain": "$\\partial J/\\partial w = 3\\cdot 1 = 3 > 0$: tăng $w$ để $a$ tiến về hành động tốt nhất $a = 2$."
+     }
+    }
+   ],
+   "hints": [
+    "$J$ phụ thuộc $\\theta$ qua $a$.",
+    "Đạo hàm của $ws + b$ theo $w$ và $b$?"
+   ],
+   "note": "Diễn viên-nhà phê bình thường chỉ dùng một số $A$ nhân với $\\nabla_\\theta\\log\\pi$; ở đây $\\partial Q/\\partial a$ cho biết **hướng** và **độ lớn** cần đổi hành động. Đây là cốt lõi của DDPG (chương 12)."
+  }
+ ]
+}

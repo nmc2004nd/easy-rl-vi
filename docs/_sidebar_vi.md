@@ -33,6 +33,7 @@
 - [🧠 Chương 8 Ôn tập (flashcard + quiz)](review/index.html?ch=8 ':ignore :target=_self')
 - [Chương 9 Thuật toán diễn viên-nhà phê bình (Actor-Critic)](chapter9/chapter9_vi)
 - [Chương 9 Bài tập](chapter9/chapter9_questions&keywords_vi)
+- [🧠 Chương 9 Ôn tập (flashcard + quiz)](review/index.html?ch=9 ':ignore :target=_self')
 - [Chương 10 Phần thưởng thưa](chapter10/chapter10_vi)
 - [Chương 10 Bài tập](chapter10/chapter10_questions&keywords_vi)
 - [Chương 11 Học bắt chước](chapter11/chapter11_vi)
