@@ -28,6 +28,12 @@
       overflow-x: auto;
       overflow-y: hidden;
     }
+    /* công thức có đánh số: đặt số ngay sau công thức (không đè lên khi màn hình hẹp), cùng cuộn ngang */
+    .markdown-section .katex-display > .katex > .katex-html:has(> .katex-tag, > .tag) { display: flex; align-items: baseline; }
+    .markdown-section .katex-display > .katex > .katex-html:has(> .katex-tag, > .tag) > * { flex-shrink: 0; }
+    .markdown-section .katex-display > .katex > .katex-html:has(> .katex-tag, > .tag) > :first-child { margin-left: auto; }
+    .markdown-section .katex-display > .katex > .katex-html > .katex-tag,
+    .markdown-section .katex-display > .katex > .katex-html > .tag { position: static; margin-left: auto; padding-left: 1.2em; }
   </style>
 </head>
 <body>
