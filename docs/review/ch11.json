@@ -1,0 +1,535 @@
+{
+ "chapter": 11,
+ "title": "Chương 11 · Học bắt chước",
+ "chapterLink": "../#/chapter11/chapter11_vi",
+ "exerciseLink": "../#/chapter11/chapter11_questions&keywords_vi",
+ "extras": "ch11-extras.js",
+ "cards": [
+  {
+   "id": "c11-il",
+   "tag": "Khái niệm",
+   "ref": "11",
+   "front": "**Học bắt chước** giải quyết tình huống nào? Còn gọi là gì?",
+   "back": "Không có phần thưởng từ môi trường, nhưng có **minh họa của chuyên gia**; tác tử vẫn tương tác được với môi trường.\nCòn gọi: học từ minh họa, học việc (apprenticeship learning), học bằng quan sát."
+  },
+  {
+   "id": "c11-why-il",
+   "tag": "Vì sao",
+   "ref": "11",
+   "front": "Vì sao học bắt chước có tính thực dụng cao? Ví dụ?",
+   "back": "Đa số bài toán thật **không định nghĩa được phần thưởng rõ ràng**: ô tô tự lái, chatbot (trò chuyện thế nào là tốt?).\nNhưng ta thu thập được nhiều bản ghi lái xe, nhiều đoạn hội thoại của con người làm minh họa."
+  },
+  {
+   "id": "c11-two",
+   "tag": "Khái niệm",
+   "ref": "11",
+   "front": "Hai phương pháp học bắt chước trong chương?",
+   "back": "**Nhân bản hành vi** (behavior cloning, BC) và **học tăng cường ngược** (inverse reinforcement learning, IRL), còn gọi là điều khiển tối ưu ngược."
+  },
+  {
+   "id": "c11-bc",
+   "tag": "Khái niệm",
+   "ref": "11.1 · Hình 11.1",
+   "front": "**Nhân bản hành vi** là gì?",
+   "back": "Xem như **học có giám sát**: thu thập các cặp $(s_i, a_i)$ của chuyên gia, học một mạng (diễn viên) sao cho đầu vào $s_i$ thì đầu ra là $a_i$. Chuyên gia làm gì, tác tử làm y như vậy."
+  },
+  {
+   "id": "c11-bc-p1",
+   "tag": "Vì sao",
+   "ref": "11.1 · Hình 11.2",
+   "front": "Vấn đề 1 của nhân bản hành vi: dữ liệu chuyên gia **hạn chế**. Ví dụ?",
+   "back": "Chuyên gia luôn đi đúng đường cua (đường đỏ), chưa bao giờ sắp đâm tường; chơi Super Mario chưa bao giờ nhảy hụt ống.\nTác tử lệch ra một chút là vào trạng thái **chưa từng thấy**, không biết xử lý."
+  },
+  {
+   "id": "c11-dagger",
+   "tag": "Khái niệm",
+   "ref": "11.1 · Hình 11.3",
+   "front": "**DAgger** (tổng hợp tập dữ liệu) làm gì?",
+   "back": "Cho **diễn viên $\\theta_1$ tự lái**, chuyên gia ngồi trên xe chỉ nói \\\"ở tình huống này tôi sẽ làm gì\\\" (nhưng không can thiệp).\nGhi lại cặp (trạng thái **diễn viên** gặp, hành động **chuyên gia** chọn), gộp vào dữ liệu, huấn luyện $\\theta_2$, lặp lại.\nNhờ vậy có dữ liệu ở cả những tình huống xấu như sắp đâm tường (đổi lại \\\"hy sinh một chuyên gia\\\")."
+  },
+  {
+   "id": "c11-bc-p2",
+   "tag": "Vì sao",
+   "ref": "11.1 · Hình 11.4",
+   "front": "Vấn đề 2 của nhân bản hành vi: học cả **thói quen thừa**. Vì sao lại nguy hiểm?",
+   "back": "Tác tử sao chép mọi thứ, kể cả cử chỉ tay của giáo viên dạy tiếng Trung. Nếu mạng nhớ được hết thì chỉ thừa vài việc.\nNhưng **dung lượng mạng có hạn**: nếu nó chỉ học được một thứ mà lại chọn cử chỉ tay thay vì giọng nói thì hỏng. BC không biết hành vi nào quan trọng."
+  },
+  {
+   "id": "c11-bc-p3",
+   "tag": "Vì sao",
+   "ref": "11.1",
+   "front": "Vấn đề 3 của nhân bản hành vi: dữ liệu huấn luyện và kiểm thử **không khớp**. Vì sao?",
+   "back": "Trong học tăng cường, **hành động ảnh hưởng trạng thái tiếp theo**. Chỉ khi $\\theta^*$ giống hệt chuyên gia $\\hat\\theta$ thì phân phối trạng thái mới giống.\nSai một chút thì đi vào trạng thái khác, ở đó sai thêm: \\\"sai một li, đi một dặm\\\". Học có giám sát thường không bị vậy vì các mẫu độc lập."
+  },
+  {
+   "id": "c11-compound",
+   "tag": "Công thức",
+   "ref": "11.1 (bổ sung)",
+   "front": "Sai số mỗi bước là $\\varepsilon$; nếu lệch khỏi quỹ đạo chuyên gia thì sai luôn về sau. Số bước sai kỳ vọng trong $T$ bước?",
+   "back": "$$\\sum_{t=1}^{T}\\big(1 - (1 - \\varepsilon)^t\\big) \\le \\sum_{t=1}^{T}t\\varepsilon = \\varepsilon\\frac{T(T+1)}{2}$$\nCỡ $\\varepsilon T^2$, tăng theo **bình phương** độ dài, trong khi học có giám sát thông thường chỉ cỡ $\\varepsilon T$ (DAgger đưa về cỡ $\\varepsilon T$)."
+  },
+  {
+   "id": "c11-irl",
+   "tag": "Khái niệm",
+   "ref": "11.2 · Hình 11.5–11.6",
+   "front": "**Học tăng cường ngược** ngược ở chỗ nào?",
+   "back": "Học tăng cường: môi trường + hàm phần thưởng $\\to$ diễn viên tối ưu.\nHọc tăng cường ngược: môi trường + minh họa chuyên gia $\\hat\\tau$ $\\to$ **suy ra hàm phần thưởng** $\\to$ dùng học tăng cường thường để tìm diễn viên."
+  },
+  {
+   "id": "c11-irl-why",
+   "tag": "Vì sao",
+   "ref": "11.2",
+   "front": "Lợi ích của việc tìm hàm phần thưởng thay vì bắt chước hành vi?",
+   "back": "Hàm phần thưởng có thể **rất đơn giản** dù hành vi rất phức tạp. Ví dụ con người: \\\"sống thêm một giây được một điểm\\\", mà sinh ra đủ loại hành vi phức tạp."
+  },
+  {
+   "id": "c11-irl-loop",
+   "tag": "Khái niệm",
+   "ref": "11.2 · Hình 11.7",
+   "front": "Vòng lặp của học tăng cường ngược?",
+   "back": "1. Chuyên gia $\\hat\\theta$ chơi $N$ ván: $\\hat\\tau_1, \\ldots, \\hat\\tau_N$.\n2. Diễn viên $\\theta$ cũng chơi $N$ ván: $\\tau_1, \\ldots, \\tau_N$.\n3. Học hàm phần thưởng sao cho $R(\\hat\\tau) > R(\\tau)$: **chuyên gia luôn giỏi nhất** (\\\"bắn tên trước, vẽ bia sau\\\").\n4. Dùng học tăng cường tìm diễn viên mới tối đa hóa $R$ mới; quay lại bước 2."
+  },
+  {
+   "id": "c11-irl-R",
+   "tag": "Công thức",
+   "ref": "11.2",
+   "front": "Hàm phần thưởng trong IRL được tham số hóa thế nào?",
+   "back": "Một mạng nhận cặp $(s, a)$, đưa ra một số; cộng trên cả quỹ đạo:\n$$R(\\tau) = \\sum_t r(s_t, a_t)$$\nHuấn luyện để $R(\\hat\\tau_n)$ lớn, $R(\\tau_n)$ nhỏ."
+  },
+  {
+   "id": "c11-irl-end",
+   "tag": "Khái niệm",
+   "ref": "11.2",
+   "front": "Hàm phần thưởng \\\"tốt nhất\\\" cuối cùng của IRL là gì?",
+   "back": "Hàm mà **chuyên gia và diễn viên đạt điểm cao như nhau**: không phân biệt được ai nên được điểm cao hơn (diễn viên đã bắt chước được chuyên gia)."
+  },
+  {
+   "id": "c11-irl-conv",
+   "tag": "Vì sao",
+   "ref": "11.2",
+   "front": "IRL có chắc hội tụ không?",
+   "back": "IRL sớm nhất giả định hàm phần thưởng **tuyến tính**: khi đó chứng minh được hội tụ.\nNếu $R$ là mạng nơ-ron thông thường thì giống GAN: **chưa chắc** hội tụ."
+  },
+  {
+   "id": "c11-irl-gan",
+   "tag": "So sánh",
+   "ref": "11.2 · Hình 11.8",
+   "front": "Đối ứng giữa IRL và GAN?",
+   "back": "Minh họa chuyên gia $\\leftrightarrow$ ảnh thật.\nDiễn viên $\\leftrightarrow$ **bộ sinh**; quỹ đạo của diễn viên $\\leftrightarrow$ ảnh bộ sinh vẽ.\nHàm phần thưởng $\\leftrightarrow$ **bộ phân biệt**: chấm cao cho chuyên gia, thấp cho diễn viên.\nDiễn viên tìm cách đạt điểm cao $\\leftrightarrow$ bộ sinh tìm cách lừa bộ phân biệt."
+  },
+  {
+   "id": "c11-gan-opt",
+   "tag": "Công thức",
+   "ref": "11.2 (bổ sung)",
+   "front": "Với bộ sinh cố định, bộ phân biệt tối ưu của GAN là gì? Khi nào bằng $\\tfrac12$?",
+   "back": "$$D^*(x) = \\frac{p_{\\text{thật}}(x)}{p_{\\text{thật}}(x) + p_{\\text{sinh}}(x)}$$\nBằng $\\tfrac12$ ở mọi nơi khi $p_{\\text{sinh}} = p_{\\text{thật}}$: đúng ý \\\"không phân biệt được\\\" của IRL (tab Chứng minh)."
+  },
+  {
+   "id": "c11-irl-few",
+   "tag": "Khái niệm",
+   "ref": "11.2 · Hình 11.9",
+   "front": "Vì sao IRL thường cần ít minh họa? Ví dụ đỗ xe?",
+   "back": "Minh họa chỉ dùng để suy ra phần thưởng; tác tử còn **tương tác với môi trường rất nhiều lần**.\nĐỗ xe: chỉ 4 minh họa mỗi hàng; minh họa khác nhau (đi trên đường, đi tắt qua chỗ không phải đường, lùi xe) cho ra **phong cách lái khác nhau**."
+  },
+  {
+   "id": "c11-irl-robot",
+   "tag": "Khái niệm",
+   "ref": "11.2",
+   "front": "IRL giúp huấn luyện robot thế nào?",
+   "back": "Không cần lập trình chi tiết: con người **kéo cánh tay robot làm mẫu** (xếp đĩa), hoặc dạy rót nước chỉ 20 lần với vị trí cốc hơi khác nhau."
+  },
+  {
+   "id": "c11-third",
+   "tag": "Khái niệm",
+   "ref": "11.3 · Hình 11.10–11.11",
+   "front": "**Học bắt chước góc nhìn ngôi thứ ba** giải quyết gì? Dùng kỹ thuật nào?",
+   "back": "Robot **nhìn** con người làm (ngôi thứ ba) nhưng phải tự làm (ngôi thứ nhất): góc nhìn khác nhau.\nDùng **huấn luyện đối kháng miền**: học bộ trích xuất đặc trưng sao cho ảnh hai miền sau khi trích xuất **không phân biệt được** đến từ miền nào, chỉ giữ thứ quan trọng."
+  },
+  {
+   "id": "c11-seq",
+   "tag": "So sánh",
+   "ref": "11.4 · Hình 11.12",
+   "front": "Sinh câu, chatbot liên hệ thế nào với học bắt chước?",
+   "back": "Mỗi chữ là một hành động, cả câu là một tập; câu của con người là minh họa chuyên gia.\n**Hợp lý cực đại** (dự đoán chữ tiếp theo) $\\leftrightarrow$ **nhân bản hành vi**.\n**GAN chuỗi** (sequence GAN) $\\leftrightarrow$ **học tăng cường ngược**."
+  },
+  {
+   "id": "c11-mle-bc",
+   "tag": "Công thức",
+   "ref": "11.4 (bổ sung)",
+   "front": "Vì sao hợp lý cực đại cho câu chính là nhân bản hành vi?",
+   "back": "$$\\log p(w_1, \\ldots, w_T) = \\sum_{t=1}^{T}\\log p(w_t \\mid w_{<t})$$\nMỗi số hạng là log xác suất \\\"hành động\\\" $w_t$ ở \\\"trạng thái\\\" $w_{<t}$ (phần câu đã viết), với nhãn đúng của chuyên gia: đúng là học có giám sát trên các cặp $(s, a)$."
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Học bắt chước dùng khi:",
+   "options": [
+    "Không có phần thưởng nhưng có minh họa của chuyên gia",
+    "Có phần thưởng rõ ràng và dày",
+    "Không tương tác được với môi trường",
+    "Hành động luôn rời rạc"
+   ],
+   "answer": 0,
+   "explain": "Ví dụ ô tô tự lái, chatbot.",
+   "ref": "11"
+  },
+  {
+   "q": "Nhân bản hành vi về bản chất là:",
+   "options": [
+    "Học có giám sát trên các cặp $(s, a)$ của chuyên gia",
+    "Học tăng cường có phần thưởng",
+    "Học không giám sát",
+    "Quy hoạch động"
+   ],
+   "answer": 0,
+   "explain": "Đầu vào $s_i$, nhãn $a_i$.",
+   "ref": "11.1"
+  },
+  {
+   "q": "Trong DAgger, ai lái xe khi thu thập dữ liệu mới?",
+   "options": [
+    "Diễn viên đang học, chuyên gia chỉ đưa ra nhãn",
+    "Chuyên gia",
+    "Một chính sách ngẫu nhiên",
+    "Không ai, dùng dữ liệu cũ"
+   ],
+   "answer": 0,
+   "explain": "Để có nhãn ở chính những trạng thái diễn viên gặp.",
+   "ref": "11.1"
+  },
+  {
+   "q": "Thu thập thêm thật nhiều minh họa \\\"sạch\\\" (chuyên gia không bao giờ mắc lỗi) có giải quyết được vấn đề đâm tường của BC không?",
+   "options": [
+    "Không: vẫn không có dữ liệu ở trạng thái lệch khỏi quỹ đạo chuyên gia",
+    "Có, luôn luôn",
+    "Có nếu mạng đủ lớn",
+    "Có nếu $\\gamma$ nhỏ"
+   ],
+   "answer": 0,
+   "explain": "Tab Thí nghiệm 1: thêm minh họa sạch không giảm tỉ lệ đâm.",
+   "ref": "11.1 (bổ sung)"
+  },
+  {
+   "q": "\\\"Sai một li, đi một dặm\\\" trong BC là do:",
+   "options": [
+    "Hành động ảnh hưởng tới phân phối trạng thái tiếp theo",
+    "Mạng quá lớn",
+    "Phần thưởng quá thưa",
+    "Hệ số chiết khấu nhỏ"
+   ],
+   "answer": 0,
+   "explain": "Dữ liệu huấn luyện và kiểm thử không khớp.",
+   "ref": "11.1"
+  },
+  {
+   "q": "Sai số mỗi bước $\\varepsilon$, một khi lệch thì sai mãi. Số bước sai kỳ vọng trong $T$ bước có cỡ:",
+   "options": [
+    "$\\varepsilon T^2$",
+    "$\\varepsilon T$",
+    "$\\varepsilon$",
+    "$T/\\varepsilon$"
+   ],
+   "answer": 0,
+   "explain": "$\\sum_t (1 - (1-\\varepsilon)^t) \\le \\varepsilon T(T+1)/2$.",
+   "ref": "11.1 (bổ sung)"
+  },
+  {
+   "q": "Nguyên tắc chọn hàm phần thưởng trong IRL:",
+   "options": [
+    "Chuyên gia luôn được điểm cao hơn diễn viên",
+    "Diễn viên luôn được điểm cao hơn",
+    "Mọi quỹ đạo được điểm như nhau ngay từ đầu",
+    "Phần thưởng luôn dương"
+   ],
+   "answer": 0,
+   "explain": "\\\"Bắn tên trước, vẽ bia sau\\\".",
+   "ref": "11.2"
+  },
+  {
+   "q": "Trong IRL, hàm phần thưởng tương ứng với thành phần nào của GAN?",
+   "options": [
+    "Bộ phân biệt",
+    "Bộ sinh",
+    "Ảnh thật",
+    "Nhiễu đầu vào"
+   ],
+   "answer": 0,
+   "explain": "Diễn viên là bộ sinh.",
+   "ref": "11.2"
+  },
+  {
+   "q": "IRL với hàm phần thưởng tuyến tính $R(\\tau) = \\boldsymbol w^{\\mathrm T}\\boldsymbol f(\\tau)$ dừng lại khi:",
+   "options": [
+    "Đặc trưng của diễn viên khớp với của chuyên gia: $\\boldsymbol f(\\tau) = \\boldsymbol f(\\hat\\tau)$",
+    "$\\boldsymbol w = \\boldsymbol 0$",
+    "Diễn viên đạt điểm cao hơn chuyên gia",
+    "Sau đúng một vòng"
+   ],
+   "answer": 0,
+   "explain": "Khi đó không hàm tuyến tính nào phân biệt được hai bên.",
+   "ref": "11.2 (bổ sung)"
+  },
+  {
+   "q": "Bộ phân biệt tối ưu của GAN khi $p_{\\text{sinh}} = p_{\\text{thật}}$ đưa ra:",
+   "options": [
+    "$\\tfrac12$ ở mọi nơi",
+    "$1$ ở mọi nơi",
+    "$0$ ở mọi nơi",
+    "Tùy $x$"
+   ],
+   "answer": 0,
+   "explain": "$D^* = p_{\\text{thật}}/(p_{\\text{thật}} + p_{\\text{sinh}})$.",
+   "ref": "11.2 (bổ sung)"
+  },
+  {
+   "q": "Học bắt chước góc nhìn ngôi thứ ba dùng thêm kỹ thuật:",
+   "options": [
+    "Huấn luyện đối kháng miền",
+    "Lấy mẫu quan trọng",
+    "Phát lại ưu tiên",
+    "Chính quy hóa entropy"
+   ],
+   "answer": 0,
+   "explain": "Đặc trưng không phân biệt được miền.",
+   "ref": "11.3"
+  },
+  {
+   "q": "Huấn luyện chatbot bằng hợp lý cực đại tương ứng với:",
+   "options": [
+    "Nhân bản hành vi",
+    "Học tăng cường ngược",
+    "DAgger",
+    "Học tăng cường phân cấp"
+   ],
+   "answer": 0,
+   "explain": "GAN chuỗi mới tương ứng IRL.",
+   "ref": "11.4"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p11-compound",
+   "ref": "11.1 (bổ sung)",
+   "title": "Sai số của nhân bản hành vi tích lũy theo $T^2$",
+   "start": "Bổ sung của người dịch (ý của Ross và Bagnell, 2010). Ở trạng thái chuyên gia từng gặp, diễn viên chọn sai với xác suất $\\varepsilon$. Mô hình đơn giản hóa: một khi đã lệch khỏi quỹ đạo chuyên gia thì vào trạng thái lạ và **sai ở mọi bước sau**. Gọi $M$ là số bước sai trong $T$ bước.",
+   "goal": "$$\\mathbb E[M] \\le \\varepsilon\\,\\frac{T(T+1)}{2}$$",
+   "steps": [
+    {
+     "tex": "\\mathbb E[M] = \\sum_{t=1}^{T}P(\\text{sai ở bước } t) = \\sum_{t=1}^{T}P(\\text{đã lệch trong } t \\text{ bước đầu})"
+    },
+    {
+     "tex": "P(\\text{đã lệch trong } t \\text{ bước đầu}) = 1 - (1 - \\varepsilon)^t",
+     "why": {
+      "options": [
+       "Chưa lệch nghĩa là đúng cả $t$ bước, mỗi bước đúng với xác suất $1 - \\varepsilon$",
+       "Luật số lớn",
+       "Bất đẳng thức Jensen",
+       "Vì sai số độc lập với $t$"
+      ],
+      "answer": 0,
+      "explain": "Lấy phần bù."
+     }
+    },
+    {
+     "tex": "1 - (1 - \\varepsilon)^t \\le t\\varepsilon",
+     "why": {
+      "options": [
+       "Bất đẳng thức Bernoulli: $(1 - \\varepsilon)^t \\ge 1 - t\\varepsilon$",
+       "Vì $\\varepsilon > 1$",
+       "Khai triển Taylor bậc 2 luôn bằng",
+       "Bất đẳng thức tam giác"
+      ],
+      "answer": 0,
+      "explain": "Hoặc: hợp của $t$ biến cố \\\"sai ở bước $k$\\\" có xác suất không quá tổng."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ \\mathbb E[M] \\le \\sum_{t=1}^{T}t\\varepsilon = \\varepsilon\\frac{T(T+1)}{2}",
+     "why": {
+      "options": [
+       "$\\sum_{t=1}^{T}t = T(T+1)/2$",
+       "Vì $T = 1$",
+       "Do chuẩn hóa",
+       "Quy tắc chuỗi"
+      ],
+      "answer": 0,
+      "explain": "Cỡ $\\varepsilon T^2$."
+     }
+    }
+   ],
+   "hints": [
+    "Viết $M$ là tổng các biến chỉ báo \\\"sai ở bước $t$\\\".",
+    "Sai ở bước $t$ khi và chỉ khi đã lệch trong $t$ bước đầu."
+   ],
+   "note": "Với học có giám sát thông thường (mẫu độc lập), số lỗi kỳ vọng chỉ là $\\varepsilon T$. DAgger huấn luyện trên chính phân phối trạng thái của diễn viên nên đưa sai số về cỡ $\\varepsilon T$. Tab Thí nghiệm 1 cho thấy điều này trên một con đường cong."
+  },
+  {
+   "id": "p11-mle",
+   "ref": "11.4 (bổ sung)",
+   "title": "Hợp lý cực đại cho câu là nhân bản hành vi",
+   "start": "Bổ sung của người dịch. Câu của con người $w_1, \\ldots, w_T$; mô hình $p_\\theta$. Coi “trạng thái” $s_t = w_{<t}$ (phần câu đã viết), “hành động” $a_t = w_t$.",
+   "goal": "$$\\max_\\theta\\log p_\\theta(w_1, \\ldots, w_T) = \\max_\\theta\\sum_{t=1}^{T}\\log\\pi_\\theta(a_t \\mid s_t)$$",
+   "steps": [
+    {
+     "tex": "p_\\theta(w_1, \\ldots, w_T) = p_\\theta(w_1)\\,p_\\theta(w_2 \\mid w_1)\\cdots p_\\theta(w_T \\mid w_{<T})"
+    },
+    {
+     "tex": "\\log p_\\theta(w_1, \\ldots, w_T) = \\sum_{t=1}^{T}\\log p_\\theta(w_t \\mid w_{<t})",
+     "why": {
+      "options": [
+       "Quy tắc nhân xác suất rồi lấy log biến tích thành tổng",
+       "Bất đẳng thức Jensen",
+       "Luật số lớn",
+       "Vì các chữ độc lập"
+      ],
+      "answer": 0,
+      "explain": "Không cần giả định độc lập: đây là quy tắc chuỗi của xác suất."
+     }
+    },
+    {
+     "tex": "= \\sum_{t=1}^{T}\\log\\pi_\\theta(a_t \\mid s_t)",
+     "why": {
+      "options": [
+       "Đặt $s_t = w_{<t}$, $a_t = w_t$, $\\pi_\\theta(a \\mid s) = p_\\theta(w_t = a \\mid w_{<t} = s)$",
+       "Vì $T = 1$",
+       "Do chuẩn hóa",
+       "Quy tắc chuỗi đạo hàm"
+      ],
+      "answer": 0,
+      "explain": "Mỗi chữ là một hành động."
+     }
+    },
+    {
+     "tex": "\\text{Đây là mất mát entropy chéo của học có giám sát trên các cặp } (s_t, a_t) \\text{ của chuyên gia: nhân bản hành vi}",
+     "why": {
+      "options": [
+       "Tối đa hóa log xác suất nhãn đúng = tối thiểu hóa entropy chéo",
+       "Đây là hàm phần thưởng",
+       "Đây là GAN",
+       "Đây là DAgger"
+      ],
+      "answer": 0,
+      "explain": "Nên sinh câu bằng hợp lý cực đại có cùng điểm yếu với BC: khi kiểm thử, mô hình đọc chữ do chính nó viết (có thể sai), không phải chữ của con người."
+     }
+    }
+   ],
+   "hints": [
+    "Phân tích xác suất của cả câu thành tích các xác suất có điều kiện.",
+    "Ánh xạ tiền tố câu thành trạng thái, chữ tiếp theo thành hành động."
+   ],
+   "note": "Hiện tượng \\\"đọc chữ của chính mình\\\" trong sinh câu thường được gọi là exposure bias: chính là vấn đề \\\"dữ liệu huấn luyện và kiểm thử không khớp\\\" của mục 11.1."
+  },
+  {
+   "id": "p11-fm",
+   "ref": "11.2 (bổ sung)",
+   "title": "IRL tuyến tính: “chuyên gia hơn diễn viên” là khớp đặc trưng",
+   "start": "Bổ sung của người dịch (Abbeel và Ng, 2004). Phần thưởng tuyến tính $r(s) = \\boldsymbol w^{\\mathrm T}\\boldsymbol\\phi(s)$, nên $R(\\tau) = \\boldsymbol w^{\\mathrm T}\\boldsymbol f(\\tau)$ với $\\boldsymbol f(\\tau) = \\sum_t\\boldsymbol\\phi(s_t)$ (đếm đặc trưng). Chuyên gia có $\\hat{\\boldsymbol f}$, diễn viên có $\\boldsymbol f$. Chọn $\\boldsymbol w$ với $\\|\\boldsymbol w\\| \\le 1$.",
+   "goal": "$$\\max_{\\|\\boldsymbol w\\| \\le 1}\\big(R(\\hat\\tau) - R(\\tau)\\big) = \\|\\hat{\\boldsymbol f} - \\boldsymbol f\\|$$",
+   "steps": [
+    {
+     "tex": "R(\\hat\\tau) - R(\\tau) = \\boldsymbol w^{\\mathrm T}\\hat{\\boldsymbol f} - \\boldsymbol w^{\\mathrm T}\\boldsymbol f = \\boldsymbol w^{\\mathrm T}(\\hat{\\boldsymbol f} - \\boldsymbol f)"
+    },
+    {
+     "tex": "\\le \\|\\boldsymbol w\\|\\,\\|\\hat{\\boldsymbol f} - \\boldsymbol f\\| \\le \\|\\hat{\\boldsymbol f} - \\boldsymbol f\\|",
+     "why": {
+      "options": [
+       "Bất đẳng thức Cauchy–Schwarz và $\\|\\boldsymbol w\\| \\le 1$",
+       "Bất đẳng thức Jensen",
+       "Luật số lớn",
+       "Vì $\\boldsymbol f \\ge 0$"
+      ],
+      "answer": 0,
+      "explain": "Tích vô hướng không vượt tích hai độ dài."
+     }
+    },
+    {
+     "tex": "\\text{dấu bằng khi } \\boldsymbol w = \\frac{\\hat{\\boldsymbol f} - \\boldsymbol f}{\\|\\hat{\\boldsymbol f} - \\boldsymbol f\\|}",
+     "why": {
+      "options": [
+       "Cauchy–Schwarz đạt dấu bằng khi hai vectơ cùng hướng",
+       "Vì $\\boldsymbol w = 0$",
+       "Do đối xứng",
+       "Vì $\\boldsymbol f = \\hat{\\boldsymbol f}$"
+      ],
+      "answer": 0,
+      "explain": "Phần thưởng \\\"vẽ bia\\\" đúng vào chỗ chuyên gia khác diễn viên nhiều nhất."
+     }
+    },
+    {
+     "tex": "\\max_{\\boldsymbol w}\\big(R(\\hat\\tau) - R(\\tau)\\big) = 0 \\iff \\boldsymbol f = \\hat{\\boldsymbol f}",
+     "why": {
+      "options": [
+       "Độ dài bằng 0 khi và chỉ khi vectơ bằng 0",
+       "Vì $\\boldsymbol w$ có thể âm",
+       "Luật số lớn",
+       "Vì $T$ hữu hạn"
+      ],
+      "answer": 0,
+      "explain": "Không hàm phần thưởng tuyến tính nào phân biệt được hai bên: đúng điểm dừng mà mục 11.2 mô tả."
+     }
+    }
+   ],
+   "hints": [
+    "Viết hiệu phần thưởng thành tích vô hướng.",
+    "Bất đẳng thức nào chặn tích vô hướng?"
+   ],
+   "note": "Thuật toán thực tế (tab Thí nghiệm 3) dùng bước đơn giản $\\boldsymbol w \\leftarrow \\boldsymbol w + \\eta(\\hat{\\boldsymbol f} - \\boldsymbol f)$, tức đi theo đúng hướng tối ưu ở trên, rồi tìm diễn viên tối ưu cho $\\boldsymbol w$ mới, lặp lại tới khi $\\boldsymbol f = \\hat{\\boldsymbol f}$."
+  },
+  {
+   "id": "p11-dstar",
+   "ref": "11.2 (bổ sung)",
+   "title": "Bộ phân biệt tối ưu của GAN",
+   "start": "Bổ sung của người dịch (Goodfellow và cộng sự, 2014). Bộ sinh cố định với phân phối $p_g$; dữ liệu thật $p_d$. Bộ phân biệt tối đa hóa $V(D) = \\int\\big(p_d(x)\\log D(x) + p_g(x)\\log(1 - D(x))\\big)\\,\\mathrm dx$.",
+   "goal": "$$D^*(x) = \\frac{p_d(x)}{p_d(x) + p_g(x)}$$",
+   "steps": [
+    {
+     "tex": "\\text{Tại mỗi } x \\text{ tối đa hóa riêng } h(y) = a\\log y + b\\log(1 - y),\\quad a = p_d(x),\\ b = p_g(x),\\ y = D(x)"
+    },
+    {
+     "tex": "h'(y) = \\frac ay - \\frac b{1 - y} = 0",
+     "why": {
+      "options": [
+       "Đạo hàm của $\\log y$ và $\\log(1 - y)$",
+       "Quy tắc chuỗi cho tích phân",
+       "Luật số lớn",
+       "Bất đẳng thức Jensen"
+      ],
+      "answer": 0,
+      "explain": "$h$ lõm trên $(0, 1)$ nên điểm dừng là cực đại."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ a(1 - y) = b y \\Rightarrow y = \\frac a{a + b}",
+     "why": {
+      "options": [
+       "Quy đồng rồi giải phương trình bậc nhất",
+       "Vì $a = b$",
+       "Khai triển Taylor",
+       "Do chuẩn hóa"
+      ],
+      "answer": 0,
+      "explain": "$D^*(x) = p_d/(p_d + p_g)$."
+     }
+    },
+    {
+     "tex": "p_g = p_d \\Rightarrow D^*(x) = \\tfrac12 \\text{ với mọi } x",
+     "why": {
+      "options": [
+       "Thay $a = b$",
+       "Vì $D$ luôn bằng 1",
+       "Vì $p_d = 0$",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Không phân biệt được: đúng là \\\"chuyên gia và diễn viên đạt điểm như nhau\\\" của IRL."
+     }
+    }
+   ],
+   "hints": [
+    "Tích phân lớn nhất khi tích phân hàm lớn nhất tại từng $x$.",
+    "Tìm cực trị của $a\\log y + b\\log(1 - y)$."
+   ],
+   "note": "Trong IRL, hàm phần thưởng đóng vai $D$, diễn viên đóng vai bộ sinh. Tab Thí nghiệm 4 chạy một GAN một chiều và vẽ $D(x)$ tiến về $\\tfrac12$."
+  }
+ ]
+}
