@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Học tăng cường phân cấp · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  :root { --pink: #d14d8b; --c3: #1f9d6b; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --pink: #ec6aa6; --c3: #3cc28d; } }
+  :root[data-theme="dark"] { --pink: #ec6aa6; --c3: #3cc28d; }
+  .maze { max-width: 440px; margin: 0 auto; }
+  .maze svg { display: block; width: 100%; height: auto; }
+  .maze text { font-family: inherit; }
+  .tog { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; font-size: .92rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Học tăng cường phân cấp</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter10/chapter10_vi?id=_104-học-tăng-cường-phân-cấp">Mục 10.4</a></div>
+    </div>
+    <p class="lead">Hình 10.9–10.11. Mê cung bốn phòng 11×11, chỉ tới đích $G$ mới được $+1$ (phần thưởng thưa). Hai tác tử: <b>tầng trên</b> ở ô hiện tại chọn một <b>điểm hồng</b> (tầm nhìn, mục tiêu con) cách không quá 4 ô; <b>tầng dưới</b> (chấm xanh) nhận điểm hồng làm đầu vào và đi tối đa 8 bước để tới đó. Tầng dưới được thưởng khi tới điểm hồng; tầng trên nhận phần thưởng thật và <b>bị phạt</b> $-0{,}05$ nếu đặt điểm hồng mà tầng dưới không tới được. Cả hai đều là Q-learning dạng bảng.</p>
+  </div>
+  <div class="only-embed open-full"><a href="hrl.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <label class="tog"><input type="checkbox" id="her" checked> Đổi tầm nhìn khi không tới được (hình 10.10)</label>
+      <span class="lb">Nền ô</span>
+      <div class="seg" id="bg"><button type="button" data-v="none" aria-pressed="false">Trống</button><button type="button" data-v="vh" aria-pressed="true">Giá trị tầng trên</button></div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="seg">Hết tầm nhìn này</button>
+      <button type="button" class="btn" id="ep">Hết tập</button>
+      <button type="button" class="btn" id="fast">+20 tập</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <p class="note" style="margin:4px 0">$\gamma = 0{,}95$ (tầng trên), $0{,}9$ (tầng dưới); $\alpha = 0{,}3$ (tầng trên), $0{,}5$ (tầng dưới); $\varepsilon = 0{,}2$ khi chọn điểm hồng, $0{,}1$ khi chọn bước đi. Tối đa 150 bước mỗi tập; ngắn nhất <span id="opt"></span> bước. Đổi lựa chọn “đổi tầm nhìn” sẽ đặt lại.</p>
+    <div class="stats"><span>Tập <b id="epn">1</b></span><span>Bước <b id="tn">0</b></span><span>Tầm nhìn thứ <b id="gn">0</b></span><span>Tới đích (20 tập gần nhất) <b id="sr">–</b></span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="maze" id="maze"></div>
+        <div class="legend" style="justify-content:center"><span class="li"><span class="sw dot" style="background:var(--s1)"></span>tầng dưới</span><span class="li"><span class="sw dot" style="background:var(--pink)"></span>tầm nhìn hiện tại</span><span class="li"><span class="sw dot" style="background:var(--pink);opacity:.35"></span>tầm nhìn trước trong tập</span><span class="li"><span class="sw box" style="background:var(--c3);opacity:.5"></span>$\max_g Q_{\text{trên}}(s, g)$</span></div>
+        <div class="calc" id="calc"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Tới đích mỗi tập</h2>
+    <div id="chart"></div>
+    <p class="note">Tỉ lệ tới đích, làm trơn 10 tập.</p>
+  </div>
+
+  <div class="blk">
+    <h2>So sánh với Q-learning phẳng</h2>
+    <p class="note" style="margin:0 0 6px">8 lần chạy × 300 tập, cùng mê cung và cùng giới hạn 150 bước. “Phẳng” là một tác tử Q-learning chọn thẳng bước đi ($\alpha = 0{,}5$, $\gamma = 0{,}95$, $\varepsilon = 0{,}1$).</p>
+    <div class="ctrl"><button type="button" class="btn" id="cmp">Chạy so sánh</button></div>
+    <div class="legend"><span class="li"><span class="sw" style="background:var(--muted)"></span>Q-learning phẳng</span><span class="li"><span class="sw" style="background:var(--s2)"></span>Phân cấp, không đổi tầm nhìn</span><span class="li"><span class="sw" style="background:var(--s1)"></span>Phân cấp, có đổi tầm nhìn</span></div>
+    <div id="cmp-chart"></div>
+    <div class="insight" id="cmp-ins">Bấm “Chạy so sánh”.</div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz;
+  // ---------- mê cung bốn phòng ----------
+  var N = 11, M = 5, WALL = {}, r, c;
+  for (r = 0; r < N; r++) WALL[r * N + M] = 1;
+  for (c = 0; c < M; c++) WALL[M * N + c] = 1;
+  for (c = M + 1; c < N; c++) WALL[(M + 1) * N + c] = 1;
+  [2 * N + M, 8 * N + M, M * N + 2, (M + 1) * N + 8].forEach(function (d) { delete WALL[d]; });
+  var S = (N - 1) * N, G = N - 1, NS = N * N, CAP = 150, H = 8, RAD = 4, GH = 0.95, GL = 0.9;
+  var DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1], AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'];
+  function mv(s, a) { var rr = Math.floor(s / N) + DR[a], cc = s % N + DC[a]; if (rr < 0 || cc < 0 || rr >= N || cc >= N) return s; var n = rr * N + cc; return WALL[n] ? s : n; }
+  function md(a, b) { return Math.abs(Math.floor(a / N) - Math.floor(b / N)) + Math.abs(a % N - b % N); }
+  function rc(s) { return '(' + Math.floor(s / N) + ',' + s % N + ')'; }
+  var CELLS = []; for (var s0 = 0; s0 < NS; s0++) if (!WALL[s0]) CELLS.push(s0);
+  var NEAR = []; for (var s1 = 0; s1 < NS; s1++) NEAR.push(WALL[s1] ? [] : CELLS.filter(function (x) { return x !== s1 && md(x, s1) <= RAD; }));
+  var OPT = (function () { var d = new Array(NS).fill(1e9), q = [S]; d[S] = 0; while (q.length) { var u = q.shift(); for (var a = 0; a < 4; a++) { var v = mv(u, a); if (d[v] > d[u] + 1) { d[v] = d[u] + 1; q.push(v); } } } return d[G]; })();
+  V_.$('#opt').textContent = OPT;
+  function am(q, rand) { var m = -1e9, b = []; for (var k = 0; k < q.length; k++) { if (q[k] > m + 1e-12) { m = q[k]; b = [k]; } else if (Math.abs(q[k] - m) <= 1e-12) b.push(k); } return b[Math.floor(rand() * b.length)]; }
+
+  // ---------- tác tử phân cấp (dùng chung cho chạy trực tiếp và so sánh) ----------
+  function Agent(her, rand) {
+    var QL = {}, QH = []; for (var s = 0; s < NS; s++) QH.push(new Float64Array(NS));
+    var ag = { her: her, rand: rand, QH: QH };
+    ag.ql = function (s, g) { var k = s * NS + g; if (!QL[k]) QL[k] = [0, 0, 0, 0]; return QL[k]; };
+    ag.updL = function (s, a, s2, g) { var d = s2 === g, q = ag.ql(s, g), old = q[a], tgt = (d ? 1 : 0) + (d ? 0 : GL * Math.max.apply(null, ag.ql(s2, g))); q[a] += 0.5 * (tgt - q[a]); return { old: old, tgt: tgt, nw: q[a] }; };
+    ag.maxH = function (s) { var m = -1e9; NEAR[s].forEach(function (x) { if (QH[s][x] > m) m = QH[s][x]; }); return m; };
+    ag.pick = function (s) {
+      var cand = NEAR[s];
+      if (rand() < 0.2) return { g: cand[Math.floor(rand() * cand.length)], rnd: true };
+      var best = -1e9, bb = []; cand.forEach(function (x) { var v = QH[s][x]; if (v > best + 1e-12) { best = v; bb = [x]; } else if (Math.abs(v - best) <= 1e-12) bb.push(x); });
+      return { g: bb[Math.floor(rand() * bb.length)], rnd: false, v: best };
+    };
+    ag.act = function (s, g) { return rand() < 0.1 ? Math.floor(rand() * 4) : am(ag.ql(s, g), rand); };
+    // kết thúc một tầm nhìn: cập nhật tầng trên (và đổi tầm nhìn nếu bật)
+    ag.endSeg = function (sg) {
+      var s = sg.s, hit = s === sg.g, pen = hit || sg.ok ? 0 : -0.05, boot = sg.ok ? 0 : Math.pow(GH, sg.k) * ag.maxH(s);
+      var old = QH[sg.s0][sg.g], tgt = sg.R + pen + boot; QH[sg.s0][sg.g] += 0.3 * (tgt - old);
+      var info = { hit: hit, pen: pen, boot: boot, old: old, tgt: tgt, nw: QH[sg.s0][sg.g], relab: null };
+      if (her && !hit && !sg.ok && s !== sg.s0) {
+        sg.traj.forEach(function (x) { ag.updL(x[0], x[1], x[2], s); });
+        if (md(s, sg.s0) <= RAD) { var o2 = QH[sg.s0][s], t2 = sg.R + boot; QH[sg.s0][s] += 0.3 * (t2 - o2); info.relab = { ach: s, old: o2, tgt: t2, nw: QH[sg.s0][s], n: sg.traj.length }; }
+      }
+      return info;
+    };
+    return ag;
+  }
+  function runEpisodeFast(ag) {
+    var s = S, t = 0, ok = 0;
+    while (t < CAP && !ok) {
+      var g = ag.pick(s).g, sg = { s0: s, g: g, R: 0, k: 0, traj: [], ok: 0 };
+      while (sg.k < H && t < CAP) {
+        var a = ag.act(s, g), s2 = mv(s, a); sg.traj.push([s, a, s2]); ag.updL(s, a, s2, g);
+        if (s2 === G) sg.R += Math.pow(GH, sg.k);
+        sg.k++; t++; s = s2; sg.s = s;
+        if (s2 === G) { ok = 1; sg.ok = 1; break; }
+        if (s2 === g) break;
+      }
+      sg.s = s; ag.endSeg(sg);
+    }
+    return ok;
+  }
+  function flatRun(E, rand) {
+    var Q = []; for (var s = 0; s < NS; s++) Q.push([0, 0, 0, 0]);
+    var out = [];
+    for (var e = 0; e < E; e++) {
+      var st = S, ok = 0;
+      for (var t = 0; t < CAP; t++) { var a = rand() < 0.1 ? Math.floor(rand() * 4) : am(Q[st], rand), s2 = mv(st, a), d = s2 === G; Q[st][a] += 0.5 * ((d ? 1 : 0) + (d ? 0 : 0.95 * Math.max.apply(null, Q[s2])) - Q[st][a]); st = s2; if (d) { ok = 1; break; } }
+      out.push(ok);
+    }
+    return out;
+  }
+
+  // ---------- trạng thái chạy trực tiếp ----------
+  var st, player;
+  function her() { return V_.$('#her').checked; }
+  function reset() {
+    player && player.stop();
+    st = { ag: Agent(her(), Math.random), ep: 1, t: 0, s: S, sg: null, gcount: 0, past: [], path: [S], hist: [], last: null, phase: 'high' };
+    buildPseudo(); render();
+  }
+  function micro() {
+    var ag = st.ag;
+    if (st.phase === 'high') {
+      var p = ag.pick(st.s);
+      st.sg = { s0: st.s, g: p.g, R: 0, k: 0, traj: [], ok: 0 }; st.gcount++;
+      st.last = { kind: 'high', p: p, s: st.s, nCand: NEAR[st.s].length };
+      st.phase = 'low'; return;
+    }
+    var sg = st.sg;
+    if (st.phase === 'low') {
+      var s = st.s, a = ag.act(s, sg.g), s2 = mv(s, a);
+      sg.traj.push([s, a, s2]); var u = ag.updL(s, a, s2, sg.g);
+      if (s2 === G) sg.R += Math.pow(GH, sg.k);
+      sg.k++; st.t++; st.s = s2; sg.s = s2; st.path.push(s2);
+      var stop = s2 === G ? 'goal' : s2 === sg.g ? 'hit' : sg.k >= H ? 'time' : st.t >= CAP ? 'cap' : null;
+      if (s2 === G) sg.ok = 1;
+      st.last = { kind: 'low', s: s, a: a, s2: s2, u: u, g: sg.g, stop: stop };
+      if (stop) st.phase = 'end';
+      return;
+    }
+    if (st.phase === 'end') {
+      var info = ag.endSeg(sg);
+      st.last = { kind: 'end', sg: sg, info: info };
+      st.past.push(sg.g);
+      if (sg.ok || st.t >= CAP) {
+        st.hist.push(sg.ok ? 1 : 0); st.last.epEnd = sg.ok ? 'goal' : 'cap';
+        st.ep++; st.t = 0; st.s = S; st.past = []; st.path = [S]; st.gcount = 0;
+      }
+      st.sg = null; st.phase = 'high';
+    }
+  }
+
+  // ---------- mã giả ----------
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; }, pseudo;
+  function buildPseudo() {
+    var lines = [
+      ['ep', 0, KW('mỗi tập') + ': $s \\leftarrow S$; ' + KW('lặp') + ' tới khi tới $G$ hoặc hết 150 bước:'],
+      ['high', 1, '<b>tầng trên</b>: chọn tầm nhìn $g$ trong các ô cách $s$ không quá 4 ($\\varepsilon$-tham lam theo $Q_{\\text{trên}}(s, g)$); $s_0 \\leftarrow s$'],
+      ['low', 1, KW('lặp') + ' tối đa 8 bước: <b>tầng dưới</b> $a \\sim \\varepsilon$-tham lam $Q_{\\text{dưới}}(s, g, \\cdot)$; $s\' \\leftarrow$ bước đi'],
+      ['lowup', 2, '$Q_{\\text{dưới}}(s, g, a) \\mathrel{+}= \\alpha\\big(\\mathbb 1[s\' = g] + \\gamma_d\\max_{a\'}Q_{\\text{dưới}}(s\', g, a\') - Q_{\\text{dưới}}(s, g, a)\\big)$'],
+      ['stop', 2, KW('dừng') + ' nếu $s\' = g$ (tới tầm nhìn) hoặc $s\' = G$'],
+      ['highup', 1, '$Q_{\\text{trên}}(s_0, g) \\mathrel{+}= \\alpha_t\\big(R + \\text{phạt} + \\gamma^k\\max_{g\'}Q_{\\text{trên}}(s, g\') - Q_{\\text{trên}}(s_0, g)\\big)$ <span class="cm">(phạt $-0{,}05$ nếu không tới $g$)</span>']
+    ];
+    if (her()) lines.push(['relab', 1, '<b>đổi tầm nhìn</b>: nếu không tới $g$, coi ô đã tới $s_k$ là tầm nhìn: cập nhật lại $Q_{\\text{dưới}}(\\cdot, s_k, \\cdot)$ trên cả đoạn và $Q_{\\text{trên}}(s_0, s_k)$ (không phạt)']);
+    var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
+    box.innerHTML = '';
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: 'HRL hai tầng (hình 10.9–10.11)', lines: lines, open: open });
+  }
+  function hl() {
+    var L = st.last; if (!L) return 'ep';
+    if (L.kind === 'high') return ['high'];
+    if (L.kind === 'low') return L.stop ? ['low', 'lowup', 'stop'] : ['low', 'lowup'];
+    return L.info.relab ? ['highup', 'relab'] : ['highup'];
+  }
+
+  // ---------- vẽ ----------
+  function drawMaze() {
+    var box = V_.$('#maze'), cs = 40, W = N * cs, sv = '<svg viewBox="0 0 ' + W + ' ' + W + '" role="img" aria-label="Mê cung bốn phòng">';
+    var bgm = V_.$('#bg [aria-pressed=true]').dataset.v, vh = null, mx = 1e-9;
+    if (bgm === 'vh') { vh = []; for (var s = 0; s < NS; s++) { var v = WALL[s] || s === G ? 0 : Math.max(0, st.ag.maxH(s)); vh.push(v); if (v > mx) mx = v; } }
+    for (var i = 0; i < NS; i++) {
+      var x = (i % N) * cs, y = Math.floor(i / N) * cs;
+      if (WALL[i]) { sv += '<rect x="' + x + '" y="' + y + '" width="' + cs + '" height="' + cs + '" fill="var(--text)" fill-opacity=".72"/>'; continue; }
+      sv += '<rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + (cs - 2) + '" height="' + (cs - 2) + '" rx="4" fill="var(--surface-2)"/>';
+      if (vh && vh[i] > 0) sv += '<rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + (cs - 2) + '" height="' + (cs - 2) + '" rx="4" fill="var(--c3)" fill-opacity="' + (0.08 + 0.6 * vh[i] / mx).toFixed(3) + '"/>';
+    }
+    if (st.sg) NEAR[st.sg.s0].forEach(function (x2) { var xx = (x2 % N) * cs, yy = Math.floor(x2 / N) * cs; sv += '<rect x="' + (xx + 3) + '" y="' + (yy + 3) + '" width="' + (cs - 6) + '" height="' + (cs - 6) + '" rx="4" fill="none" stroke="var(--pink)" stroke-opacity=".25" stroke-dasharray="3 3"/>'; });
+    var cx = function (s) { return (s % N) * cs + cs / 2; }, cy = function (s) { return Math.floor(s / N) * cs + cs / 2; };
+    sv += '<text x="' + cx(S) + '" y="' + (cy(S) + 5) + '" text-anchor="middle" style="fill:var(--muted);font-weight:700;font-size:15px">S</text>';
+    sv += '<rect x="' + ((G % N) * cs + 4) + '" y="' + (Math.floor(G / N) * cs + 4) + '" width="' + (cs - 8) + '" height="' + (cs - 8) + '" rx="6" fill="#e6b422"/><text x="' + cx(G) + '" y="' + (cy(G) + 5) + '" text-anchor="middle" style="fill:#3a2a00;font-weight:700;font-size:15px">G</text>';
+    if (st.path.length > 1) sv += '<path d="' + st.path.map(function (p, k) { return (k ? 'L' : 'M') + cx(p) + ' ' + cy(p); }).join('') + '" fill="none" stroke="var(--s1)" stroke-opacity=".35" stroke-width="3" stroke-linejoin="round"/>';
+    st.past.forEach(function (g) { sv += '<circle cx="' + cx(g) + '" cy="' + cy(g) + '" r="7" fill="var(--pink)" fill-opacity=".35"/>'; });
+    if (st.sg) sv += '<circle cx="' + cx(st.sg.g) + '" cy="' + cy(st.sg.g) + '" r="10" fill="var(--pink)" stroke="var(--surface)" stroke-width="2"/>';
+    sv += '<circle cx="' + cx(st.s) + '" cy="' + cy(st.s) + '" r="9" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>';
+    box.innerHTML = sv + '</svg>';
+  }
+  function num(x, d) { return V_.tz(x, d == null ? 3 : d); }
+  function numP(x, d) { return V_.tz(x, d == null ? 3 : d, true); }
+  function showCalc() {
+    var el = V_.$('#calc'), L = st.last;
+    if (!L) { el.innerHTML = '<span class="hint">Bấm “Bước tiếp”: lần đầu tầng trên chọn tầm nhìn, các lần sau tầng dưới đi từng bước, cuối đoạn cập nhật tầng trên.</span>'; return; }
+    if (L.kind === 'high') {
+      el.innerHTML = '<p class="hint" style="margin:0">Tầng trên ở $' + rc(L.s) + '$ có ' + L.nCand + ' ô có thể chọn (khung hồng đứt nét). ' + (L.p.rnd ? 'Lần này chọn <b>ngẫu nhiên</b> (khám phá): ' : 'Chọn ô có $Q_{\\text{trên}}$ lớn nhất ($' + num(L.p.v) + '$): ') + 'tầm nhìn $g = ' + rc(L.p.g) + '$.</p>';
+      V_.texAll(el); return;
+    }
+    if (L.kind === 'low') {
+      V_.tex(el, 'Q_{\\text{dưới}}(s, g, ' + AN[L.a] + ') \\leftarrow ' + num(L.u.old) + ' + 0.5\\big(' + num(L.u.tgt) + ' - ' + numP(L.u.old) + '\\big) = ' + num(L.u.nw), true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">Mục tiêu ' + (L.s2 === L.g ? '$= 1$ vì tới đúng tầm nhìn.' : '$= 0 + 0.9\\max_{a\'}Q_{\\text{dưới}}(s\', g, a\') = ' + num(L.u.tgt) + '$.') + ' Tầng dưới ở $' + rc(L.s) + '$, tầm nhìn $' + rc(L.g) + '$, đi $' + AN[L.a] + '$ tới $' + rc(L.s2) + '$.' + (L.stop === 'hit' ? ' <b>Tới tầm nhìn.</b>' : L.stop === 'goal' ? ' <b>Tới đích $G$!</b>' : L.stop === 'time' ? ' Hết 8 bước mà chưa tới.' : L.stop === 'cap' ? ' Hết 150 bước của tập.' : '') + '</p>');
+      V_.texAll(el.lastChild); return;
+    }
+    var sg = L.sg, I = L.info, rows = '&Q_{\\text{trên}}(s_0, g) \\leftarrow ' + num(I.old) + ' + 0.3\\big(\\underbrace{' + num(sg.R) + '}_{R}' + (I.pen ? ' \\underbrace{- 0.05}_{\\text{phạt}}' : '') + ' + \\underbrace{' + num(I.boot) + '}_{\\gamma^{' + sg.k + '}\\max Q_{\\text{trên}}} - ' + numP(I.old) + '\\big) = ' + num(I.nw);
+    if (I.relab) rows += '\\\\&\\text{đổi tầm nhìn } g \\to ' + rc(I.relab.ach) + ':\\ Q_{\\text{trên}}(s_0, s_k) \\leftarrow ' + num(I.relab.old) + ' + 0.3\\big(' + num(I.relab.tgt) + ' - ' + numP(I.relab.old) + '\\big) = ' + num(I.relab.nw) + ',\\ \\text{cập nhật lại } ' + I.relab.n + '\\text{ bước của tầng dưới}';
+    V_.tex(el, '\\begin{aligned}' + rows + '\\end{aligned}', true);
+    el.insertAdjacentHTML('beforeend', '<p class="hint">' + (sg.ok ? 'Tầng dưới tới đích: cả hai tầng nhận phần thưởng.' : I.hit ? 'Tầng dưới tới tầm nhìn sau ' + sg.k + ' bước: tầng trên không bị phạt.' : 'Tầng dưới không tới được tầm nhìn: tầng trên <b>bị phạt</b>' + (I.relab ? ', nhưng nhờ đổi tầm nhìn, ' + sg.k + ' bước vừa đi <b>không bị lãng phí</b>: chúng trở thành ví dụ đúng của “đi tới $' + rc(I.relab.ach) + '$”.' : '.')) + (L.epEnd ? ' Tập kết thúc.' : '') + '</p>');
+    V_.texAll(el.lastChild);
+  }
+  function insight() {
+    var el = V_.$('#insight'), n = st.hist.length, h;
+    if (!n) h = 'Lúc đầu cả hai tầng đều chưa biết gì: tầng trên chọn tầm nhìn gần như ngẫu nhiên, tầng dưới đi lòng vòng. Nhưng tầm nhìn chỉ cách tối đa 4 ô nên tầng dưới thường xuyên chạm được “phần thưởng” của nó, khác hẳn phần thưởng thật ở tận góc kia của mê cung.';
+    else {
+      var l = st.hist.slice(-20), sr = l.reduce(function (a, b) { return a + b; }, 0) / l.length;
+      var tot = st.hist.reduce(function (a, b) { return a + b; }, 0);
+      if (!tot) h = 'Đã chạy ' + n + ' tập nhưng chưa tập nào tới đích, nên tầng trên chưa nhận được phần thưởng thật nào (nền chưa có màu xanh). Tầng dưới thì vẫn đang học cách đi tới các ô gần' + (her() ? ' rất nhanh nhờ đổi tầm nhìn' : '') + '. Bấm “+20 tập” thêm vài lần.';
+      else h = 'Đã chạy ' + n + ' tập; tới đích ' + V_.fmt(100 * sr, 0) + '% trong ' + l.length + ' tập gần nhất. Nền xanh là $\\max_g Q_{\\text{trên}}(s, g)$: giá trị lan dần từ $G$ qua các cửa giữa các phòng, nên tầng trên học được đặt điểm hồng nối tiếp nhau về phía đích, giống hình 10.11.' +
+        (her() ? '' : ' Đang tắt đổi tầm nhìn: tầng dưới chỉ học từ những lần tình cờ tới đúng điểm hồng nên học chậm. Bật lại để so sánh.');
+    }
+    el.innerHTML = h; V_.texAll(el);
+  }
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'Tới đích', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 2, yMin: 0, yMax: 1, aria: 'Tỉ lệ tới đích theo tập' });
+  function smooth(a, w) { return a.map(function (_, i) { var s = 0, n = 0; for (var j = Math.max(0, i - w + 1); j <= i; j++) { s += a[j]; n++; } return s / n; }); }
+  function render() {
+    pseudo.hl(hl()); drawMaze(); showCalc(); insight();
+    V_.$('#epn').textContent = st.ep; V_.$('#tn').textContent = st.t; V_.$('#gn').textContent = st.gcount;
+    var l = st.hist.slice(-20); V_.$('#sr').textContent = l.length ? V_.fmt(100 * l.reduce(function (a, b) { return a + b; }, 0) / l.length, 0) + '%' : '–';
+    chart.set([smooth(st.hist, 10)]);
+    V_.postHeight();
+  }
+
+  // ---------- điều khiển ----------
+  var PER = [1, 1, 4, 20, 120];
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: function () { var n = PER[+V_.$('#speed').value - 1]; for (var i = 0; i < n; i++) micro(); render(); return true; } });
+  V_.$('#step').addEventListener('click', function () { player.stop(); micro(); render(); });
+  V_.$('#seg').addEventListener('click', function () { player.stop(); var g = 0; do micro(); while (st.phase !== 'high' && g++ < 50); render(); });
+  V_.$('#ep').addEventListener('click', function () { player.stop(); var e = st.ep, g = 0; while (st.ep === e && g++ < 1000) micro(); render(); });
+  V_.$('#fast').addEventListener('click', function () { player.stop(); var e = st.ep + 20, g = 0; while (st.ep < e && g++ < 20 * 1000) micro(); render(); });
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#her').addEventListener('change', reset);
+  V_.$('#bg').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; V_.$$('#bg button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); drawMaze(); });
+
+  var cmpChart = V_.LineChart(V_.$('#cmp-chart'), { series: [{ name: 'Phẳng', color: '--muted' }, { name: 'Phân cấp', color: '--s2' }, { name: 'Phân cấp + đổi tầm nhìn', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 2, yMin: 0, yMax: 1, aria: 'So sánh Q-learning phẳng và phân cấp' });
+  V_.$('#cmp').addEventListener('click', function () {
+    var btn = V_.$('#cmp'); btn.disabled = true; btn.textContent = 'Đang chạy…';
+    setTimeout(function () {
+      var E = 300, RU = 8, A = [new Array(E).fill(0), new Array(E).fill(0), new Array(E).fill(0)];
+      for (var i = 0; i < RU; i++) {
+        flatRun(E, V_.seeded(i + 1)).forEach(function (v, k) { A[0][k] += v / RU; });
+        [false, true].forEach(function (h2, j) { var ag = Agent(h2, V_.seeded(i + 1)); for (var e = 0; e < E; e++) A[j + 1][e] += runEpisodeFast(ag) / RU; });
+      }
+      cmpChart.set(A.map(function (a) { return smooth(a, 10); }));
+      var m = function (a, k0, k1) { var s = 0; for (var k = k0; k < k1; k++) s += a[k]; return s / (k1 - k0); };
+      var f = function (j) { return V_.fmt(100 * m(A[j], 100, 150), 0) + '% / ' + V_.fmt(100 * m(A[j], 250, 300), 0) + '%'; };
+      V_.$('#cmp-ins').innerHTML = 'Tỉ lệ tới đích ở tập 101–150 / 251–300: phẳng ' + f(0) + ', phân cấp không đổi tầm nhìn ' + f(1) + ', phân cấp có đổi tầm nhìn <b>' + f(2) + '</b>. ' +
+        'Chỉ chia hai tầng thôi thì <b>chưa đủ</b>, thậm chí kém hơn tác tử phẳng: tầng dưới chỉ học được khi tình cờ tới đúng điểm hồng, còn tầng trên bị phạt liên tục vì tầng dưới chưa biết đi. Đổi tầm nhìn (hình 10.10) biến mọi đoạn đi thành ví dụ học được cho tầng dưới, nên tầng dưới học rất nhanh cách tới bất kỳ ô gần nào; khi đó tầng trên chỉ cần học chuỗi tầm nhìn qua các cửa, và vượt hẳn tác tử phẳng.';
+      btn.disabled = false; btn.textContent = 'Chạy lại so sánh';
+      V_.postHeight();
+    }, 30);
+  });
+
+  V_.onTheme(render);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

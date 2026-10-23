@@ -66,6 +66,15 @@ Ta có thể học một mạng khác, tức mạng 2. Mạng 2 nhận vectơ $\
 </div>
 <div align=center>Hình 10.5 Mô-đun tò mò</div>
 
+<details class="viz-box">
+<summary>🎬 Mô phỏng mô-đun tò mò nội tại (ICM) <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: mạng nơ-ron thật học trực tuyến; so sánh dự đoán quan sát thô (hình 10.4) với dự đoán đặc trưng $\boldsymbol\phi$ có mô hình ngược (hình 10.5) khi trong phòng có “lá cây bay”. [Mở trang riêng](viz/icm.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/icm.html?embed" style="height:1985px" title="Mô phỏng mô-đun tò mò nội tại (ICM)" loading="lazy"></iframe>
+
+</details>
+
 ## 10.3 Học theo giáo trình
 
 Hướng thứ hai là **học theo giáo trình (curriculum learning)**. Học theo giáo trình không phải khái niệm riêng của học tăng cường, trong học máy đặc biệt là học sâu, ta đều dùng đến khái niệm học theo giáo trình. Cụ thể, học theo giáo trình là ta lập kế hoạch cho việc học của tác tử, dữ liệu huấn luyện "đút" cho nó có thứ tự, thường là từ dễ đến khó. Ví dụ, giả sử ta muốn dạy một bạn nhỏ học vi tích phân, làm sai bài thì phạt, như vậy rất khó học được. Ta nên dạy phép nhân trước, rồi mới dạy vi tích phân. Vì vậy học theo giáo trình là khi huấn luyện tác tử, dữ liệu huấn luyện đi từ dễ đến khó. Dù không phải học tăng cường, thông thường khi huấn luyện mạng sâu, đôi khi ta cũng làm như vậy. Ví dụ, khi huấn luyện mạng nơ-ron hồi quy (RNN), đã có rất nhiều tài liệu chứng minh, cho tác tử xem chuỗi ngắn trước, rồi từ từ cho nó xem chuỗi dài, thường nó có thể học tốt hơn. Trong học tăng cường, ta cần giúp tác tử lập kế hoạch giáo trình của nó, độ khó của giáo trình từ dễ đến khó.
@@ -134,6 +143,15 @@ Hình 10.11 là ví dụ trò chơi thực. Trò chơi thứ nhất là đi mê 
 <div align=center>Hình 10.11 Ví dụ đi mê cung và con lắc đơn</div>
 
 Cuối cùng, ta tổng kết học tăng cường phân cấp. Học tăng cường phân cấp là phân rã một bài toán học tăng cường phức tạp thành nhiều bài toán con nhỏ, đơn giản, mỗi bài toán con đều có thể được mô hình hóa riêng bằng quá trình quyết định Markov. Như vậy, ta có thể chia chính sách của tác tử thành chính sách cấp cao và chính sách cấp thấp, chính sách cấp cao dựa vào trạng thái hiện tại để quyết định cách thực hiện chính sách cấp thấp. Như vậy, tác tử có thể giải quyết một số nhiệm vụ rất phức tạp.
+
+<details class="viz-box">
+<summary>🎬 Mô phỏng học tăng cường phân cấp <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: tầng trên đặt điểm hồng (tầm nhìn), tầng dưới đi tới đó trong mê cung bốn phòng như hình 10.11; bật/tắt đổi tầm nhìn (hình 10.10) và so sánh với Q-learning phẳng. [Mở trang riêng](viz/hrl.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/hrl.html?embed" style="height:2224px" title="Mô phỏng học tăng cường phân cấp" loading="lazy"></iframe>
+
+</details>
 
 ## Tài liệu tham khảo
 

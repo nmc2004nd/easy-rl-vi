@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mô-đun tò mò nội tại · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  :root { --c3: #1f9d6b; --leaf: #6aa84f; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c3: #3cc28d; } }
+  :root[data-theme="dark"] { --c3: #3cc28d; }
+  .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+  .room { max-width: 360px; margin: 0 auto; }
+  .room svg, .vec svg { display: block; width: 100%; height: auto; }
+  .vec text { font-family: inherit; font-size: 11px; fill: var(--muted); }
+  .gcap { text-align: center; font-weight: 600; font-size: .9rem; margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Mô-đun tò mò nội tại (ICM)</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter10/chapter10_vi?id=_102-sự-tò-mò">Mục 10.2</a></div>
+    </div>
+    <p class="lead">Hình 10.4 và 10.5, với <b>mạng nơ-ron thật</b> học trực tuyến trong trình duyệt. Phòng 9×9 <b>không có phần thưởng thật</b>; tác tử chỉ có phần thưởng tò mò $r^i$. Quan sát $o$ là vectơ 24 số: 9 số cho hàng, 9 số cho cột (dạng một-nóng) và 6 kênh “lá cây bay”: bằng 0 ở mọi nơi, nhưng ở 4 ô 🍃 thì là số ngẫu nhiên mới mỗi bước. Tác tử chọn bước đi bằng Q-learning dạng bảng theo vị trí, học từ $r^i$ ($\gamma = 0{,}9$, $\varepsilon = 0{,}1$).</p>
+  </div>
+  <div class="only-embed open-full"><a href="icm.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <span class="lb">Mô-đun</span>
+      <div class="seg" id="mode"><button type="button" data-v="raw" aria-pressed="true">Dự đoán quan sát thô (hình 10.4)</button><button type="button" data-v="phi" aria-pressed="false">Dự đoán đặc trưng $\boldsymbol\phi$ (hình 10.5)</button></div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="fast">+1000 bước</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <p class="note" style="margin:4px 0" id="netnote"></p>
+    <div class="stats"><span>Bước <b id="tn">0</b></span><span>Số ô đã tới <b id="cov">1</b>/81</span><span>Thời gian ở 🍃 (500 bước gần nhất) <b id="tvf">–</b></span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="two-col">
+          <div><p class="gcap">Phòng: nền là $r^i$ trung bình gần đây</p><div class="room" id="room"></div></div>
+          <div><p class="gcap" id="vcap"></p><div class="vec" id="vec"></div></div>
+        </div>
+        <div class="calc" id="calc"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Phần thưởng tò mò và thời gian ở 🍃</h2>
+    <div class="legend"><span class="li"><span class="sw" style="background:var(--s2)"></span>$r^i$ trung bình ở 🍃</span><span class="li"><span class="sw" style="background:var(--s1)"></span>$r^i$ trung bình ở các ô khác</span></div>
+    <div id="chart"></div>
+    <div class="legend"><span class="li"><span class="sw" style="background:var(--c3)"></span>tỉ lệ thời gian ở 🍃 (4 ô trên 81, tức khoảng 5% nếu đi đều)</span></div>
+    <div id="chart2"></div>
+    <p class="note">Mỗi điểm là trung bình của 200 bước.</p>
+  </div>
+
+  <div class="blk">
+    <h2>So sánh nhiều lần chạy</h2>
+    <p class="note" style="margin:0 0 6px">4 lần chạy × 8000 bước cho mỗi mô-đun, cùng mạng và tham số như trên (mất vài giây).</p>
+    <div class="ctrl"><button type="button" class="btn" id="cmp">Chạy so sánh</button></div>
+    <div class="tscroll" id="cmp-tab"></div>
+    <div class="insight" id="cmp-ins">Bấm “Chạy so sánh”.</div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz;
+  // ---------- mạng nhỏ: lan truyền xuôi, ngược (trả gradient theo đầu vào), Adam ----------
+  function Net(sizes, r, acts) {
+    this.L = [];
+    for (var i = 0; i < sizes.length - 1; i++) {
+      var a = sizes[i], b = sizes[i + 1], sc = Math.sqrt(2 / a), W = new Float64Array(a * b);
+      for (var k = 0; k < W.length; k++) W[k] = (r() * 2 - 1) * sc * 0.87;
+      this.L.push({ a: a, b: b, W: W, bb: new Float64Array(b), gW: new Float64Array(a * b), gb: new Float64Array(b), mW: new Float64Array(a * b), vW: new Float64Array(a * b), mb: new Float64Array(b), vb: new Float64Array(b), act: acts[i] });
+    }
+    this.t = 0;
+  }
+  Net.prototype.fwd = function (x) {
+    var cache = [x];
+    for (var l = 0; l < this.L.length; l++) {
+      var Ly = this.L[l], y = new Float64Array(Ly.b);
+      for (var j = 0; j < Ly.b; j++) { var s = Ly.bb[j]; for (var i = 0; i < Ly.a; i++) s += x[i] * Ly.W[i * Ly.b + j]; y[j] = Ly.act === 'relu' ? (s > 0 ? s : 0) : Ly.act === 'tanh' ? Math.tanh(s) : s; }
+      cache.push(y); x = y;
+    }
+    this.cache = cache; return x;
+  };
+  Net.prototype.bwd = function (d) {
+    var c = this.cache;
+    for (var l = this.L.length - 1; l >= 0; l--) {
+      var Ly = this.L[l], y = c[l + 1], x = c[l], dx = new Float64Array(Ly.a);
+      for (var j = 0; j < Ly.b; j++) {
+        var dj = Ly.act === 'relu' && y[j] <= 0 ? 0 : Ly.act === 'tanh' ? d[j] * (1 - y[j] * y[j]) : d[j];
+        if (!dj) continue;
+        Ly.gb[j] += dj;
+        for (var i = 0; i < Ly.a; i++) { Ly.gW[i * Ly.b + j] += x[i] * dj; dx[i] += Ly.W[i * Ly.b + j] * dj; }
+      }
+      d = dx;
+    }
+    return d;
+  };
+  Net.prototype.step = function (lr, wd) {
+    this.t++;
+    var b1 = 0.9, b2 = 0.999, c1 = 1 - Math.pow(b1, this.t), c2 = 1 - Math.pow(b2, this.t);
+    this.L.forEach(function (Ly) {
+      [[Ly.W, Ly.gW, Ly.mW, Ly.vW, wd], [Ly.bb, Ly.gb, Ly.mb, Ly.vb, 0]].forEach(function (q) {
+        var p = q[0], g = q[1], m = q[2], v = q[3], w = q[4];
+        for (var k = 0; k < p.length; k++) { var gg = g[k] + w * p[k]; m[k] = b1 * m[k] + (1 - b1) * gg; v[k] = b2 * v[k] + (1 - b2) * gg * gg; p[k] -= lr * (m[k] / c1) / (Math.sqrt(v[k] / c2) + 1e-8); g[k] = 0; }
+      });
+    });
+  };
+
+  // ---------- phòng ----------
+  var N = 9, D = 6, OD = 2 * N + D, F = 8, TV = {}, START = 4 * N + 4, LR = 3e-3;
+  for (var r0 = 1; r0 < 3; r0++) for (var c0 = 1; c0 < 3; c0++) TV[r0 * N + c0] = 1;
+  var DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1], AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'];
+  function mv(s, a) { var r = Math.floor(s / N) + DR[a], c = s % N + DC[a]; if (r < 0 || c < 0 || r >= N || c >= N) return s; return r * N + c; }
+  function obs(s, rnd) { var o = new Float64Array(OD); o[Math.floor(s / N)] = 1; o[N + s % N] = 1; if (TV[s]) for (var k = 0; k < D; k++) o[2 * N + k] = rnd(); return o; }
+  function oneHot(a) { var v = new Float64Array(4); v[a] = 1; return v; }
+  function cat(a, b) { var o = new Float64Array(a.length + b.length); o.set(a); o.set(b, a.length); return o; }
+  function rc(s) { return '(' + Math.floor(s / N) + ',' + s % N + ')'; }
+
+  // một thế giới: tác tử + mô-đun; step() trả thông tin để hiển thị
+  function World(mode, r) {
+    var w = { mode: mode, r: r, t: 0, s: START, Q: [], seen: {}, nSeen: 1, recent: [] };
+    for (var s = 0; s < N * N; s++) w.Q.push([0, 0, 0, 0]);
+    w.seen[START] = 1; w.o = obs(START, r);
+    if (mode === 'raw') w.f = new Net([OD + 4, 32, OD], r, ['relu', 'lin']);
+    else { w.enc = new Net([OD, 16, F], r, ['relu', 'tanh']); w.inv = new Net([2 * F, 16, 4], r, ['relu', 'lin']); w.f = new Net([F + 4, 16, F], r, ['relu', 'lin']); }
+    w.riS = new Float64Array(N * N); w.riN = new Float64Array(N * N);
+    w.step = function () {
+      var q = w.Q[w.s], a;
+      if (r() < 0.1) a = Math.floor(r() * 4); else { var m = Math.max.apply(null, q), b = []; for (var k = 0; k < 4; k++) if (q[k] === m) b.push(k); a = b[Math.floor(r() * b.length)]; }
+      var s = w.s, s2 = mv(s, a), o2 = obs(s2, r), info = { s: s, a: a, s2: s2, o: w.o, o2: o2 };
+      if (mode === 'raw') {
+        var p = w.f.fwd(cat(w.o, oneHot(a))), d = new Float64Array(OD), e = 0;
+        for (var k = 0; k < OD; k++) { d[k] = p[k] - o2[k]; e += d[k] * d[k]; }
+        info.pred = p; info.tgt = o2; info.ri = 0.5 * e; info.eNoise = 0; for (var k2 = 2 * N; k2 < OD; k2++) info.eNoise += 0.5 * d[k2] * d[k2];
+        w.f.bwd(d); w.f.step(LR, 0);
+      } else {
+        var f1 = w.enc.fwd(w.o), ca = w.enc.cache, f2 = w.enc.fwd(o2), cb = w.enc.cache;
+        var lg = w.inv.fwd(cat(f1, f2)), mx = Math.max.apply(null, lg), ex = Array.prototype.map.call(lg, function (x) { return Math.exp(x - mx); }), S = ex.reduce(function (x, y) { return x + y; }, 0), pr = ex.map(function (x) { return x / S; }), dl = new Float64Array(4);
+        for (var k3 = 0; k3 < 4; k3++) dl[k3] = pr[k3] - (k3 === a ? 1 : 0);
+        var dIn = w.inv.bwd(dl); w.inv.step(LR, 0);
+        w.enc.cache = cb; w.enc.bwd(dIn.slice(F)); w.enc.cache = ca; w.enc.bwd(dIn.slice(0, F)); w.enc.step(LR, 1e-2);
+        var p2 = w.f.fwd(cat(f1, oneHot(a))), dd = new Float64Array(F), e2 = 0;
+        for (var k4 = 0; k4 < F; k4++) { dd[k4] = p2[k4] - f2[k4]; e2 += dd[k4] * dd[k4]; }
+        info.pred = p2; info.tgt = f2; info.phi1 = f1; info.ri = 0.5 * e2; info.pinv = pr; info.lossInv = -Math.log(Math.max(pr[a], 1e-12));
+        w.f.bwd(dd); w.f.step(LR, 0);
+      }
+      var rr = Math.min(info.ri, 2), old = w.Q[s][a];
+      w.Q[s][a] += 0.5 * (rr + 0.9 * Math.max.apply(null, w.Q[s2]) - w.Q[s][a]);
+      info.qOld = old; info.qNew = w.Q[s][a];
+      w.riS[s2] = 0.98 * w.riS[s2] + 0.02 * info.ri; w.riN[s2] = 1;
+      if (!w.seen[s2]) { w.seen[s2] = 1; w.nSeen++; }
+      w.recent.push(TV[s2] ? 1 : 0); if (w.recent.length > 500) w.recent.shift();
+      w.s = s2; w.o = o2; w.t++;
+      return info;
+    };
+    return w;
+  }
+
+  var w, last = null, player, hist = { tv: [], ot: [], fr: [] }, acc = { tv: 0, tvn: 0, ot: 0, otn: 0, in: 0, n: 0 };
+  function mode() { return V_.$('#mode [aria-pressed=true]').dataset.v; }
+  function reset() {
+    player && player.stop(); w = World(mode(), Math.random); last = null; hist = { tv: [], ot: [], fr: [] }; acc = { tv: 0, tvn: 0, ot: 0, otn: 0, in: 0, n: 0 };
+    V_.$('#netnote').innerHTML = mode() === 'raw' ? 'Mạng 1: $[o_t;\\ a_t] \\to 32 \\to \\hat o_{t+1}$ (24 số), Adam $3\\cdot 10^{-3}$. $r^i_t = \\tfrac12\\|\\hat o_{t+1} - o_{t+1}\\|^2$.' :
+      'Bộ trích xuất $\\boldsymbol\\phi$: $o \\to 16 \\to 8$ (tanh). Mạng 2 (ngược): $[\\boldsymbol\\phi_t;\\ \\boldsymbol\\phi_{t+1}] \\to 16 \\to$ 4 hành động, mất mát entropy chéo, gradient chảy vào cả $\\boldsymbol\\phi$ (có suy giảm trọng số $10^{-2}$). Mạng 1 (thuận): $[\\boldsymbol\\phi_t;\\ a_t] \\to 16 \\to \\hat{\\boldsymbol\\phi}_{t+1}$, chỉ cập nhật mạng 1. $r^i_t = \\tfrac12\\|\\hat{\\boldsymbol\\phi}_{t+1} - \\boldsymbol\\phi_{t+1}\\|^2$.';
+    V_.texAll(V_.$('#netnote'));
+    buildPseudo(); render();
+  }
+  function one() {
+    last = w.step();
+    if (TV[last.s2]) { acc.tv += last.ri; acc.tvn++; acc.in++; } else { acc.ot += last.ri; acc.otn++; }
+    acc.n++;
+    if (acc.n === 200) { hist.tv.push(acc.tvn ? acc.tv / acc.tvn : null); hist.ot.push(acc.ot / Math.max(1, acc.otn)); hist.fr.push(acc.in / 200); acc = { tv: 0, tvn: 0, ot: 0, otn: 0, in: 0, n: 0 }; }
+  }
+
+  // ---------- mã giả ----------
+  var pseudo;
+  function buildPseudo() {
+    var lines = [['act', 0, 'chọn $a_t$ $\\varepsilon$-tham lam theo $Q(s_t, \\cdot)$; nhận $o_{t+1}$ <span class="cm">(không có phần thưởng thật)</span>']];
+    if (mode() === 'raw') lines = lines.concat([
+      ['pred', 0, '<b>mạng 1</b>: $\\hat o_{t+1} = f(o_t, a_t)$'],
+      ['ri', 0, '$r^i_t = \\tfrac12\\|\\hat o_{t+1} - o_{t+1}\\|^2$ <span class="cm">(càng khó dự đoán càng thưởng)</span>'],
+      ['fup', 0, 'cập nhật mạng 1 để giảm $r^i_t$']]);
+    else lines = lines.concat([
+      ['enc', 0, '$\\boldsymbol\\phi_t = \\boldsymbol\\phi(o_t)$, $\\boldsymbol\\phi_{t+1} = \\boldsymbol\\phi(o_{t+1})$'],
+      ['inv', 0, '<b>mạng 2</b>: $\\hat p(a \\mid \\boldsymbol\\phi_t, \\boldsymbol\\phi_{t+1})$; giảm $-\\log\\hat p(a_t)$, cập nhật mạng 2 <b>và</b> $\\boldsymbol\\phi$'],
+      ['pred', 0, '<b>mạng 1</b>: $\\hat{\\boldsymbol\\phi}_{t+1} = f(\\boldsymbol\\phi_t, a_t)$'],
+      ['ri', 0, '$r^i_t = \\tfrac12\\|\\hat{\\boldsymbol\\phi}_{t+1} - \\boldsymbol\\phi_{t+1}\\|^2$; cập nhật mạng 1']]);
+    lines.push(['q', 0, '$Q(s_t, a_t) \\mathrel{+}= 0.5\\big(r^i_t + 0.9\\max_{a\'}Q(s_{t+1}, a\') - Q(s_t, a_t)\\big)$']);
+    var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
+    box.innerHTML = '';
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: mode() === 'raw' ? 'Tò mò, bản nguyên thủy (hình 10.4)' : 'ICM đầy đủ (hình 10.5)', lines: lines, open: open });
+  }
+
+  // ---------- vẽ ----------
+  function drawRoom() {
+    var cs = 40, W = N * cs, s = '<svg viewBox="0 0 ' + W + ' ' + W + '" role="img" aria-label="Phòng 9×9 và phần thưởng tò mò">', mx = 1e-9;
+    for (var i = 0; i < N * N; i++) if (w.riN[i] && w.riS[i] > mx) mx = w.riS[i];
+    for (var j = 0; j < N * N; j++) {
+      var x = (j % N) * cs, y = Math.floor(j / N) * cs;
+      s += '<rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + (cs - 2) + '" height="' + (cs - 2) + '" rx="4" fill="var(--surface-2)"/>';
+      if (w.riN[j]) s += '<rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + (cs - 2) + '" height="' + (cs - 2) + '" rx="4" fill="var(--s2)" fill-opacity="' + (0.06 + 0.8 * Math.sqrt(w.riS[j] / mx)).toFixed(3) + '"/>';
+      if (TV[j]) s += '<text x="' + (x + cs / 2) + '" y="' + (y + cs / 2 + 6) + '" text-anchor="middle" style="font-size:17px">🍃</text>';
+      else if (!w.seen[j]) s += '<circle cx="' + (x + cs / 2) + '" cy="' + (y + cs / 2) + '" r="2.5" fill="var(--muted)" fill-opacity=".5"/>';
+    }
+    s += '<circle cx="' + ((w.s % N) * cs + cs / 2) + '" cy="' + (Math.floor(w.s / N) * cs + cs / 2) + '" r="10" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>';
+    V_.$('#room').innerHTML = s + '</svg>';
+  }
+  function drawVec() {
+    var box = V_.$('#vec'), L = last;
+    V_.$('#vcap').innerHTML = mode() === 'raw' ? 'Thật $o_{t+1}$ (trên) và dự đoán $\\hat o_{t+1}$ (dưới)' : 'Thật $\\boldsymbol\\phi_{t+1}$ (trên) và dự đoán $\\hat{\\boldsymbol\\phi}_{t+1}$ (dưới)';
+    V_.texAll(V_.$('#vcap'));
+    if (!L) { box.innerHTML = '<p class="hint">Bấm “Bước tiếp”.</p>'; return; }
+    var n = L.tgt.length, W = 360, cw = W / n, H = 150, mid = 70, sc = mode() === 'raw' ? 50 : 50;
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Vectơ thật và dự đoán">';
+    var bar = function (v, i, y0, col) { var hh = Math.max(-1, Math.min(1, v)) * sc; return '<rect x="' + (i * cw + 1).toFixed(1) + '" y="' + (hh >= 0 ? y0 - hh : y0).toFixed(1) + '" width="' + Math.max(1, cw - 2).toFixed(1) + '" height="' + Math.abs(hh).toFixed(1) + '" rx="1.5" fill="' + col + '"/>'; };
+    for (var i = 0; i < n; i++) {
+      var noise = mode() === 'raw' && i >= 2 * N;
+      s += bar(L.tgt[i], i, mid - 12, noise ? 'var(--leaf)' : 'var(--s1)') + bar(L.pred[i], i, mid + 62, noise ? 'var(--leaf)' : 'var(--s2)');
+    }
+    s += '<line x1="0" x2="' + W + '" y1="' + (mid - 12) + '" y2="' + (mid - 12) + '" stroke="var(--border)"/><line x1="0" x2="' + W + '" y1="' + (mid + 62) + '" y2="' + (mid + 62) + '" stroke="var(--border)"/>';
+    if (mode() === 'raw') s += '<text x="' + (N * cw / 2) + '" y="' + (H - 2) + '" text-anchor="middle">hàng</text><text x="' + (1.5 * N * cw) + '" y="' + (H - 2) + '" text-anchor="middle">cột</text><text x="' + ((2 * N + D / 2) * cw) + '" y="' + (H - 2) + '" text-anchor="middle">lá</text>';
+    else s += '<text x="' + (W / 2) + '" y="' + (H - 2) + '" text-anchor="middle">8 đặc trưng</text>';
+    box.innerHTML = s + '</svg>';
+  }
+  function num(x, d) { return V_.tz(x, d == null ? 3 : d); }
+  function showCalc() {
+    var el = V_.$('#calc'), L = last;
+    if (!L) { el.innerHTML = '<span class="hint">Mỗi bước: tác tử đi một bước, mô-đun tính $r^i$ rồi tự học, Q-learning cập nhật bằng $r^i$.</span>'; V_.texAll(el); return; }
+    var rows = ['&s_t = ' + rc(L.s) + ',\\ a_t = ' + AN[L.a] + ',\\ s_{t+1} = ' + rc(L.s2) + (TV[L.s2] ? '\\ (\\text{ô lá cây bay})' : '')];
+    if (mode() === 'raw') rows.push('&r^i_t = \\tfrac12\\|\\hat o_{t+1} - o_{t+1}\\|^2 = ' + num(L.ri) + '\\quad(\\text{trong đó 6 kênh lá: } ' + num(L.eNoise) + ')');
+    else {
+      rows.push('&\\hat p(\\cdot \\mid \\boldsymbol\\phi_t, \\boldsymbol\\phi_{t+1}) = [' + L.pinv.map(function (x) { return num(x, 2); }).join(',\\ ') + ']\\ (' + AN.join(',') + '),\\quad -\\log\\hat p(a_t) = ' + num(L.lossInv));
+      rows.push('&r^i_t = \\tfrac12\\|\\hat{\\boldsymbol\\phi}_{t+1} - \\boldsymbol\\phi_{t+1}\\|^2 = ' + num(L.ri));
+    }
+    rows.push('&Q(s_t, a_t): ' + num(L.qOld) + ' \\to ' + num(L.qNew));
+    V_.tex(el, '\\begin{aligned}' + rows.join('\\\\') + '\\end{aligned}', true);
+  }
+  function insight() {
+    var el = V_.$('#insight'), h, k = hist.tv.length;
+    var lastTv = null, lastOt = null; for (var i = k - 1; i >= 0 && i >= k - 5; i--) { if (hist.tv[i] != null && lastTv == null) lastTv = hist.tv[i]; }
+    if (k) lastOt = hist.ot[k - 1];
+    var fr = w.recent.length ? w.recent.reduce(function (a, b) { return a + b; }, 0) / w.recent.length : 0;
+    if (w.t < 400) h = 'Lúc đầu mạng 1 dự đoán sai ở mọi nơi nên $r^i$ lớn khắp nơi: tác tử đi đâu cũng thấy “thú vị”. Ô nào đi qua nhiều thì mạng học được, $r^i$ ở đó giảm (nền nhạt dần), tác tử bị đẩy sang chỗ mới.';
+    else if (!Object.keys(TV).some(function (c) { return w.seen[c]; })) h = 'Tác tử chưa tới ô 🍃 nào; nó đang bị kéo sang những ô chưa quen ở chỗ khác. Bấm “+1000 bước” tiếp để xem điều gì xảy ra khi nó tình cờ tới 🍃.';
+    else if (mode() === 'raw' && fr < 0.15) h = 'Tác tử đã tới 🍃 nhưng hiện chỉ ở đó ' + V_.fmt(100 * fr, 0) + '% thời gian. Ở ô 🍃, 6 kênh lá là số ngẫu nhiên mới mỗi bước nên mạng 1 không bao giờ dự đoán được và $r^i$ ở đó không giảm' + (lastTv != null ? ' (gần đây ' + num(lastTv, 2) + ', các ô khác ' + num(lastOt, 2) + ')' : '') + '; khi các ô khác trở nên nhàm chán, tác tử thường bị kéo về 🍃. Chạy tiếp để xem.';
+    else if (mode() === 'raw') h = 'Ở ô 🍃, 6 kênh lá là số ngẫu nhiên mới mỗi bước nên mạng 1 <b>không bao giờ</b> dự đoán được: $r^i$ ở đó không giảm' + (lastTv != null ? ' (gần đây ' + num(lastTv, 2) + ', còn các ô khác ' + num(lastOt, 2) + ')' : '') + '. Tác tử đang dành ' + V_.fmt(100 * fr, 0) + '% thời gian ở 4 ô 🍃: đúng cảnh “nhìn lá cây bay mãi” của mục 10.2. (Mức sàn lý thuyết: 6 kênh × phương sai $\\tfrac1{12}$ × $\\tfrac12$ = 0.25.)';
+    else h = 'Mạng 2 chỉ cần biết tác tử đã đi hướng nào; kênh lá không giúp gì nên $\\boldsymbol\\phi$ dần bỏ qua chúng (suy giảm trọng số kéo các trọng số vô dụng về 0). Khi đó ô 🍃 trong không gian $\\boldsymbol\\phi$ cũng dự đoán được như mọi ô khác' + (lastTv != null ? ' ($r^i$ gần đây ở 🍃: ' + num(lastTv, 2) + ', ô khác: ' + num(lastOt, 2) + ')' : '') + '. Tác tử dành ' + V_.fmt(100 * fr, 0) + '% thời gian ở 🍃.';
+    el.innerHTML = h; V_.texAll(el);
+  }
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'rⁱ ở 🍃', color: '--s2' }, { name: 'rⁱ ô khác', color: '--s1' }], xName: 'Đoạn 200 bước', xLabel: 'Đoạn 200 bước', dec: 2, yMin: 0, aria: 'Phần thưởng tò mò trung bình' });
+  var chart2 = V_.LineChart(V_.$('#chart2'), { series: [{ name: 'Thời gian ở 🍃', color: '--c3' }], xName: 'Đoạn 200 bước', xLabel: 'Đoạn 200 bước', dec: 2, yMin: 0, yMax: 1, aria: 'Tỉ lệ thời gian ở ô lá cây bay' });
+  function render() {
+    if (last) pseudo.hl(mode() === 'raw' ? ['act', 'pred', 'ri', 'fup', 'q'] : ['act', 'enc', 'inv', 'pred', 'ri', 'q']); else pseudo.hl('act');
+    drawRoom(); drawVec(); showCalc(); insight();
+    V_.$('#tn').textContent = w.t; V_.$('#cov').textContent = w.nSeen;
+    V_.$('#tvf').textContent = w.recent.length ? V_.fmt(100 * w.recent.reduce(function (a, b) { return a + b; }, 0) / w.recent.length, 0) + '%' : '–';
+    chart.set([hist.tv, hist.ot]); chart2.set([hist.fr]);
+    V_.postHeight();
+  }
+  var PER = [1, 1, 5, 25, 100];
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: function () { var n = PER[+V_.$('#speed').value - 1]; for (var i = 0; i < n; i++) one(); render(); return true; } });
+  V_.$('#step').addEventListener('click', function () { player.stop(); one(); render(); });
+  V_.$('#fast').addEventListener('click', function () { player.stop(); for (var i = 0; i < 1000; i++) one(); render(); });
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#mode').addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; V_.$$('#mode button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); reset(); });
+
+  V_.$('#cmp').addEventListener('click', function () {
+    var btn = V_.$('#cmp'); btn.disabled = true; btn.textContent = 'Đang chạy…';
+    var jobs = [], res = { raw: [], phi: [] };
+    [1, 2, 3, 4].forEach(function (sd) { ['raw', 'phi'].forEach(function (m) { jobs.push([m, sd]); }); });
+    (function next() {
+      if (!jobs.length) {
+        var avg = function (a, f) { return a.reduce(function (x, y) { return x + f(y); }, 0) / a.length; };
+        var rows = ['raw', 'phi'].map(function (m) { var a = res[m]; return [m === 'raw' ? 'Quan sát thô' : 'Đặc trưng $\\boldsymbol\\phi$', a.map(function (x) { return V_.fmt(100 * x.fr, 0) + '%'; }).join(' · ') + ' <b>(' + V_.fmt(100 * avg(a, function (x) { return x.fr; }), 0) + '%)</b>', a.map(function (x) { return x.cov; }).join(' · ') + ' <b>(' + V_.fmt(avg(a, function (x) { return x.cov; }), 0) + ')</b>', a.map(function (x) { return x.tvri == null ? '–' : V_.fmt(x.tvri, 2); }).join(' · ')]; });
+        V_.$('#cmp-tab').innerHTML = '<table class="res" style="width:100%;border-collapse:collapse;font-size:.88rem"><thead><tr><th style="text-align:left">Mô-đun</th><th>Thời gian ở 🍃, bước 4001–8000</th><th>Số ô đã tới (trên 81)</th><th>$r^i$ ở 🍃 cuối cùng</th></tr></thead><tbody>' + rows.map(function (r) { return '<tr>' + r.map(function (x, i) { return '<td style="padding:6px;border-bottom:1px solid var(--border);text-align:' + (i ? 'center' : 'left') + '">' + x + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+        V_.texAll(V_.$('#cmp-tab'));
+        var fr0 = avg(res.raw, function (x) { return x.fr; }), fr1 = avg(res.phi, function (x) { return x.fr; }), c0 = avg(res.raw, function (x) { return x.cov; }), c1 = avg(res.phi, function (x) { return x.cov; });
+        V_.$('#cmp-ins').innerHTML = 'Dự đoán quan sát thô: tác tử dành trung bình <b>' + V_.fmt(100 * fr0, 0) + '%</b> thời gian ở 4 ô 🍃 (chỉ khoảng 5% diện tích). Dự đoán đặc trưng $\\boldsymbol\\phi$: <b>' + V_.fmt(100 * fr1, 0) + '%</b>. ' +
+          (c1 > c0 + 3 ? 'Nhờ không bị “nghiện” lá cây bay, tác tử có $\\boldsymbol\\phi$ khám phá được nhiều ô hơn (' + V_.fmt(c1, 0) + ' so với ' + V_.fmt(c0, 0) + ').' : c1 < c0 - 3 ? 'Tuy vậy, ở đây tác tử có $\\boldsymbol\\phi$ lại khám phá được <b>ít</b> ô hơn (' + V_.fmt(c1, 0) + ' so với ' + V_.fmt(c0, 0) + '): $\\boldsymbol\\phi$ thay đổi liên tục trong lúc học nên $r^i$ nhiễu, và phần thưởng tò mò ở mọi ô giảm nhanh nên Q-learning ít bị kéo đi xa. Với mạng nhỏ như trang này, ICM đầy đủ chỉ cho thấy rõ vế “không nghiện lá cây bay”, chưa cho thấy khám phá tốt hơn.' : 'Số ô khám phá được của hai bên gần nhau (' + V_.fmt(c1, 0) + ' và ' + V_.fmt(c0, 0) + ').') +
+          ' Kết quả mỗi lần chạy khá khác nhau: mạng nhỏ, học trực tuyến và Q-learning trên phần thưởng thay đổi liên tục. Nhưng xu hướng đúng như hình 10.5 muốn sửa: không có $\\boldsymbol\\phi$ thì phần thưởng tò mò bị chiếm bởi thứ ngẫu nhiên không quan trọng.';
+        V_.texAll(V_.$('#cmp-ins'));
+        btn.disabled = false; btn.textContent = 'Chạy lại so sánh'; V_.postHeight(); return;
+      }
+      var j = jobs.shift(), ww = World(j[0], V_.seeded(j[1] * 7 + 1)), inTv = 0, tvri = null;
+      for (var t = 0; t < 8000; t++) { var I = ww.step(); if (t >= 4000 && TV[I.s2]) inTv++; if (TV[I.s2]) tvri = tvri == null ? I.ri : 0.95 * tvri + 0.05 * I.ri; }
+      res[j[0]].push({ fr: inTv / 4000, cov: ww.nSeen, tvri: tvri });
+      btn.textContent = 'Đang chạy… ' + (8 - jobs.length) + '/8';
+      setTimeout(next, 0);
+    })();
+  });
+
+  V_.onTheme(render);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>
