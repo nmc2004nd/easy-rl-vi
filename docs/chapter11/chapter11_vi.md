@@ -47,6 +47,15 @@ Ta mong có thể học được một $\theta^*$, và mong $\theta^*$ càng g�
 
 Nếu $\theta^*$ và $\hat{\theta}$ có một chút sai số, trong bài toán học có giám sát thông thường, mỗi mẫu (example) đều độc lập, có lẽ không có vấn đề gì. Nhưng với bài toán học tăng cường, có thể ở một chỗ nào đó chính là "sai một li, đi một dặm". Có thể ở một chỗ nào đó, tác tử không thể sao chép hoàn toàn hành vi của chuyên gia, nó sao chép kém đi một chút, có thể kết quả cuối cùng sẽ kém đi rất nhiều. Vì vậy nhân bản hành vi không thể giải quyết hoàn toàn bài toán học bắt chước, ta còn có một phương pháp khác khá tốt, gọi là học tăng cường ngược.
 
+<details class="viz-box">
+<summary>🎬 Mô phỏng DAgger lái xe <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: diễn viên là mạng nơ-ron tự lái trên đường cong, chuyên gia “ngồi trên xe” chỉ nói góc lái mình muốn như hình 11.3; so sánh nhân bản hành vi (kể cả khi thêm nhiều minh họa sạch) với DAgger. [Mở trang riêng](viz/dagger.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/dagger.html?embed" style="height:2018px" title="Mô phỏng DAgger lái xe" loading="lazy"></iframe>
+
+</details>
+
 ## 11.2 Học tăng cường ngược
 
 Tại sao gọi là học tăng cường ngược? Vì trong học tăng cường ban đầu, có một môi trường và một hàm phần thưởng. Như hình 11.5, dựa vào môi trường và hàm phần thưởng, thông qua kỹ thuật học tăng cường, ta sẽ tìm ra một diễn viên, và học ra được một diễn viên tối ưu.
@@ -114,6 +123,15 @@ Học tăng cường ngược có một điểm thú vị: thường ta không c
 
 
 Ta cũng có thể dùng học tăng cường ngược để huấn luyện robot, ta có thể cho robot làm một số động tác mà con người muốn nó làm. Trước đây, nếu ta muốn huấn luyện robot, cho nó làm động tác ta muốn, thực ra khá phiền phức. Ví dụ, nếu ta muốn điều khiển cánh tay robot, cần tốn rất nhiều công sức viết chương trình, như vậy mới cho cánh tay robot làm được một việc rất đơn giản. Có kỹ thuật học tăng cường ngược, bản thân ta có thể làm minh họa, robot học thông qua minh họa. Ví dụ, cho robot học xếp đĩa, kéo cánh tay robot đi xếp đĩa, máy tự động di chuyển. Ví dụ khác, cho robot học rót nước, con người chỉ dạy nó 20 lần, vị trí đặt cốc mỗi lần hơi khác nhau.
+
+<details class="viz-box">
+<summary>🎬 Mô phỏng vòng lặp học tăng cường ngược <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: từng vòng của hình 11.7 trên lưới nhiều loại địa hình: diễn viên học tăng cường, so sánh với chuyên gia, sửa phần thưởng (“vẽ bia”); có thể tự vẽ minh họa. [Mở trang riêng](viz/irl.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/irl.html?embed" style="height:1925px" title="Mô phỏng vòng lặp học tăng cường ngược" loading="lazy"></iframe>
+
+</details>
 
 ## 11.3 Học bắt chước góc nhìn ngôi thứ ba
 

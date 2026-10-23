@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Học tăng cường ngược · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  :root { --c3: #1f9d6b; --sand: #d9a441; --water: #2a78d6; --road: #8a94a3; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c3: #3cc28d; --sand: #e3ac45; --water: #3987e5; } }
+  :root[data-theme="dark"] { --c3: #3cc28d; --sand: #e3ac45; --water: #3987e5; }
+  .map { max-width: 420px; margin: 0 auto; }
+  .map svg { display: block; width: 100%; height: auto; cursor: pointer; }
+  .map text { font-family: inherit; }
+  table.res { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+  table.res th, table.res td { padding: 5px 6px; border-bottom: 1px solid var(--border); text-align: center; }
+  table.res th:first-child, table.res td:first-child { text-align: left; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>Vòng lặp học tăng cường ngược</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter11/chapter11_vi?id=_112-học-tăng-cường-ngược">Mục 11.2</a></div>
+    </div>
+    <p class="lead">Hình 11.7 và 11.8. Lưới 10×10 có 4 loại ô: <b>đường</b>, <b>cỏ</b>, <b>cát</b>, <b>nước</b>. Không có phần thưởng; chỉ có minh họa của chuyên gia đi từ $S$ tới $G$. Phần thưởng cần học: mỗi lần bước vào ô loại $k$ được $w_k \le 0$ (giả định mỗi bước đều tốn, để tác tử muốn tới đích), nên $R(\tau) = \boldsymbol w^{\mathrm T}\boldsymbol f(\tau)$ với $\boldsymbol f$ là số ô mỗi loại. Mỗi vòng: diễn viên dùng <b>học tăng cường thường</b> (ở đây là tìm đường có tổng phần thưởng lớn nhất, đi được cả 4 hướng) với $\boldsymbol w$ hiện tại, rồi phần thưởng được sửa để chuyên gia lại hơn diễn viên.</p>
+  </div>
+  <div class="only-embed open-full"><a href="irl.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <span class="lb">Minh họa</span>
+      <div class="seg" id="demo"><button type="button" data-v="road" aria-pressed="true">Đi theo đường</button><button type="button" data-v="sand" aria-pressed="false">Đi tắt qua cát</button><button type="button" data-v="draw" aria-pressed="false">Tự vẽ</button></div>
+      <span class="lb">Nền ô</span>
+      <div class="seg" id="bg"><button type="button" data-v="ter" aria-pressed="false">Địa hình</button><button type="button" data-v="rew" aria-pressed="true">Phần thưởng học được</button></div>
+    </div>
+    <div class="ctrl" id="drawctl" style="display:none"><span class="rxs">Bấm lần lượt các ô kề nhau từ $S$ tới $G$.</span><button type="button" class="btn" id="undo">Lùi một ô</button><button type="button" class="btn" id="clear">Xóa</button></div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="round">Hết vòng</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="2">
+    </div>
+    <div class="stats"><span>Vòng <b id="rn">0</b></span><span id="phase" class="phase"></span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="map" id="map"></div>
+        <div class="legend" style="justify-content:center"><span class="li"><span class="sw" style="background:var(--s2)"></span>chuyên gia $\hat\tau$</span><span class="li"><span class="sw" style="background:var(--s1)"></span>diễn viên $\tau$</span><span class="li" id="leg-ter"></span></div>
+        <div class="tscroll" id="tab"></div>
+        <div class="calc" id="calc"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>$R(\hat\tau)$ và $R(\tau)$ qua các vòng</h2>
+    <div class="legend"><span class="li"><span class="sw" style="background:var(--s2)"></span>$R(\hat\tau)$ chuyên gia</span><span class="li"><span class="sw" style="background:var(--s1)"></span>$R(\tau)$ diễn viên (tối ưu theo phần thưởng của vòng đó)</span></div>
+    <div id="chart"></div>
+    <p class="note">Cả hai đo bằng phần thưởng <b>của cùng một vòng</b>, trước khi sửa. Diễn viên luôn tối ưu nên $R(\tau) \ge R(\hat\tau)$; khi bằng nhau thì phần thưởng không còn phân biệt được hai bên.</p>
+  </div>
+
+  <div class="blk">
+    <h2>Đối chiếu với GAN (hình 11.8)</h2>
+    <div class="tscroll"><table class="res"><thead><tr><th>Trang này</th><th>GAN</th></tr></thead><tbody>
+      <tr><td>Đường đi của chuyên gia $\hat\tau$</td><td>Ảnh thật</td></tr>
+      <tr><td>Diễn viên tìm đường tối ưu theo $\boldsymbol w$</td><td>Bộ sinh vẽ ảnh để lừa bộ phân biệt</td></tr>
+      <tr><td>$\boldsymbol w \leftarrow \boldsymbol w + \eta(\hat{\boldsymbol f} - \boldsymbol f)$: chấm chuyên gia cao hơn</td><td>Bộ phân biệt chấm ảnh thật cao, ảnh giả thấp</td></tr>
+      <tr><td>Dừng khi $\boldsymbol f = \hat{\boldsymbol f}$</td><td>Dừng khi $D = \tfrac12$</td></tr>
+    </tbody></table></div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz;
+  var MAP = [
+    'RRRRRRRRRR',
+    'RggggggggR',
+    'RggggggggR',
+    'RggggWgggR',
+    'RgggWWWggR',
+    'SggWWWWggG',
+    'ggggWWgggg',
+    'gggggggggg',
+    'ssssssssss',
+    'gggggggggg'];
+  var N = 10, NAMES = ['đường', 'cỏ', 'cát', 'nước'], COLS = ['--road', '--c3', '--sand', '--water'];
+  function typ(s) { var c = MAP[Math.floor(s / N)][s % N]; return c === 'R' || c === 'S' || c === 'G' ? 0 : c === 'g' ? 1 : c === 's' ? 2 : 3; }
+  var S = 5 * N, G = 5 * N + 9, DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1];
+  function nbrs(s) { var r = Math.floor(s / N), c = s % N, o = []; for (var a = 0; a < 4; a++) { var rr = r + DR[a], cc = c + DC[a]; if (rr >= 0 && cc >= 0 && rr < N && cc < N) o.push(rr * N + cc); } return o; }
+  function feats(path) { var f = [0, 0, 0, 0]; for (var i = 1; i < path.length; i++) f[typ(path[i])]++; return f; }
+  function dot(a, b) { return a.reduce(function (s, x, i) { return s + x * b[i]; }, 0); }
+  // diễn viên: đường có tổng phần thưởng lớn nhất = chi phí −w nhỏ nhất (Dijkstra; w ≤ −0,05 nên chi phí dương)
+  function bestPath(w) {
+    var dist = new Array(N * N).fill(Infinity), prev = new Array(N * N).fill(-1), done = new Array(N * N).fill(false); dist[S] = 0;
+    for (var it = 0; it < N * N; it++) {
+      var u = -1, b = Infinity; for (var k = 0; k < N * N; k++) if (!done[k] && dist[k] < b - 1e-12) { b = dist[k]; u = k; }
+      if (u < 0 || u === G) break; done[u] = true;
+      nbrs(u).forEach(function (v) { var d = dist[u] - w[typ(v)]; if (d < dist[v] - 1e-9) { dist[v] = d; prev[v] = u; } });
+    }
+    var p = [], c = G; while (c >= 0) { p.unshift(c); c = prev[c]; } return p;
+  }
+  var PRESET = {
+    road: (function () { var p = []; for (var r = 5; r >= 0; r--) p.push(r * N); for (var c = 1; c < N; c++) p.push(c); for (var r2 = 1; r2 <= 5; r2++) p.push(r2 * N + 9); return p; })(),
+    sand: (function () { var p = []; for (var r = 5; r <= 8; r++) p.push(r * N); for (var c = 1; c < N; c++) p.push(8 * N + c); for (var r2 = 7; r2 >= 5; r2--) p.push(r2 * N + 9); return p; })()
+  };
+  var ETA = 0.02, WMAX = -0.05;
+  var st, player;
+  function demoMode() { return V_.$('#demo [aria-pressed=true]').dataset.v; }
+  function demoPath() { return demoMode() === 'draw' ? st.draw : PRESET[demoMode()]; }
+  function demoOK() { var p = demoPath(); return p.length > 1 && p[0] === S && p[p.length - 1] === G; }
+  function reset() {
+    player && player.stop();
+    st = { w: [-1, -1, -1, -1], it: 0, path: null, phase: 'rl', last: null, hist: [], draw: st && st.draw ? st.draw : [S] };
+    st.path = bestPath(st.w);
+    V_.$('#drawctl').style.display = demoMode() === 'draw' ? '' : 'none';
+    buildPseudo(); render();
+  }
+  // ba pha mỗi vòng: ① diễn viên học tăng cường ② so sánh ③ sửa phần thưởng
+  function micro() {
+    if (!demoOK()) return false;
+    var fh = feats(demoPath());
+    if (st.phase === 'rl') { st.path = bestPath(st.w); st.last = { kind: 'rl' }; st.phase = 'cmp'; return true; }
+    if (st.phase === 'cmp') {
+      var f = feats(st.path); st.last = { kind: 'cmp', f: f, fh: fh, Re: dot(st.w, fh), Ra: dot(st.w, f) };
+      st.hist.push([st.last.Re, st.last.Ra]); st.phase = f.join() === fh.join() ? 'done' : 'upd'; return true;
+    }
+    if (st.phase === 'upd') {
+      var f2 = feats(st.path), w0 = st.w.slice();
+      st.w = st.w.map(function (x, k) { return Math.min(WMAX, x + ETA * (fh[k] - f2[k])); });
+      st.last = { kind: 'upd', w0: w0, f: f2, fh: fh, Re: dot(st.w, fh), Ra: dot(st.w, f2), clip: st.w.some(function (x, k) { return x === WMAX && w0[k] + ETA * (fh[k] - f2[k]) > WMAX; }) };
+      st.it++; st.phase = 'rl'; return true;
+    }
+    return false;
+  }
+
+  // ---------- mã giả ----------
+  var pseudo, KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  function buildPseudo() {
+    var lines = [
+      ['init', 0, 'có minh họa chuyên gia $\\hat\\tau$, đếm $\\hat{\\boldsymbol f}$; khởi tạo $\\boldsymbol w = (-1, -1, -1, -1)$'],
+      ['loop', 0, KW('lặp') + ':'],
+      ['rl', 1, '<b>học tăng cường thường</b>: diễn viên $\\tau = \\arg\\max_\\tau \\boldsymbol w^{\\mathrm T}\\boldsymbol f(\\tau)$'],
+      ['cmp', 1, 'so sánh $R(\\hat\\tau) = \\boldsymbol w^{\\mathrm T}\\hat{\\boldsymbol f}$ và $R(\\tau) = \\boldsymbol w^{\\mathrm T}\\boldsymbol f$; ' + KW('dừng') + ' nếu $\\boldsymbol f = \\hat{\\boldsymbol f}$'],
+      ['upd', 1, '<b>sửa phần thưởng</b> (“vẽ bia”): $\\boldsymbol w \\leftarrow \\min\\big(\\boldsymbol w + 0.02(\\hat{\\boldsymbol f} - \\boldsymbol f),\\ -0.05\\big)$']
+    ];
+    var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
+    box.innerHTML = '';
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: 'Học tăng cường ngược (hình 11.7)', lines: lines, open: open });
+  }
+
+  // ---------- vẽ ----------
+  function drawMap() {
+    var cs = 40, W = N * cs, bgm = V_.$('#bg [aria-pressed=true]').dataset.v, s = '<svg viewBox="0 0 ' + W + ' ' + W + '" role="img" aria-label="Bản đồ, phần thưởng và hai đường đi">';
+    var wmin = Math.min.apply(null, st.w), wmax = Math.max.apply(null, st.w), span = Math.max(1e-6, wmax - wmin);
+    for (var i = 0; i < N * N; i++) {
+      var x = (i % N) * cs, y = Math.floor(i / N) * cs, t = typ(i);
+      if (bgm === 'ter') s += '<rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + (cs - 2) + '" height="' + (cs - 2) + '" rx="4" fill="var(' + COLS[t] + ')" fill-opacity="' + (t === 1 ? 0.3 : 0.55) + '"/>';
+      else {
+        var v = (st.w[t] - wmin) / span; // 1 = tốt nhất
+        s += '<rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + (cs - 2) + '" height="' + (cs - 2) + '" rx="4" fill="var(--surface-2)"/>';
+        s += '<rect x="' + (x + 1) + '" y="' + (y + 1) + '" width="' + (cs - 2) + '" height="' + (cs - 2) + '" rx="4" fill="var(--neg)" fill-opacity="' + (0.08 + 0.75 * (1 - v)).toFixed(3) + '"/>';
+        s += '<rect x="' + (x + 3) + '" y="' + (y + 3) + '" width="7" height="7" rx="2" fill="var(' + COLS[t] + ')"/>';
+      }
+    }
+    var cx = function (k) { return (k % N) * cs + cs / 2; }, cy = function (k) { return Math.floor(k / N) * cs + cs / 2; };
+    var line = function (p, col, dash, off) { return p.length > 1 ? '<path d="' + p.map(function (k, j) { return (j ? 'L' : 'M') + (cx(k) + off) + ' ' + (cy(k) + off); }).join('') + '" fill="none" stroke="' + col + '" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"' + (dash ? ' stroke-dasharray="7 6"' : '') + '/>' : ''; };
+    s += line(demoPath(), 'var(--s2)', true, -4);
+    if (st.path && st.phase !== 'rl' || st.it) s += line(st.path, 'var(--s1)', false, 4);
+    [[S, 'S'], [G, 'G']].forEach(function (q) { s += '<text x="' + cx(q[0]) + '" y="' + (cy(q[0]) + 5) + '" text-anchor="middle" style="font-weight:700;font-size:15px;fill:var(--text)">' + q[1] + '</text>'; });
+    if (demoMode() === 'draw') { var lastC = st.draw[st.draw.length - 1]; nbrs(lastC).forEach(function (k) { s += '<rect x="' + ((k % N) * cs + 4) + '" y="' + (Math.floor(k / N) * cs + 4) + '" width="' + (cs - 8) + '" height="' + (cs - 8) + '" rx="4" fill="none" stroke="var(--s2)" stroke-dasharray="3 3"/>'; }); }
+    V_.$('#map').innerHTML = s + '</svg>';
+    V_.$('#leg-ter').innerHTML = NAMES.map(function (n, k) { return '<span class="sw box" style="background:var(' + COLS[k] + ');opacity:.7"></span>' + n; }).join(' ');
+  }
+  function num(x, d) { return V_.tz(x, d == null ? 2 : d); }
+  function vec(v, d) { return '(' + v.map(function (x) { return num(x, d); }).join(';\\ ') + ')'; }
+  function drawTab() {
+    var fh = demoOK() ? feats(demoPath()) : [0, 0, 0, 0], f = st.path ? feats(st.path) : [0, 0, 0, 0];
+    V_.$('#tab').innerHTML = '<table class="res"><thead><tr><th></th>' + NAMES.map(function (n) { return '<th>' + n + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      '<tr><td>$\\boldsymbol w$</td>' + st.w.map(function (x) { return '<td><b>' + V_.fmt(x, 2) + '</b></td>'; }).join('') + '</tr>' +
+      '<tr><td>$\\hat{\\boldsymbol f}$ chuyên gia</td>' + fh.map(function (x) { return '<td>' + x + '</td>'; }).join('') + '</tr>' +
+      '<tr><td>$\\boldsymbol f$ diễn viên</td>' + f.map(function (x) { return '<td>' + x + '</td>'; }).join('') + '</tr></tbody></table>';
+    V_.texAll(V_.$('#tab'));
+  }
+  function showCalc() {
+    var el = V_.$('#calc'), L = st.last;
+    if (!demoOK()) { el.innerHTML = '<span class="hint">Minh họa chưa đi từ $S$ tới $G$.</span>'; V_.texAll(el); return; }
+    if (!L) { el.innerHTML = '<span class="hint">Bấm “Bước tiếp”. Mỗi vòng có 3 bước: diễn viên học tăng cường, so sánh với chuyên gia, sửa phần thưởng.</span>'; return; }
+    if (L.kind === 'rl') { el.innerHTML = '<p class="hint" style="margin:0">Diễn viên tìm đường có tổng phần thưởng lớn nhất theo $\\boldsymbol w = ' + vec(st.w) + '$ (đường xanh, ' + (st.path.length - 1) + ' bước).</p>'; V_.texAll(el); return; }
+    if (L.kind === 'cmp') {
+      V_.tex(el, '\\begin{aligned}&R(\\hat\\tau) = \\boldsymbol w^{\\mathrm T}\\hat{\\boldsymbol f} = ' + vec(st.w) + '\\cdot' + vec(L.fh, 0) + ' = ' + num(L.Re) + '\\\\&R(\\tau) = \\boldsymbol w^{\\mathrm T}\\boldsymbol f = ' + vec(st.w) + '\\cdot' + vec(L.f, 0) + ' = ' + num(L.Ra) + '\\end{aligned}', true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">' + (st.phase === 'done' ? '$\\boldsymbol f = \\hat{\\boldsymbol f}$: <b>dừng</b>. Phần thưởng hiện tại không phân biệt được chuyên gia và diễn viên.' : 'Theo phần thưởng hiện tại diễn viên <b>được điểm cao hơn</b> chuyên gia (' + num(L.Ra) + ' > ' + num(L.Re) + '). Vô lý: chuyên gia phải giỏi nhất. Sửa phần thưởng.') + '</p>');
+      V_.texAll(el.lastChild); return;
+    }
+    V_.tex(el, '\\begin{aligned}&\\boldsymbol w \\leftarrow \\min\\big(' + vec(L.w0) + ' + 0.02\\,(' + vec(L.fh, 0) + ' - ' + vec(L.f, 0) + '),\\ -0.05\\big) = ' + vec(st.w) + '\\\\&\\text{với phần thưởng mới: } R(\\hat\\tau) = ' + num(L.Re) + ',\\quad R(\\tau_{\\text{cũ}}) = ' + num(L.Ra) + '\\end{aligned}', true);
+    el.insertAdjacentHTML('beforeend', '<p class="hint">Loại ô chuyên gia đi nhiều hơn được tăng phần thưởng, loại ô diễn viên đi nhiều hơn bị giảm. ' + (L.Re > L.Ra ? 'Đường cũ của diễn viên giờ <b>kém hơn</b> chuyên gia: diễn viên vừa đạt điểm cao thì “bia” bị dời (diễn viên “tức giận”).' : 'Đường cũ của diễn viên vẫn chưa kém hơn chuyên gia; cần thêm vài vòng.') + (L.clip ? ' (Có thành phần chạm giới hạn $-0.05$.)' : '') + '</p>');
+    V_.texAll(el.lastChild);
+  }
+  function insight() {
+    var el = V_.$('#insight'), h;
+    if (!demoOK()) h = 'Vẽ xong minh họa (tới $G$) thì mới chạy được.';
+    else if (st.phase === 'done') {
+      var order = [0, 1, 2, 3].sort(function (a, b) { return st.w[b] - st.w[a]; });
+      h = 'Sau ' + st.it + ' vòng, diễn viên đi qua đúng số ô mỗi loại như chuyên gia. Phần thưởng học được xếp: ' + order.map(function (k) { return '<b>' + NAMES[k] + '</b> (' + V_.fmt(st.w[k], 2) + ')'; }).join(' > ') + '. ' +
+        'Lưu ý: đây <b>không phải</b> phần thưởng “thật” duy nhất. Nhân mọi $w_k$ với 2 thì diễn viên vẫn đi y hệt; loại ô mà cả hai không đi qua (ví dụ nước) chỉ cần “đủ tệ”, giá trị cụ thể của nó không xác định được. Minh họa càng đa dạng thì phần thưởng càng rõ.';
+    } else if (!st.it) h = 'Lúc đầu mọi loại ô có cùng phần thưởng $-1$, nên diễn viên chỉ đi đường ngắn nhất, có thể băng qua cỏ hoặc nước. Chuyên gia thì đi khác: “bắn tên trước”. Giờ ta sẽ “vẽ bia” sao cho mũi tên của chuyên gia trúng giữa.';
+    else h = 'Mỗi vòng, nền ô đổi màu: loại ô chuyên gia hay đi sáng lên, loại ô chỉ diễn viên đi thì tối đi. Diễn viên đổi đường theo phần thưởng mới, rồi phần thưởng lại bị sửa.';
+    el.innerHTML = h; V_.texAll(el);
+  }
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'R(chuyên gia)', color: '--s2' }, { name: 'R(diễn viên)', color: '--s1' }], xName: 'Vòng', xLabel: 'Vòng', dec: 1, aria: 'R của chuyên gia và diễn viên qua các vòng' });
+  function render() {
+    var ph = st.phase, L = st.last;
+    pseudo.hl(!L ? 'init' : L.kind === 'rl' ? ['rl'] : L.kind === 'cmp' ? ['cmp'] : ['upd']);
+    V_.$('#rn').textContent = st.it;
+    var pe = V_.$('#phase'); pe.className = 'phase ' + (ph === 'done' ? 'ok' : 'on'); pe.textContent = ph === 'done' ? 'Đã khớp, dừng' : ph === 'rl' ? '① Diễn viên học tăng cường' : ph === 'cmp' ? '② So sánh với chuyên gia' : '③ Sửa phần thưởng';
+    drawMap(); drawTab(); showCalc(); insight();
+    chart.set([st.hist.map(function (x) { return x[0]; }), st.hist.map(function (x) { return x[1]; })]);
+    V_.postHeight();
+  }
+
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: function () { var ok = micro(); render(); return ok && st.phase !== 'done'; } });
+  V_.$('#step').addEventListener('click', function () { player.stop(); micro(); render(); });
+  V_.$('#round').addEventListener('click', function () { player.stop(); var g = 0; do { if (!micro()) break; } while (st.phase !== 'rl' && st.phase !== 'done' && g++ < 5); render(); });
+  V_.$('#reset').addEventListener('click', reset);
+  ['#demo', '#bg'].forEach(function (id) { V_.$(id).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; V_.$$(id + ' button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); }); if (id === '#demo') reset(); else render(); }); });
+  V_.$('#map').addEventListener('click', function (e) {
+    if (demoMode() !== 'draw') return;
+    var svg = V_.$('#map svg'), r = svg.getBoundingClientRect(), c = Math.floor((e.clientX - r.left) / r.width * N), rr = Math.floor((e.clientY - r.top) / r.height * N), k = rr * N + c;
+    var lastC = st.draw[st.draw.length - 1];
+    if (lastC === G) return;
+    if (nbrs(lastC).indexOf(k) >= 0) { st.draw.push(k); var d = st.draw; reset(); st.draw = d; render(); }
+  });
+  V_.$('#undo').addEventListener('click', function () { if (st.draw.length > 1) { var d = st.draw.slice(0, -1); reset(); st.draw = d; render(); } });
+  V_.$('#clear').addEventListener('click', function () { st.draw = [S]; var d = st.draw; reset(); st.draw = d; render(); });
+
+  V_.onTheme(render);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

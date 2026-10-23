@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DAgger lái xe · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  :root { --c3: #1f9d6b; --c4: #8b5cf6; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c3: #3cc28d; --c4: #a78bfa; } }
+  :root[data-theme="dark"] { --c3: #3cc28d; --c4: #a78bfa; }
+  .stage canvas { width: 100%; height: auto; display: block; border-radius: 12px; background: var(--surface-2); }
+  .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+  .gcap { font-weight: 600; font-size: .9rem; margin: 8px 0 4px; }
+  .sens svg, .scat svg { display: block; width: 100%; height: auto; }
+  .sens text, .scat text { font-family: inherit; font-size: 11px; fill: var(--muted); }
+  table.res { width: 100%; border-collapse: collapse; font-size: .88rem; font-variant-numeric: tabular-nums; }
+  table.res th, table.res td { padding: 6px; border-bottom: 1px solid var(--border); text-align: center; }
+  table.res th:first-child, table.res td:first-child { text-align: left; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>DAgger lái xe</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter11/chapter11_vi?id=_111-nhân-bản-hành-vi">Mục 11.1</a></div>
+    </div>
+    <p class="lead">Hình 11.2 và 11.3. Xe chạy đều trên đường cong, mỗi bước chọn góc lái $\delta \in [-1, 1]$; tay lái bị nhiễu $\mathcal N(0, \sigma^2)$ cộng thêm. Ra khỏi lề là đâm tường. Diễn viên là <b>mạng nơ-ron</b> $21 \to 32 \to 32 \to 1$, học trong trình duyệt. Nó nhìn đường qua một “cảm biến” giống camera: 11 ô cho độ lệch ngang, 9 ô cho độ lệch hướng (mỗi ô sáng lên khi độ lệch ở gần ô đó) và 1 số cho độ cong phía trước. Chuyên gia nhìn trước 0,8 đơn vị và lái về tim đường; minh họa của chuyên gia là <b>sạch</b> (không bị nhiễu).</p>
+  </div>
+  <div class="only-embed open-full"><a href="dagger.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <label for="sig">$\sigma$</label><input id="sig" type="range" min="0.1" max="0.5" step="0.05" value="0.3"><span class="val" id="sig-v"></span>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="dagger">Vòng DAgger (3 lần tự lái + huấn luyện)</button>
+      <button type="button" class="btn" id="more">+50 minh họa sạch</button>
+      <button type="button" class="btn" id="reset">Về nhân bản hành vi</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="4">
+    </div>
+    <div class="stats"><span>Mô hình <b id="mdl">BC</b></span><span>Số cặp $(s, a^*)$ <b id="nd">0</b></span><span>Đâm tường (40 lần thử) <b id="cr">–</b></span><span id="busy" class="phase ok">Sẵn sàng</span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="stage"><canvas id="cv" width="900" height="300" aria-label="Con đường, xe và mũi tên của chuyên gia"></canvas></div>
+        <div class="legend"><span class="li"><span class="sw" style="background:var(--s1)"></span>xe của diễn viên và vệt đi</span><span class="li"><span class="sw" style="background:var(--s2)"></span>góc lái chuyên gia muốn (chỉ nói, không can thiệp)</span></div>
+        <div class="two-col">
+          <div><p class="gcap">Cảm biến lúc này (ô đậm: đã có dữ liệu)</p><div class="sens" id="sens"></div></div>
+          <div><p class="gcap">Dữ liệu huấn luyện theo (độ lệch ngang, độ lệch hướng)</p><div class="scat" id="scat"></div></div>
+        </div>
+        <div class="calc" id="calc"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Tỉ lệ đâm tường theo từng mô hình</h2>
+    <div id="chart"></div>
+  </div>
+
+  <div class="blk">
+    <h2>So sánh nhiều lần chạy</h2>
+    <p class="note" style="margin:0 0 6px">3 lần chạy (mạng khởi tạo khác nhau), cùng $\sigma$ hiện tại, mỗi mô hình thử lái 40 lần. Mất khoảng 10 giây.</p>
+    <div class="ctrl"><button type="button" class="btn" id="cmp">Chạy so sánh</button></div>
+    <div class="tscroll" id="cmp-tab"></div>
+    <div class="insight" id="cmp-ins">Bấm “Chạy so sánh”.</div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script src="nn.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz;
+  // ---------- đường và xe ----------
+  var L = 20, A = 2.2, HW = 0.6, VEL = 0.12, TURN = 0.12, MAXN = 400;
+  function yc(x) { return A * Math.sin(2 * Math.PI * x / L); }
+  function slope(x) { return A * 2 * Math.PI / L * Math.cos(2 * Math.PI * x / L); }
+  function s0() { return { x: 0, y: 0, th: Math.atan(slope(0)) }; }
+  function errs(s) { return [s.y - yc(s.x), s.th - Math.atan(slope(s.x))]; }
+  function expert(s) { var la = 0.8, xt = s.x + la, tt = Math.atan2(yc(xt) - s.y, la), d = (tt - s.th) / TURN * 0.6; return Math.max(-1, Math.min(1, d)); }
+  var EB = [], PB = []; for (var i = 0; i < 11; i++) EB.push(-0.8 + 1.6 * i / 10); for (var j = 0; j < 9; j++) PB.push(-0.8 + 1.6 * j / 8);
+  function feat(s) { var e = errs(s), f = []; EB.forEach(function (c) { f.push(Math.exp(-Math.pow((e[0] - c) / 0.12, 2))); }); PB.forEach(function (c) { f.push(Math.exp(-Math.pow((e[1] - c) / 0.15, 2))); }); f.push((slope(s.x + 0.6) - slope(s.x)) / 0.6); return f; }
+  function step(s, d) { d = Math.max(-1, Math.min(1, d)); var th = s.th + d * TURN; return { x: s.x + VEL * Math.cos(th), y: s.y + VEL * Math.sin(th), th: th }; }
+  function crashed(s) { return Math.abs(s.y - yc(s.x)) > HW; }
+  function gauss(r) { var u = r() || 1e-12, v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  function roll(pol, r, sig, rec) { var s = s0(), n = 0; while (s.x < L && n < MAXN) { var d = pol(s); if (rec) rec.push(s); d += sig * gauss(r); s = step(s, d); n++; if (crashed(s)) return { crash: true, x: s.x }; } return { crash: false, x: s.x }; }
+  function fit(net, D, ep, r) { for (var e = 0; e < ep; e++) { for (var i = D.length - 1; i > 0; i--) { var j = Math.floor(r() * (i + 1)), t = D[i]; D[i] = D[j]; D[j] = t; } for (var b = 0; b < D.length; b += 32) net.train(D.slice(b, b + 32).map(function (d) { return { x: d.f, a: 0, y: d.a }; }), 3e-3); } }
+  function crashRate(net, r, sig, n) { var c = 0; for (var i = 0; i < n; i++) if (roll(function (s) { return net.forward(feat(s))[0]; }, r, sig).crash) c++; return c / n; }
+  function sig() { return +V_.$('#sig').value; }
+
+  // ---------- trạng thái ----------
+  var st, player, busy = false;
+  function addDemo(k) { for (var i = 0; i < k; i++) { var rec = []; roll(expert, st.r, 0, rec); rec.forEach(function (s) { var e = errs(s); st.D.push({ f: feat(s), a: expert(s), e: e, src: 0 }); }); } st.demos += k; }
+  function markCov() { st.cov = new Array(20).fill(0); st.D.forEach(function (d) { for (var k = 0; k < 20; k++) if (d.f[k] > 0.5) st.cov[k] = 1; }); }
+  function reset() {
+    player && player.stop();
+    st = { r: V_.seeded(5), D: [], demos: 0, it: 0, hist: [], labels: [], car: null, trail: [], last: null, phase: 'idle' };
+    st.net = new NN.MLP([21, 32, 32, 1], st.r);
+    addDemo(5); fit(st.net, st.D, 30, st.r); markCov();
+    st.hist.push(crashRate(st.net, V_.seeded(99), sig(), 40)); st.labels.push('BC');
+    buildPseudo(); newDrive(); render();
+  }
+  function newDrive() { st.car = s0(); st.trail = [st.car]; st.drive = { r: V_.seeded(1000 + st.hist.length * 7 + st.trail.length), n: 0, crash: false, done: false }; st.last = null; }
+  function driveStep() {
+    if (st.drive.done) newDrive();
+    var s = st.car, f = feat(s), d = st.net.forward(f)[0], dx = expert(s), noise = sig() * gauss(st.drive.r), s2 = step(s, d + noise);
+    st.last = { s: s, f: f, d: d, dx: dx, noise: noise, e: errs(s) };
+    st.car = s2; st.trail.push(s2); st.drive.n++;
+    if (crashed(s2)) { st.drive.done = true; st.drive.crash = true; st.last.crash = true; }
+    else if (s2.x >= L || st.drive.n >= MAXN) { st.drive.done = true; st.last.finish = true; }
+  }
+  function daggerRound(cb) {
+    if (busy) return; busy = true; player.stop(); setBusy('Đang tự lái 3 lần và gán nhãn…');
+    setTimeout(function () {
+      var before = st.D.length;
+      for (var k = 0; k < 3; k++) { var rec = []; roll(function (s) { return st.net.forward(feat(s))[0]; }, st.r, sig(), rec); rec.forEach(function (s) { st.D.push({ f: feat(s), a: expert(s), e: errs(s), src: st.it + 1 }); }); }
+      st.added = st.D.length - before;
+      setBusy('Đang huấn luyện lại trên ' + st.D.length + ' cặp…');
+      setTimeout(function () {
+        fit(st.net, st.D, 10, st.r); st.it++; markCov();
+        st.hist.push(crashRate(st.net, V_.seeded(99 + st.it), sig(), 40)); st.labels.push('D' + st.it);
+        busy = false; setBusy(null); newDrive(); st.phase = 'trained'; render(); cb && cb();
+      }, 20);
+    }, 20);
+  }
+  function setBusy(t) { var el = V_.$('#busy'); el.textContent = t || 'Sẵn sàng'; el.className = 'phase ' + (t ? 'on' : 'ok'); }
+
+  // ---------- mã giả ----------
+  var pseudo, KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  function buildPseudo() {
+    var lines = [
+      ['init', 0, '$\\mathcal D \\leftarrow$ minh họa sạch của chuyên gia; huấn luyện $\\pi_1$ trên $\\mathcal D$ <span class="cm">(nhân bản hành vi)</span>'],
+      ['loop', 0, KW('với') + ' $i = 1, 2, \\ldots$:'],
+      ['drive', 1, '<b>diễn viên $\\pi_i$ tự lái</b>, ghi lại mọi trạng thái $s$ nó gặp'],
+      ['label', 1, 'chuyên gia nói $a^* = \\hat\\pi(s)$ cho từng $s$ <span class="cm">(không can thiệp vào tay lái)</span>'],
+      ['agg', 1, '$\\mathcal D \\leftarrow \\mathcal D \\cup \\{(s, a^*)\\}$'],
+      ['train', 1, 'huấn luyện $\\pi_{i+1}$ trên $\\mathcal D$: giảm $\\tfrac12\\big(\\pi(s) - a^*\\big)^2$']
+    ];
+    var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
+    box.innerHTML = '';
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: 'DAgger (hình 11.3)', lines: lines, open: open });
+  }
+
+  // ---------- vẽ ----------
+  var cv = V_.$('#cv'), g = cv.getContext('2d');
+  function drawRoad() {
+    var W = cv.width, H = cv.height, sx = (W - 20) / L, sy = sx, oy = H / 2;
+    var X = function (x) { return 10 + x * sx; }, Y = function (y) { return oy - y * sy; };
+    g.clearRect(0, 0, W, H);
+    g.fillStyle = V_.cssVar('--surface');
+    g.beginPath(); for (var x = 0; x <= L; x += 0.05) g.lineTo(X(x), Y(yc(x) + HW)); for (var x2 = L; x2 >= 0; x2 -= 0.05) g.lineTo(X(x2), Y(yc(x2) - HW)); g.closePath(); g.fill();
+    g.strokeStyle = V_.cssVar('--muted'); g.lineWidth = 2;
+    [HW, -HW].forEach(function (o) { g.beginPath(); for (var x = 0; x <= L; x += 0.05) g.lineTo(X(x), Y(yc(x) + o)); g.stroke(); });
+    g.setLineDash([6, 6]); g.lineWidth = 1; g.beginPath(); for (var x3 = 0; x3 <= L; x3 += 0.05) g.lineTo(X(x3), Y(yc(x3))); g.stroke(); g.setLineDash([]);
+    g.strokeStyle = V_.cssVar('--s1'); g.lineWidth = 2.5; g.beginPath(); st.trail.forEach(function (p) { g.lineTo(X(p.x), Y(p.y)); }); g.stroke();
+    var c = st.car, cx = X(c.x), cy = Y(c.y);
+    if (st.last && !st.drive.done) {
+      var the = c.th + expert(c) * TURN * 4;
+      g.strokeStyle = V_.cssVar('--s2'); g.lineWidth = 3; g.beginPath(); g.moveTo(cx, cy); var ex = cx + Math.cos(the) * 40, ey = cy - Math.sin(the) * 40; g.lineTo(ex, ey); g.stroke();
+      g.beginPath(); g.arc(ex, ey, 4, 0, 7); g.fillStyle = V_.cssVar('--s2'); g.fill();
+    }
+    g.save(); g.translate(cx, cy); g.rotate(-c.th); g.fillStyle = st.drive.crash ? V_.cssVar('--s2') : V_.cssVar('--s1'); g.beginPath(); g.moveTo(12, 0); g.lineTo(-8, 7); g.lineTo(-8, -7); g.closePath(); g.fill(); g.restore();
+    if (st.drive.crash) { g.fillStyle = V_.cssVar('--s2'); g.font = '600 16px "Be Vietnam Pro", sans-serif'; g.fillText('Đâm tường!', cx + 12, cy - 12); }
+  }
+  function drawSens() {
+    var f = st.last ? st.last.f : feat(st.car), W = 360, H = 90, cw = W / 21, s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Các ô cảm biến">';
+    for (var k = 0; k < 20; k++) {
+      var x = k * cw + (k >= 11 ? cw : 0), h = f[k] * 50;
+      s += '<rect x="' + (x + 2) + '" y="10" width="' + (cw - 4) + '" height="50" rx="3" fill="var(--surface-2)" stroke="' + (st.cov[k] ? 'var(--text)' : 'var(--s2)') + '" stroke-opacity="' + (st.cov[k] ? 0.5 : 0.9) + '"' + (st.cov[k] ? '' : ' stroke-dasharray="3 2"') + '/>';
+      s += '<rect x="' + (x + 2) + '" y="' + (60 - h) + '" width="' + (cw - 4) + '" height="' + h + '" rx="3" fill="var(--s1)"/>';
+    }
+    s += '<text x="' + (11 * cw / 2) + '" y="76" text-anchor="middle">độ lệch ngang (trái → phải)</text><text x="' + (12 * cw + 9 * cw / 2) + '" y="76" text-anchor="middle">độ lệch hướng</text>';
+    s += '<text x="0" y="88">viền cam đứt nét: ô chưa từng sáng trong dữ liệu huấn luyện</text>';
+    V_.$('#sens').innerHTML = s + '</svg>';
+  }
+  var SRC = ['var(--muted)', 'var(--s1)', 'var(--c3)', 'var(--c4)', 'var(--s2)'];
+  function drawScat() {
+    var W = 360, H = 200, m = { l: 30, r: 8, t: 8, b: 26 }, iw = W - m.l - m.r, ih = H - m.t - m.b;
+    var X = function (e) { return m.l + (Math.max(-0.8, Math.min(0.8, e)) + 0.8) / 1.6 * iw; }, Y = function (p) { return m.t + ih - (Math.max(-0.8, Math.min(0.8, p)) + 0.8) / 1.6 * ih; };
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Phân bố dữ liệu huấn luyện">';
+    s += '<rect x="' + X(-HW) + '" y="' + m.t + '" width="' + (X(HW) - X(-HW)) + '" height="' + ih + '" fill="var(--surface-2)"/>';
+    var step2 = Math.max(1, Math.floor(st.D.length / 1500));
+    for (var i = 0; i < st.D.length; i += step2) { var d = st.D[i]; s += '<circle cx="' + X(d.e[0]).toFixed(1) + '" cy="' + Y(d.e[1]).toFixed(1) + '" r="1.6" fill="' + SRC[Math.min(4, d.src)] + '" fill-opacity=".6"/>'; }
+    if (st.last) s += '<circle cx="' + X(st.last.e[0]) + '" cy="' + Y(st.last.e[1]) + '" r="5" fill="none" stroke="var(--text)" stroke-width="2"/>';
+    s += '<text x="' + (m.l + iw / 2) + '" y="' + (H - 4) + '" text-anchor="middle">độ lệch ngang (vùng sáng: trong lề)</text><text x="' + m.l + '" y="' + (H - 14) + '">−0,8</text><text x="' + (W - m.r) + '" y="' + (H - 14) + '" text-anchor="end">0,8</text>';
+    V_.$('#scat').innerHTML = s + '</svg>';
+  }
+  function num(x, d) { return V_.tz(x, d == null ? 2 : d); }
+  function showCalc() {
+    var el = V_.$('#calc'), L2 = st.last;
+    if (!L2) { el.innerHTML = '<span class="hint">Bấm “Phát” hoặc “Bước tiếp” để xem diễn viên hiện tại tự lái, kèm góc lái chuyên gia muốn.</span>'; return; }
+    V_.tex(el, '\\begin{aligned}&\\text{độ lệch ngang } ' + num(L2.e[0]) + ',\\quad \\text{độ lệch hướng } ' + num(L2.e[1]) + '\\\\&\\text{diễn viên: } \\delta = \\pi(s) = ' + num(L2.d) + ',\\quad \\text{chuyên gia muốn: } a^* = ' + num(L2.dx) + ',\\quad \\text{nhiễu } ' + num(L2.noise) + '\\end{aligned}', true);
+    el.insertAdjacentHTML('beforeend', '<p class="hint">' + (L2.crash ? '<b>Đâm tường.</b> ' : L2.finish ? '<b>Về đích.</b> ' : '') + 'Xe đi theo $\\delta$ của diễn viên (cộng nhiễu), không theo chuyên gia. Cặp $(s, a^*)$ chỉ được <b>ghi lại</b> khi chạy một vòng DAgger.</p>');
+    V_.texAll(el.lastChild);
+  }
+  function insight() {
+    var el = V_.$('#insight'), cr = st.hist[st.hist.length - 1], miss = st.cov.filter(function (x) { return !x; }).length, h;
+    if (st.it === 0) h = (st.demos > 5 ? 'Đã có ' + st.demos + ' minh họa sạch nhưng chuyên gia không bao giờ bị lệch, nên mọi minh họa gần như trùng nhau: ' : 'Nhân bản hành vi từ 5 minh họa sạch: ') + 'dữ liệu chỉ nằm sát tim đường (chấm xám), ' + miss + '/20 ô cảm biến chưa từng sáng. Bị nhiễu đẩy lệch một chút là ô lạ sáng lên, mạng đưa ra góc lái gần như tùy ý, sai thêm, lệch thêm: đâm tường <b>' + V_.fmt(100 * cr, 0) + '%</b> lần thử. Bấm “Vòng DAgger”.';
+    else h = 'Sau ' + st.it + ' vòng DAgger, dữ liệu có cả những chỗ xe lệch xa tim đường (chấm màu), mỗi điểm kèm góc lái “chuyên gia sẽ làm gì ở đây”; ' + (miss ? 'còn ' + miss + ' ô cảm biến chưa từng sáng' : 'mọi ô cảm biến đều đã có dữ liệu') + '. Đâm tường: <b>' + V_.fmt(100 * cr, 0) + '%</b>' + (st.added ? ' (vòng vừa rồi thêm ' + st.added + ' cặp)' : '') + '.';
+    el.innerHTML = h; V_.texAll(el);
+  }
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'Đâm tường', color: '--s2' }], xName: 'Mô hình', xLabel: 'Mô hình (BC, rồi từng vòng DAgger)', dec: 2, yMin: 0, yMax: 1, aria: 'Tỉ lệ đâm tường theo mô hình' });
+  function render() {
+    pseudo.hl(st.phase === 'trained' ? ['agg', 'train'] : st.last ? (st.it ? ['drive', 'label'] : ['drive']) : 'init');
+    drawRoad(); drawSens(); drawScat(); showCalc(); insight();
+    V_.$('#mdl').textContent = st.labels[st.labels.length - 1]; V_.$('#nd').textContent = st.D.length; V_.$('#cr').textContent = V_.fmt(100 * st.hist[st.hist.length - 1], 0) + '%';
+    V_.$('#sig-v').textContent = V_.fmt(sig(), 2);
+    chart.set([st.hist]);
+    V_.postHeight();
+  }
+
+  var PER = [1, 1, 2, 4, 10];
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: function () { if (busy) return false; var n = PER[+V_.$('#speed').value - 1]; for (var i = 0; i < n; i++) { driveStep(); if (st.drive.done) break; } st.phase = 'drive'; render(); return true; } });
+  V_.$('#step').addEventListener('click', function () { if (busy) return; player.stop(); driveStep(); st.phase = 'drive'; render(); });
+  V_.$('#dagger').addEventListener('click', function () { daggerRound(); });
+  V_.$('#more').addEventListener('click', function () {
+    if (busy) return; busy = true; player.stop(); setBusy('Đang thêm 50 minh họa và huấn luyện lại…');
+    setTimeout(function () { if (st.it) { busy = false; reset(); busy = true; } addDemo(50); fit(st.net, st.D, 5, st.r); markCov(); st.hist.push(crashRate(st.net, V_.seeded(199), sig(), 40)); st.labels.push('BC+' + (st.demos - 5)); busy = false; setBusy(null); newDrive(); render(); }, 20);
+  });
+  V_.$('#reset').addEventListener('click', function () { if (!busy) reset(); });
+  V_.$('#sig').addEventListener('input', function () { V_.$('#sig-v').textContent = V_.fmt(sig(), 2); });
+  V_.$('#sig').addEventListener('change', function () { if (!busy) reset(); });
+
+  // ---------- so sánh ----------
+  V_.$('#cmp').addEventListener('click', function () {
+    if (busy) return; var btn = V_.$('#cmp'); btn.disabled = true;
+    var cfg = [['bc5', 'Nhân bản hành vi, 5 minh họa sạch'], ['bc55', 'Nhân bản hành vi, 55 minh họa sạch'], ['noisy', 'Nhân bản hành vi, 5 minh họa có nhiễu (chuyên gia cũng bị nhiễu $\\sigma$)'], ['dag', 'DAgger, 3 vòng (từ 5 minh họa sạch)']], res = {}, jobs = [];
+    cfg.forEach(function (c) { res[c[0]] = []; [1, 2, 3].forEach(function (sd) { jobs.push([c[0], sd]); }); });
+    var total = jobs.length;
+    (function next() {
+      if (!jobs.length) {
+        V_.$('#cmp-tab').innerHTML = '<table class="res"><thead><tr><th>Cách</th><th>Đâm tường (3 lần chạy)</th><th>Số cặp dữ liệu</th></tr></thead><tbody>' + cfg.map(function (c) { var a = res[c[0]]; return '<tr><td>' + c[1] + '</td><td>' + a.map(function (x) { return V_.fmt(100 * x.cr, 0) + '%'; }).join(' · ') + '</td><td>' + a[0].n + '</td></tr>'; }).join('') + '</tbody></table>';
+        V_.texAll(V_.$('#cmp-tab'));
+        var m = function (k) { return res[k].reduce(function (s, x) { return s + x.cr; }, 0) / 3; };
+        V_.$('#cmp-ins').innerHTML = 'Trung bình: 5 minh họa sạch ' + V_.fmt(100 * m('bc5'), 0) + '%, 55 minh họa sạch ' + V_.fmt(100 * m('bc55'), 0) + '%, minh họa có nhiễu ' + V_.fmt(100 * m('noisy'), 0) + '%, DAgger ' + V_.fmt(100 * m('dag'), 0) + '%. ' +
+          'Thêm minh họa sạch không giúp vì chúng không chứa tình huống lệch. Có hai cách đưa tình huống lệch vào dữ liệu: cho <b>chính diễn viên</b> tự lái rồi hỏi chuyên gia (DAgger, hình 11.3), hoặc cố tình làm chuyên gia lái lệch khi ghi minh họa. Trong bài toán nhỏ này cả hai đều hiệu quả; DAgger có ưu điểm là thu đúng những trạng thái mà <b>diễn viên</b> sẽ gặp, không cần đoán trước.';
+        V_.texAll(V_.$('#cmp-ins'));
+        btn.disabled = false; btn.textContent = 'Chạy lại so sánh'; V_.postHeight(); return;
+      }
+      var jb = jobs.shift(), r = V_.seeded(jb[1] * 13), net = new NN.MLP([21, 32, 32, 1], r), D = [], sg = sig();
+      var demo = function (k, ds) { for (var i = 0; i < k; i++) { var rec = []; roll(ds ? function (s) { return expert(s); } : expert, r, ds, rec); rec.forEach(function (s) { D.push({ f: feat(s), a: expert(s) }); }); } };
+      if (jb[0] === 'bc5' || jb[0] === 'dag') demo(5, 0); else if (jb[0] === 'bc55') demo(55, 0); else demo(5, sg);
+      fit(net, D, 30, r);
+      if (jb[0] === 'dag') for (var it = 0; it < 3; it++) { for (var k = 0; k < 3; k++) { var rec = []; roll(function (s) { return net.forward(feat(s))[0]; }, r, sg, rec); rec.forEach(function (s) { D.push({ f: feat(s), a: expert(s) }); }); } fit(net, D, 10, r); }
+      res[jb[0]].push({ cr: crashRate(net, V_.seeded(500 + jb[1]), sg, 40), n: D.length });
+      btn.textContent = 'Đang chạy… ' + (total - jobs.length) + '/' + total;
+      setTimeout(next, 0);
+    })();
+  });
+
+  V_.onTheme(render);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

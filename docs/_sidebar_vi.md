@@ -42,6 +42,7 @@
 - [Chương 11 Học bắt chước](chapter11/chapter11_vi)
 - [Chương 11 Bài tập](chapter11/chapter11_questions&keywords_vi)
 - [🧠 Chương 11 Ôn tập (flashcard + quiz)](review/index.html?ch=11 ':ignore :target=_self')
+- [🎬 Chương 11 Mô phỏng thuật toán](viz/index.html#ch11 ':ignore :target=_self')
 - [Chương 12 Thuật toán gradient chính sách tất định sâu (DDPG)](chapter12/chapter12_vi)
 - [Chương 12 Bài tập](chapter12/chapter12_questions&keywords_vi)
 - [Dự án 3 Dùng phương pháp Policy-Based giải Pendulum-v0](chapter12/project3_vi)
