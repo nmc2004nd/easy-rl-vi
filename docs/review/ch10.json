@@ -1,0 +1,547 @@
+{
+ "chapter": 10,
+ "title": "Chương 10 · Phần thưởng thưa",
+ "chapterLink": "../#/chapter10/chapter10_vi",
+ "exerciseLink": "../#/chapter10/chapter10_questions&keywords_vi",
+ "extras": "ch10-extras.js",
+ "cards": [
+  {
+   "id": "c10-sparse",
+   "tag": "Khái niệm",
+   "ref": "10",
+   "front": "**Phần thưởng thưa** là gì? Vì sao làm học tăng cường rất khó?",
+   "back": "Phần lớn thời gian tác tử nhận phần thưởng 0 (ví dụ robot phải nhặt tua vít rồi vặn ốc mới được $+1$).\nKhám phá ngẫu nhiên gần như không bao giờ chạm tới phần thưởng, nên với tác tử mọi hành động đều \\\"tệ như nhau\\\": nó không học được gì."
+  },
+  {
+   "id": "c10-three",
+   "tag": "Khái niệm",
+   "ref": "10 · Bài tập 10-1",
+   "front": "Các hướng giải quyết phần thưởng thưa trong chương?",
+   "back": "1. **Thiết kế phần thưởng** (reward shaping), gồm cả **phần thưởng hướng tò mò** (ICM).\n2. **Học theo giáo trình** (curriculum learning) và **giáo trình ngược**.\n3. **Học tăng cường phân cấp** (HRL)."
+  },
+  {
+   "id": "c10-shaping",
+   "tag": "Khái niệm",
+   "ref": "10.1",
+   "front": "**Thiết kế phần thưởng** là gì?",
+   "back": "Môi trường có phần thưởng thực cố định; ta **cố ý thêm** các phần thưởng không có trong môi trường để dẫn dắt tác tử làm điều ta muốn.\nVí dụ: cho đứa trẻ cây kẹo mút khi chịu học."
+  },
+  {
+   "id": "c10-kid",
+   "tag": "Vì sao",
+   "ref": "10.1 · Hình 10.1",
+   "front": "Ví dụ đứa trẻ: chơi được $+1$ ngay nhưng $-100$ sau 100 giờ; học bị $-1$ ngay nhưng $+100$ sau 100 giờ. Vì sao đứa trẻ vẫn chọn chơi?",
+   "back": "Đứa trẻ chiết khấu rất nặng ($\\gamma$ **nhỏ**), gần như chỉ thấy phần thưởng ngay sau đó; lại ít kinh nghiệm nên ước lượng $Q$ rất sai.\n> Ghi chú: bản gốc viết \\\"hệ số chiết khấu rất lớn\\\"; theo định nghĩa thì phải là $\\gamma$ nhỏ.\nCây kẹo mút làm phần thưởng ngay của \\\"học\\\" thành dương."
+  },
+  {
+   "id": "c10-kid-calc",
+   "tag": "Tính tay",
+   "ref": "10.1 (bổ sung)",
+   "front": "Với $\\gamma$ nào thì \\\"học\\\" tốt hơn \\\"chơi\\\" (không có kẹo)?",
+   "back": "$Q(\\text{chơi}) = 1 - 100\\gamma^{100}$, $Q(\\text{học}) = -1 + 100\\gamma^{100}$.\nHọc tốt hơn khi $200\\gamma^{100} > 2$, tức $\\gamma^{100} > 0{,}01$:\n$$\\gamma > 0{,}01^{1/100} \\approx 0{,}955$$"
+  },
+  {
+   "id": "c10-vizdoom",
+   "tag": "Khái niệm",
+   "ref": "10.1",
+   "front": "Meta thiết kế phần thưởng gì cho tác tử chơi ViZDoom?",
+   "back": "Mất máu: trừ. Đạn giảm: trừ. Nhặt gói tiếp tế: cộng. Đứng yên: trừ. Di chuyển: cộng.\n**Còn sống bị trừ một chút**: nếu không, tác tử chỉ lo sống sót, luôn né kẻ địch; trừ nhẹ làm nó hiếu chiến hơn."
+  },
+  {
+   "id": "c10-shaping-problem",
+   "tag": "Vì sao",
+   "ref": "10.1 · Hình 10.2 · Bài tập 10-2",
+   "front": "Vấn đề chính của thiết kế phần thưởng? (ví dụ tấm ván và cây cột)",
+   "back": "Cần **tri thức chuyên ngành**. Thưởng \\\"tấm ván càng gần cột càng tốt\\\" nghe hợp lý, nhưng robot sẽ **đập** tấm ván vào cột thay vì đặt lên trên rồi luồn qua.\nCách thưởng nào có vấn đề phải thử và điều chỉnh."
+  },
+  {
+   "id": "c10-potential",
+   "tag": "Công thức",
+   "ref": "10.1 (bổ sung)",
+   "front": "Thiết kế phần thưởng dạng **tiềm năng** (potential-based, Ng và cộng sự, 1999) là gì? Vì sao an toàn?",
+   "back": "Thêm $F(s, s') = \\gamma\\Phi(s') - \\Phi(s)$ với một hàm $\\Phi$ bất kỳ trên trạng thái.\nTổng phần thưởng thêm vào **co về** (telescoping) chỉ còn phụ thuộc trạng thái đầu, nên $Q'(s, a) = Q(s, a) - \\Phi(s)$: **chính sách tối ưu không đổi**. Không thể tạo ra \\\"vòng lặp ăn thưởng\\\" như ví dụ tấm ván."
+  },
+  {
+   "id": "c10-curiosity",
+   "tag": "Khái niệm",
+   "ref": "10.2 · Hình 10.3",
+   "front": "Phần thưởng **hướng tò mò** cộng gì vào tổng phần thưởng?",
+   "back": "Một **mô-đun tò mò nội tại** (ICM) nhận $(s_t, a_t, s_{t+1})$, đưa ra phần thưởng nội tại $r^i_t$.\nTác tử tối đa hóa $\\sum_t\\big(r_t + r^i_t\\big)$: muốn cả phần thưởng thật lẫn phần thưởng tò mò lớn."
+  },
+  {
+   "id": "c10-icm1",
+   "tag": "Khái niệm",
+   "ref": "10.2 · Hình 10.4 · Bài tập 10-3",
+   "front": "Thiết kế nguyên thủy của ICM: $r^i_t$ được tính thế nào?",
+   "back": "Mạng 1 dự đoán $\\hat s_{t+1}$ từ $(s_t, a_t)$. Phần thưởng là độ **khác nhau** giữa $\\hat s_{t+1}$ và $s_{t+1}$ thật:\n**trạng thái tương lai càng khó dự đoán, phần thưởng càng lớn**. Khuyến khích khám phá thế giới chưa biết.\nMạng 1 được huấn luyện riêng; khi tác tử tương tác thì cố định ICM."
+  },
+  {
+   "id": "c10-noisy-tv",
+   "tag": "Vì sao",
+   "ref": "10.2",
+   "front": "Vì sao chỉ dùng \\\"khó dự đoán\\\" là không đủ? (lá cây bay, cò quay Nga)",
+   "back": "Khó dự đoán **không** có nghĩa là tốt hay quan trọng. Lá cây bay, gió thổi cỏ lay là ngẫu nhiên nên **mãi mãi** khó dự đoán: tác tử sẽ đứng nhìn lá cây bay mãi.\nCò quay Nga cũng không dự đoán được nhưng không nên chơi mỗi ngày.\nPhải cho tác tử biết điều gì **thực sự quan trọng**."
+  },
+  {
+   "id": "c10-icm2",
+   "tag": "Khái niệm",
+   "ref": "10.2 · Hình 10.5",
+   "front": "ICM đầy đủ: bộ trích xuất đặc trưng $\\boldsymbol\\phi$ và mạng 2 để làm gì?",
+   "back": "Mạng 1 dự đoán $\\boldsymbol\\phi(s_{t+1})$ từ $a_t$ và $\\boldsymbol\\phi(s_t)$; $r^i$ là sai số dự đoán **trong không gian đặc trưng**.\n**Mạng 2** (mô hình ngược) dự đoán $a_t$ từ $\\boldsymbol\\phi(s_t)$, $\\boldsymbol\\phi(s_{t+1})$. Học $\\boldsymbol\\phi$ sao cho đoán được hành động, nên $\\boldsymbol\\phi$ chỉ giữ những gì **liên quan tới hành động**; lá cây bay không giúp đoán hành động nên bị lọc bỏ."
+  },
+  {
+   "id": "c10-icm-fix",
+   "tag": "Khái niệm",
+   "ref": "10.2",
+   "front": "Trong ICM đầy đủ, đầu vào của mạng 1 là gì? (lỗi trong bản gốc)",
+   "back": "Hành động $a_t$ và $\\boldsymbol\\phi(s_t)$.\n> Ghi chú: bản gốc viết \\\"cho nó một diễn viên (演员)\\\"; theo hình 10.5 phải là **hành động**."
+  },
+  {
+   "id": "c10-curriculum",
+   "tag": "Khái niệm",
+   "ref": "10.3",
+   "front": "**Học theo giáo trình** là gì? Ví dụ ngoài học tăng cường?",
+   "back": "Lập kế hoạch cho việc học: dữ liệu huấn luyện **từ dễ đến khó**.\nDạy phép nhân trước rồi mới dạy vi tích phân. Huấn luyện RNN: cho xem chuỗi ngắn trước, chuỗi dài sau thường học tốt hơn."
+  },
+  {
+   "id": "c10-curr-ex",
+   "tag": "Khái niệm",
+   "ref": "10.3 · Hình 10.6",
+   "front": "Ví dụ giáo trình trong học tăng cường?",
+   "back": "**ViZDoom** (Meta, hạng nhất cuộc thi): giáo trình 0 tới 7, quái vật nhanh hơn và nhiều máu hơn dần. Vào thẳng giáo trình 7 thì không học được.\n**Tấm ván và cây cột**: lúc đầu tấm ván đã ở trên cột (chỉ cần ấn xuống), rồi đặt cao hơn một chút, rồi xa hơn."
+  },
+  {
+   "id": "c10-reverse",
+   "tag": "Khái niệm",
+   "ref": "10.3 · Hình 10.7–10.8",
+   "front": "**Sinh giáo trình ngược** gồm những bước nào?",
+   "back": "1. Bắt đầu từ **trạng thái đích** $s_g$.\n2. Lấy mẫu các trạng thái $s_1$ **gần** $s_g$, cho tác tử chơi từ đó, ghi phần thưởng.\n3. **Bỏ** các trạng thái phần thưởng cực đoan: quá lớn (quá dễ, đã biết) và quá nhỏ (quá khó).\n4. Lấy mẫu thêm trạng thái quanh những trạng thái có phần thưởng **vừa phải**, xa đích hơn một chút. Lặp lại."
+  },
+  {
+   "id": "c10-reverse-why",
+   "tag": "Vì sao",
+   "ref": "10.3 (bổ sung)",
+   "front": "Vì sao giáo trình ngược giúp được khi phần thưởng thưa?",
+   "back": "Xuất phát **gần đích** thì khám phá ngẫu nhiên vẫn chạm được phần thưởng, nên tác tử có tín hiệu để học. Khi vùng gần đích đã học xong, giá trị \\\"lan\\\" ra dần; trạng thái xa hơn chỉ cần đi tới vùng đã học.\nLọc \\\"vừa phải\\\" giữ cho mỗi vòng đều có tín hiệu học hữu ích."
+  },
+  {
+   "id": "c10-hrl",
+   "tag": "Khái niệm",
+   "ref": "10.4 · Hình 10.9",
+   "front": "**Học tăng cường phân cấp** là gì? Ví dụ hiệu trưởng, giáo sư, nghiên cứu sinh?",
+   "back": "Nhiều tác tử phân cấp: tầng trên đưa ra **tầm nhìn** (mục tiêu con), tầng dưới nhận tầm nhìn làm đầu vào và thực hiện.\nHiệu trưởng: \\\"mỗi giáo sư 3 bài tạp chí/năm\\\" → giáo sư lập kế hoạch thí nghiệm → nghiên cứu sinh làm thí nghiệm. Đạt mục tiêu chung thì mọi người được thưởng."
+  },
+  {
+   "id": "c10-hrl-penalty",
+   "tag": "Vì sao",
+   "ref": "10.4",
+   "front": "Tầng trên đưa ra tầm nhìn mà tầng dưới không làm được thì sao?",
+   "back": "Tầng trên **bị phạt** (nhận phần thưởng âm), nên nó học cách tránh đặt mục tiêu bất khả thi cho tầng dưới."
+  },
+  {
+   "id": "c10-hrl-relabel",
+   "tag": "Khái niệm",
+   "ref": "10.4 · Hình 10.10",
+   "front": "Giáo sư định đăng bài tạp chí nhưng cuối cùng thành YouTuber. HRL xử lý thế nào?",
+   "back": "**Đổi tầm nhìn ban đầu** thành \\\"trở thành YouTuber\\\": coi như mục tiêu từ đầu đã là cái đạt được. Các hành động **không bị lãng phí**, tầng dưới học được cách đạt mục tiêu đó.\n(Ý tưởng gán lại mục tiêu này về sau phát triển thành hindsight experience replay.)"
+  },
+  {
+   "id": "c10-hrl-ex",
+   "tag": "Khái niệm",
+   "ref": "10.4 · Hình 10.11",
+   "front": "Trong ví dụ mê cung và con lắc ở hình 10.11, các điểm màu hồng là gì?",
+   "back": "**Tầm nhìn** (mục tiêu con) do tác tử tầng trên đưa ra. Tác tử tầng dưới (màu xanh lam) lần lượt đi tới từng điểm hồng, cuối cùng tới đích màu vàng."
+  },
+  {
+   "id": "c10-hrl-why",
+   "tag": "Vì sao",
+   "ref": "10.4 (bổ sung)",
+   "front": "Vì sao chia nhỏ mục tiêu giúp khám phá? (bước ngẫu nhiên trên chuỗi)",
+   "back": "Bước ngẫu nhiên cần trung bình khoảng $n^2$ bước để đi xa $n$ ô (tab Chứng minh).\nChia thành $k$ mục tiêu con, mỗi đoạn $n/k$ ô: tổng khoảng $k\\cdot(n/k)^2 = n^2/k$ bước. Mục tiêu càng gần thì khám phá càng dễ chạm phần thưởng."
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Vì sao phần thưởng thưa làm tác tử không học được?",
+   "options": [
+    "Khám phá ngẫu nhiên gần như không chạm tới phần thưởng, mọi hành động đều cho 0",
+    "Vì mạng quá nhỏ",
+    "Vì $\\gamma = 1$",
+    "Vì phần thưởng âm"
+   ],
+   "answer": 0,
+   "explain": "Không có tín hiệu nào phân biệt hành động.",
+   "ref": "10"
+  },
+  {
+   "q": "Trong ví dụ đứa trẻ, cây kẹo mút là:",
+   "options": [
+    "Phần thưởng do con người thiết kế, không phải phần thưởng thực",
+    "Phần thưởng thực của môi trường",
+    "Hệ số chiết khấu",
+    "Phần thưởng tò mò"
+   ],
+   "answer": 0,
+   "explain": "Thiết kế phần thưởng.",
+   "ref": "10.1"
+  },
+  {
+   "q": "Đứa trẻ chọn chơi vì:",
+   "options": [
+    "Chiết khấu nặng ($\\gamma$ nhỏ) và ước lượng $Q$ rất sai",
+    "$\\gamma$ rất lớn",
+    "Học cho phần thưởng âm mãi mãi",
+    "Không có trạng thái kết thúc"
+   ],
+   "answer": 0,
+   "explain": "Bản gốc viết nhầm thành \\\"hệ số chiết khấu rất lớn\\\".",
+   "ref": "10.1"
+  },
+  {
+   "q": "Với ví dụ đứa trẻ (không có kẹo), \\\"học\\\" tốt hơn \\\"chơi\\\" khi:",
+   "options": [
+    "$\\gamma > 0{,}01^{1/100} \\approx 0{,}955$",
+    "$\\gamma > 0{,}5$",
+    "$\\gamma < 0{,}9$",
+    "mọi $\\gamma$"
+   ],
+   "answer": 0,
+   "explain": "$200\\gamma^{100} > 2$.",
+   "ref": "10.1 (bổ sung)"
+  },
+  {
+   "q": "Vấn đề chính của thiết kế phần thưởng:",
+   "options": [
+    "Cần tri thức chuyên ngành; thiết kế sai có thể dẫn tới hành vi không mong muốn",
+    "Không dùng được với Q-learning",
+    "Làm phần thưởng thưa hơn",
+    "Cần nhiều tiến trình"
+   ],
+   "answer": 0,
+   "explain": "Ví dụ robot đập tấm ván vào cột.",
+   "ref": "10.1"
+  },
+  {
+   "q": "Thêm $F = \\gamma\\Phi(s') - \\Phi(s)$ vào phần thưởng thì chính sách tối ưu:",
+   "options": [
+    "Không đổi",
+    "Luôn đổi",
+    "Thành ngẫu nhiên",
+    "Chỉ đổi khi $\\Phi > 0$"
+   ],
+   "answer": 0,
+   "explain": "$Q' = Q - \\Phi(s)$.",
+   "ref": "10.1 (bổ sung)"
+  },
+  {
+   "q": "Trong ICM nguyên thủy, $r^i$ lớn khi:",
+   "options": [
+    "Trạng thái tiếp theo khó dự đoán",
+    "Trạng thái tiếp theo dễ dự đoán",
+    "Phần thưởng thật lớn",
+    "Tác tử đứng yên"
+   ],
+   "answer": 0,
+   "explain": "Khuyến khích khám phá.",
+   "ref": "10.2"
+  },
+  {
+   "q": "Vì sao ICM cần bộ trích xuất đặc trưng?",
+   "options": [
+    "Để bỏ các thứ ngẫu nhiên không quan trọng (lá cây bay) khỏi phép dự đoán",
+    "Để tăng tốc GPU",
+    "Để dự đoán phần thưởng thật",
+    "Để thay mạng Q"
+   ],
+   "answer": 0,
+   "explain": "Nếu không, tác tử nhìn lá cây bay mãi.",
+   "ref": "10.2"
+  },
+  {
+   "q": "Mạng 2 trong ICM (mô hình ngược) dự đoán:",
+   "options": [
+    "Hành động $a_t$ từ $\\boldsymbol\\phi(s_t)$ và $\\boldsymbol\\phi(s_{t+1})$",
+    "$\\boldsymbol\\phi(s_{t+1})$ từ $a_t$",
+    "Phần thưởng thật",
+    "Giá trị $V(s)$"
+   ],
+   "answer": 0,
+   "explain": "Nên $\\boldsymbol\\phi$ chỉ giữ thứ liên quan tới hành động.",
+   "ref": "10.2"
+  },
+  {
+   "q": "Học theo giáo trình là:",
+   "options": [
+    "Cho tác tử học từ nhiệm vụ dễ đến khó",
+    "Cho tác tử học từ khó đến dễ",
+    "Thêm phần thưởng tò mò",
+    "Chia tác tử thành nhiều tầng"
+   ],
+   "answer": 0,
+   "explain": "Như dạy phép nhân trước vi tích phân.",
+   "ref": "10.3"
+  },
+  {
+   "q": "Trong sinh giáo trình ngược, trạng thái có phần thưởng rất lớn thì:",
+   "options": [
+    "Bị bỏ vì quá dễ",
+    "Được ưu tiên học",
+    "Thành trạng thái đích mới",
+    "Bị phạt"
+   ],
+   "answer": 0,
+   "explain": "Chỉ giữ trạng thái có phần thưởng vừa phải.",
+   "ref": "10.3"
+  },
+  {
+   "q": "Trong học tăng cường phân cấp, hành động của tác tử tầng trên là:",
+   "options": [
+    "Đưa ra tầm nhìn (mục tiêu con) cho tầng dưới",
+    "Chọn hành động cấp thấp trực tiếp",
+    "Tính phần thưởng tò mò",
+    "Sắp xếp giáo trình"
+   ],
+   "answer": 0,
+   "explain": "Tầng dưới nhận tầm nhìn làm đầu vào.",
+   "ref": "10.4"
+  },
+  {
+   "q": "Bước ngẫu nhiên trên chuỗi cần khoảng $n^2$ bước để đi xa $n$ ô. Chia thành 4 mục tiêu con đều nhau thì cần khoảng:",
+   "options": [
+    "$n^2/4$",
+    "$n^2$",
+    "$4n^2$",
+    "$n/4$"
+   ],
+   "answer": 0,
+   "explain": "$4\\cdot(n/4)^2 = n^2/4$.",
+   "ref": "10.4 (bổ sung)"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p10-kid",
+   "ref": "10.1 (bổ sung)",
+   "title": "Đứa trẻ cần $\\gamma$ bao nhiêu thì mới chọn học?",
+   "start": "Bổ sung của người dịch. Chơi: $r = +1$ ngay, $-100$ sau 100 giờ. Học: $r = -1$ ngay, $+100$ sau 100 giờ. Coi phần thưởng ngay ở bước 0 và phần thưởng xa ở bước 100.",
+   "goal": "$$Q(\\text{học}) > Q(\\text{chơi}) \\iff \\gamma > 0{,}01^{1/100} \\approx 0{,}955$$",
+   "steps": [
+    {
+     "tex": "Q(\\text{chơi}) = 1 - 100\\gamma^{100},\\qquad Q(\\text{học}) = -1 + 100\\gamma^{100}"
+    },
+    {
+     "tex": "Q(\\text{học}) > Q(\\text{chơi}) \\iff 200\\gamma^{100} > 2",
+     "why": {
+      "options": [
+       "Chuyển vế, gom các số hạng",
+       "Bất đẳng thức Jensen",
+       "Lấy kỳ vọng",
+       "Vì $\\gamma = 1$"
+      ],
+      "answer": 0,
+      "explain": "$-1 + 100\\gamma^{100} > 1 - 100\\gamma^{100}$."
+     }
+    },
+    {
+     "tex": "\\iff \\gamma^{100} > 0{,}01",
+     "why": {
+      "options": [
+       "Chia hai vế cho 200",
+       "Lấy logarit",
+       "Bình phương hai vế",
+       "Vì $\\gamma < 1$"
+      ],
+      "answer": 0,
+      "explain": "$2/200 = 0{,}01$."
+     }
+    },
+    {
+     "tex": "\\iff \\gamma > 0{,}01^{1/100} = e^{\\ln(0{,}01)/100} \\approx e^{-0{,}046} \\approx 0{,}955",
+     "why": {
+      "options": [
+       "Lấy căn bậc 100 (hàm tăng trên $[0, 1]$)",
+       "Khai triển Taylor",
+       "Đổi dấu bất đẳng thức",
+       "Quy tắc chuỗi"
+      ],
+      "answer": 0,
+      "explain": "$\\ln 0{,}01 \\approx -4{,}605$."
+     }
+    }
+   ],
+   "hints": [
+    "Viết $Q$ của mỗi hành động là tổng hai phần thưởng có chiết khấu.",
+    "Chỉ còn $\\gamma^{100}$ là ẩn."
+   ],
+   "note": "Với cây kẹo $c$ khi học: học tốt hơn khi $c > 2 - 200\\gamma^{100}$. Với $\\gamma = 0{,}9$ thì $\\gamma^{100} \\approx 2{,}7\\cdot 10^{-5}$, cần $c > 1{,}99$: một cây kẹo trị giá 2 điểm là đủ đổi quyết định (tab Thí nghiệm 1)."
+  },
+  {
+   "id": "p10-pot",
+   "ref": "10.1 (bổ sung)",
+   "title": "Thiết kế phần thưởng dạng tiềm năng không đổi chính sách tối ưu",
+   "start": "Bổ sung của người dịch (Ng, Harada, Russell, 1999). Phần thưởng mới $r'_t = r_t + \\gamma\\Phi(s_{t+1}) - \\Phi(s_t)$, với tập vô hạn hoặc $\\gamma^T\\Phi(s_T) \\to 0$.",
+   "goal": "$$G'_0 = G_0 - \\Phi(s_0)\\quad\\Rightarrow\\quad Q'(s, a) = Q(s, a) - \\Phi(s)$$",
+   "steps": [
+    {
+     "tex": "G'_0 = \\sum_{t \\ge 0}\\gamma^t r_t + \\sum_{t \\ge 0}\\gamma^t\\big(\\gamma\\Phi(s_{t+1}) - \\Phi(s_t)\\big)"
+    },
+    {
+     "tex": "\\sum_{t \\ge 0}\\big(\\gamma^{t+1}\\Phi(s_{t+1}) - \\gamma^t\\Phi(s_t)\\big) = \\big(\\gamma\\Phi(s_1) - \\Phi(s_0)\\big) + \\big(\\gamma^2\\Phi(s_2) - \\gamma\\Phi(s_1)\\big) + \\cdots",
+     "why": {
+      "options": [
+       "Nhân $\\gamma^t$ vào và viết ra vài số hạng đầu",
+       "Bất đẳng thức tam giác",
+       "Phương trình Bellman",
+       "Lấy kỳ vọng"
+      ],
+      "answer": 0,
+      "explain": "Mỗi số hạng dương bị số hạng âm kế tiếp triệt tiêu."
+     }
+    },
+    {
+     "tex": "= -\\Phi(s_0)",
+     "why": {
+      "options": [
+       "Tổng co về (telescoping), số hạng cuối $\\gamma^T\\Phi(s_T) \\to 0$",
+       "Vì $\\Phi = 0$",
+       "Vì $\\gamma = 1$",
+       "Do chuẩn hóa"
+      ],
+      "answer": 0,
+      "explain": "Chỉ còn số hạng đầu tiên."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ G'_0 = G_0 - \\Phi(s_0),\\quad Q'(s, a) = \\mathbb E[G'_0 \\mid s_0 = s, a_0 = a] = Q(s, a) - \\Phi(s)",
+     "why": {
+      "options": [
+       "Lấy kỳ vọng; $\\Phi(s)$ là hằng số khi biết $s$",
+       "Quy tắc chuỗi",
+       "Mẹo đạo hàm logarit",
+       "Vì $Q = V$"
+      ],
+      "answer": 0,
+      "explain": "Ở mỗi $s$, mọi hành động bị trừ cùng một lượng $\\Phi(s)$, nên $\\arg\\max_a$ không đổi."
+     }
+    }
+   ],
+   "hints": [
+    "Viết phần thêm vào thành hiệu $\\gamma^{t+1}\\Phi(s_{t+1}) - \\gamma^t\\Phi(s_t)$.",
+    "Tổng của các hiệu liên tiếp còn lại gì?"
+   ],
+   "note": "Ngược lại, thưởng kiểu \\\"càng gần càng tốt\\\" ($r' = r + c\\cdot\\text{độ gần}(s')$) không co về được: tác tử có thể đứng lì ở chỗ gần đích để ăn thưởng mãi (giống robot đập tấm ván vào cột). Tab Thí nghiệm 2 so sánh cả hai."
+  },
+  {
+   "id": "p10-tv",
+   "ref": "10.2 (bổ sung)",
+   "title": "Vì sao tác tử tò mò “nghiện” lá cây bay",
+   "start": "Bổ sung của người dịch. Ở một trạng thái, quan sát tiếp theo là một trong $K$ khả năng, mỗi khả năng xác suất $1/K$, độc lập với mọi thứ (lá cây bay). Mô hình dự đoán đưa ra phân phối $q = (q_1, \\ldots, q_K)$ và đoán đúng với xác suất $q_{\\text{thật}}$. Phần thưởng tò mò $r^i = 1 - q_{\\text{thật}}$.",
+   "goal": "$$\\mathbb E[r^i] = 1 - \\frac1K\\ \\text{với mọi mô hình } q$$",
+   "steps": [
+    {
+     "tex": "\\mathbb E[q_{\\text{thật}}] = \\sum_{k=1}^{K} P(\\text{thật} = k)\\,q_k"
+    },
+    {
+     "tex": "= \\sum_{k=1}^{K}\\frac1K q_k",
+     "why": {
+      "options": [
+       "Mỗi khả năng có xác suất $1/K$",
+       "Vì $q$ đều",
+       "Vì $K = 2$",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Quan sát hoàn toàn ngẫu nhiên."
+     }
+    },
+    {
+     "tex": "= \\frac1K\\sum_{k}q_k = \\frac1K",
+     "why": {
+      "options": [
+       "$q$ là phân phối nên $\\sum_k q_k = 1$",
+       "Vì $q_k = 1/K$",
+       "Bất đẳng thức Jensen",
+       "Do chuẩn hóa entropy"
+      ],
+      "answer": 0,
+      "explain": "Không phụ thuộc mô hình học được gì."
+     }
+    },
+    {
+     "tex": "\\Rightarrow\\ \\mathbb E[r^i] = 1 - \\frac1K",
+     "why": {
+      "options": [
+       "Thay vào định nghĩa $r^i$",
+       "Vì $r^i$ âm",
+       "Vì $K \\to \\infty$",
+       "Quy tắc chuỗi"
+      ],
+      "answer": 0,
+      "explain": "Không bao giờ giảm về 0, dù xem bao lâu."
+     }
+    }
+   ],
+   "hints": [
+    "Kỳ vọng theo kết quả thật, với xác suất $1/K$ mỗi kết quả.",
+    "$\\sum_k q_k = ?$"
+   ],
+   "note": "Ở chuyển trạng thái tất định, mô hình học được và $r^i \\to 0$ sau vài lần; ở chỗ ngẫu nhiên, $r^i$ mãi ở $1 - 1/K$. Vì vậy tác tử chỉ tò mò sẽ quay lại xem lá cây bay mãi. Bộ trích xuất đặc trưng $\\boldsymbol\\phi$ học bằng mô hình ngược bỏ phần ngẫu nhiên đó (không giúp đoán hành động), nên trong không gian $\\boldsymbol\\phi$ nó lại thành tất định (tab Thí nghiệm 3)."
+  },
+  {
+   "id": "p10-walk",
+   "ref": "10.4 (bổ sung)",
+   "title": "Bước ngẫu nhiên cần $n^2$ bước để đi xa $n$ ô",
+   "start": "Bổ sung của người dịch. Chuỗi ô $0, 1, \\ldots, n$; ô $0$ sát tường (từ ô $0$ luôn sang ô $1$), ô $n$ là đích. Ở ô $0 < k < n$, sang trái hoặc phải với xác suất $\\tfrac12$. Gọi $h(k)$ là số bước kỳ vọng để tới $n$ từ $k$.",
+   "goal": "$$h(k) = n^2 - k^2,\\qquad h(0) = n^2$$",
+   "steps": [
+    {
+     "tex": "h(n) = 0,\\qquad h(0) = 1 + h(1),\\qquad h(k) = 1 + \\tfrac12 h(k-1) + \\tfrac12 h(k+1)"
+    },
+    {
+     "tex": "\\text{Thử } h(k) = n^2 - k^2:\\quad 1 + \\tfrac12\\big(n^2 - (k-1)^2\\big) + \\tfrac12\\big(n^2 - (k+1)^2\\big)",
+     "why": {
+      "options": [
+       "Thay nghiệm đoán vào phương trình",
+       "Lấy kỳ vọng hai lần",
+       "Quy nạp theo $n$",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "Kiểm tra vế phải có bằng $n^2 - k^2$ không."
+     }
+    },
+    {
+     "tex": "= 1 + n^2 - \\tfrac12\\big((k-1)^2 + (k+1)^2\\big) = 1 + n^2 - (k^2 + 1) = n^2 - k^2",
+     "why": {
+      "options": [
+       "$(k-1)^2 + (k+1)^2 = 2k^2 + 2$",
+       "Vì $k = 0$",
+       "Vì $n = k$",
+       "Bất đẳng thức Cauchy"
+      ],
+      "answer": 0,
+      "explain": "Thỏa phương trình ở ô giữa."
+     }
+    },
+    {
+     "tex": "h(n) = 0\\ \\checkmark,\\qquad 1 + h(1) = 1 + n^2 - 1 = n^2 = h(0)\\ \\checkmark",
+     "why": {
+      "options": [
+       "Kiểm tra hai điều kiện biên",
+       "Vì $h$ tuyến tính",
+       "Vì $n = 1$",
+       "Do đối xứng"
+      ],
+      "answer": 0,
+      "explain": "Nghiệm thỏa cả biên nên đúng là $h$."
+     }
+    }
+   ],
+   "hints": [
+    "Viết phương trình một bước cho $h(k)$.",
+    "Đoán nghiệm dạng $a - k^2$."
+   ],
+   "note": "Đi xa gấp đôi thì lâu gấp bốn. Với $k$ mục tiêu con cách đều, mỗi đoạn $n/k$: tổng $k(n/k)^2 = n^2/k$. Đây là lý do mục tiêu con (điểm hồng ở hình 10.11) và giáo trình ngược (xuất phát gần đích) giúp được khi phần thưởng thưa."
+  }
+ ]
+}

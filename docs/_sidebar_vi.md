@@ -37,6 +37,7 @@
 - [🎬 Chương 9 Mô phỏng thuật toán](viz/index.html#ch9 ':ignore :target=_self')
 - [Chương 10 Phần thưởng thưa](chapter10/chapter10_vi)
 - [Chương 10 Bài tập](chapter10/chapter10_questions&keywords_vi)
+- [🧠 Chương 10 Ôn tập (flashcard + quiz)](review/index.html?ch=10 ':ignore :target=_self')
 - [Chương 11 Học bắt chước](chapter11/chapter11_vi)
 - [Chương 11 Bài tập](chapter11/chapter11_questions&keywords_vi)
 - [Chương 12 Thuật toán gradient chính sách tất định sâu (DDPG)](chapter12/chapter12_vi)
