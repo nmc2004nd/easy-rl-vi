@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A2C từng bước · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  :root { --c3: #1f9d6b; --c4: #8b5cf6; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c3: #3cc28d; --c4: #a78bfa; } }
+  :root[data-theme="dark"] { --c3: #3cc28d; --c4: #a78bfa; }
+  .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  .gcap { text-align: center; font-weight: 600; font-size: .9rem; margin: 0 0 6px; }
+  .qbox { max-width: 360px; width: 100%; margin: 0 auto; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+  table.tr td.neg { color: var(--s2); font-weight: 700; }
+  table.tr td.pos { color: var(--accent-text); font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>A2C từng bước</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter9/chapter9_vi?id=_93-thuật-toán-diễn-viên-nhà-phê-bình-lợi-thế">Mục 9.3</a> · <a href="reinforce.html">REINFORCE trên cùng lưới</a></div>
+    </div>
+    <p class="lead">Hình 9.4 và biểu thức (9.2), trên đúng lưới của trang REINFORCE (chương 4). <b>Diễn viên</b>: mỗi ô có chính sách softmax $\pi(\cdot \mid s) = \mathrm{softmax}\big(\theta(s, \cdot)\big)$ (4 tam giác bên trái). <b>Nhà phê bình</b>: bảng $V(s)$ (bên phải). Khác REINFORCE, A2C <b>cập nhật ngay sau mỗi bước</b> bằng sai số TD $\delta = r + \gamma V(s') - V(s)$, không đợi hết tập.</p>
+  </div>
+  <div class="only-embed open-full"><a href="a2c.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <label for="aa">$\alpha_{\text{diễn viên}}$</label><input id="aa" type="range" min="0.02" max="0.5" step="0.02" value="0.1"><span class="val" id="aa-v"></span>
+      <label for="ac">$\alpha_{\text{phê bình}}$</label><input id="ac" type="range" min="0.05" max="0.8" step="0.05" value="0.2"><span class="val" id="ac-v"></span>
+    </div>
+    <div class="ctrl">
+      <label for="gamma">$\gamma$</label><input id="gamma" type="range" min="0.5" max="1" step="0.05" value="0.9"><span class="val" id="gamma-v"></span>
+      <label for="beta">entropy $\beta$</label><input id="beta" type="range" min="0" max="0.5" step="0.05" value="0"><span class="val" id="beta-v"></span>
+    </div>
+    <div class="ctrl">
+      <span class="lb">Nhiễu phần thưởng $\sigma$</span>
+      <div class="seg" id="noise"><button type="button" data-v="0" aria-pressed="true">0</button><button type="button" data-v="1" aria-pressed="false">1</button><button type="button" data-v="2" aria-pressed="false">2</button></div>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="ep">Hết tập</button>
+      <button type="button" class="btn" id="fast">+50 tập</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="3">
+    </div>
+    <p class="note" style="margin:4px 0">Lưới 4×4, bắt đầu ở $S$; mỗi bước $-1$, bước vào đích $G$ được $0$, rơi vào hố $-10$; cả hai kết thúc tập ($V = 0$ ở đó). Tập bị cắt sau 50 bước. Đường ngắn nhất 6 bước, tổng thưởng $-5$. Nhiễu $\mathcal N(0, \sigma^2)$ chỉ cộng vào phần thưởng tác tử <b>nhìn thấy</b> khi học; đồ thị vẫn vẽ tổng thưởng thật.</p>
+    <div class="stats"><span>Tập <b id="epn">1</b></span><span>Bước <b id="tn">0</b></span><span id="phase" class="phase"></span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="two-col">
+          <div><p class="gcap">Diễn viên $\pi(a \mid s)$</p><div class="qbox" id="gbox"></div><div class="scale" id="scale"></div></div>
+          <div><p class="gcap">Nhà phê bình $V(s)$</p><div class="qbox" id="vbox"></div><div class="scale" id="vscale"></div></div>
+        </div>
+        <div class="calc" id="calc"></div>
+        <div class="tscroll" id="tbox" style="max-height:220px;overflow-y:auto;margin-top:10px"><table class="tr"><thead><tr><th>$t$</th><th>$s_t$</th><th>$a_t$</th><th>$r$</th><th>$V(s_t)$</th><th>$V(s_{t+1})$</th><th>$\delta_t$</th></tr></thead><tbody id="rows"></tbody></table></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Tổng thưởng mỗi tập</h2>
+    <div id="chart"></div>
+    <p class="note">Làm trơn 10 tập khi đã có hơn 60 tập. Tối ưu là $-5$.</p>
+  </div>
+
+  <div class="blk">
+    <h2>So sánh với REINFORCE (cùng lưới)</h2>
+    <p class="note" style="margin:0 0 6px">Mỗi đường là trung bình của 30 lần chạy × 300 tập với $\gamma$, $\sigma$, $\beta$ hiện tại. REINFORCE dùng $G_t$ có chiết khấu và đường cơ sở (cấu hình tốt nhất của trang chương 4, $\alpha = 0{,}1$); A2C dùng $\alpha$ hiện tại.</p>
+    <div class="ctrl"><button type="button" class="btn" id="cmp">Chạy so sánh</button></div>
+    <div class="legend"><span class="li"><span class="sw" style="background:var(--s2)"></span>REINFORCE ($G_t - b$, cập nhật hết tập)</span><span class="li"><span class="sw" style="background:var(--s1)"></span>A2C ($\delta_t$, cập nhật từng bước)</span></div>
+    <div id="cmp-chart"></div>
+    <div class="insight" id="cmp-ins">Bấm “Chạy so sánh”.</div>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, R = 4, C = 4, N = 16, START = 12, GOAL = 3, PIT = 6, CAP = 50;
+  var DR = [-1, 0, 1, 0], DC = [0, 1, 0, -1], AN = ['\\uparrow', '\\rightarrow', '\\downarrow', '\\leftarrow'], AW = ['↑', '→', '↓', '←'];
+  function mv(s, a) { var r = Math.floor(s / C) + DR[a], c = s % C + DC[a]; if (r < 0 || c < 0 || r >= R || c >= C) return s; return r * C + c; }
+  function isTerm(s) { return s === GOAL || s === PIT; }
+  function rew(s2) { return s2 === GOAL ? 0 : s2 === PIT ? -10 : -1; }
+  function rc(s) { return '(' + Math.floor(s / C) + ',' + s % C + ')'; }
+  function softmax(t) { var m = Math.max.apply(null, t), e = t.map(function (x) { return Math.exp(x - m); }), s = e.reduce(function (a, b) { return a + b; }, 0); return e.map(function (x) { return x / s; }); }
+  function sample(p, rand) { var u = rand(), a = 0, c = p[0]; while (u > c && a < 3) { a++; c += p[a]; } return a; }
+  function gauss(r) { var u = r() || 1e-12, v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  function entGrad(p) { var H = -p.reduce(function (q, x) { return q + x * Math.log(x); }, 0); return { H: H, g: p.map(function (x) { return -x * (Math.log(x) + H); }) }; }
+  function aa() { return +V_.$('#aa').value; }
+  function ac() { return +V_.$('#ac').value; }
+  function gamma() { return +V_.$('#gamma').value; }
+  function beta() { return +V_.$('#beta').value; }
+  function sigma() { return +V_.$('#noise [aria-pressed=true]').dataset.v; }
+  function num(x, d) { return V_.tz(x, d == null ? 3 : d); }
+  function numP(x, d) { return V_.tz(x, d == null ? 3 : d, true); }
+  function vec(v, d) { return '[' + v.map(function (x) { return num(x, d == null ? 2 : d); }).join(',\\ ') + ']'; }
+
+  var st, view, vview, player, rand = Math.random;
+  function newState() {
+    var th = [], V = []; for (var s = 0; s < N; s++) { th.push([0, 0, 0, 0]); V.push(0); }
+    return { th: th, V: V, k: 1, t: 0, s: START, phase: 'act', cur: null, rows: [], last: null, hist: [], tot: 0 };
+  }
+  function reset() { player && player.stop(); buildPseudo(); st = newState(); render(); }
+
+  // ba pha mỗi bước thời gian: ① hành động ② nhà phê bình ③ diễn viên
+  function micro() {
+    var g = gamma();
+    if (st.phase === 'act') {
+      if (st.t === 0 && st.s === START && !st.cur) st.rows = [];
+      var s = st.s, p = softmax(st.th[s]), a = sample(p, rand), s2 = mv(s, a), r = rew(s2), ro = r + sigma() * gauss(rand);
+      st.cur = { s: s, a: a, p: p, r: r, ro: ro, s2: s2, term: isTerm(s2), trunc: !isTerm(s2) && st.t + 1 >= CAP };
+      st.tot += r;
+      st.last = { kind: 'act' }; st.phase = 'td'; return;
+    }
+    var c = st.cur;
+    if (st.phase === 'td') {
+      c.v0 = st.V[c.s]; c.vn = c.term ? 0 : st.V[c.s2]; c.d = c.ro + g * c.vn - c.v0;
+      st.V[c.s] = c.v0 + ac() * c.d; c.v1 = st.V[c.s];
+      st.rows.push({ t: st.t, s: c.s, a: c.a, r: c.ro, v0: c.v0, vn: c.vn, d: c.d });
+      st.last = { kind: 'td' }; st.phase = 'pi'; return;
+    }
+    if (st.phase === 'pi') {
+      var gl = c.p.map(function (x, k) { return (k === c.a ? 1 : 0) - x; }), eg = entGrad(c.p), b = beta();
+      for (var k = 0; k < 4; k++) st.th[c.s][k] += aa() * (c.d * gl[k] + b * eg.g[k]);
+      c.gl = gl; c.eg = eg; c.q = softmax(st.th[c.s]);
+      st.last = { kind: 'pi' };
+      st.t++;
+      if (c.term || c.trunc) { st.hist.push(st.tot); st.tot = 0; st.k++; st.t = 0; st.s = START; st.last.end = true; st.endInfo = c; st.cur = null; }
+      else { st.s = c.s2; }
+      st.phase = 'act';
+    }
+  }
+  function stepTime() { do micro(); while (st.phase !== 'act'); }
+
+  // ---------- mã giả ----------
+  var KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  var pseudo;
+  function buildPseudo() {
+    var lines = [
+      ['init', 0, 'Khởi tạo $\\theta(s, a) = 0$, $V(s) = 0$ với mọi $s, a$'],
+      ['ep', 0, KW('với mỗi tập') + ': $s \\leftarrow S$'],
+      ['loop', 1, KW('lặp') + ' tới khi kết thúc hoặc hết 50 bước:'],
+      ['act', 2, '$a \\sim \\pi(\\cdot \\mid s)$; nhận $r$, $s\'$'],
+      ['td', 2, '$\\delta \\leftarrow r + \\gamma V(s\') - V(s)$ <span class="cm">($V(s\') = 0$ nếu $s\'$ kết thúc)</span>'],
+      ['crit', 2, '<b>nhà phê bình</b>: $V(s) \\leftarrow V(s) + \\alpha_c\\,\\delta$'],
+      ['actor', 2, '<b>diễn viên</b>: $\\theta(s, \\cdot) \\mathrel{+}= \\alpha_a\\big(\\delta\\,(e_a - \\pi(\\cdot \\mid s)) + \\beta\\nabla H\\big)$'],
+      ['next', 2, '$s \\leftarrow s\'$']
+    ];
+    var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
+    box.innerHTML = '';
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: 'A2C dạng bảng (hình 9.4)', lines: lines, open: open });
+  }
+  function hlIds() {
+    var L = st.last;
+    if (!L) return 'init';
+    if (L.kind === 'act') return ['act'];
+    if (L.kind === 'td') return ['td', 'crit'];
+    return L.end ? ['actor', 'ep'] : ['actor', 'next'];
+  }
+
+  // ---------- giao diện ----------
+  var VMAX = 10;
+  function render() {
+    pseudo.hl(hlIds());
+    var c = st.cur || (st.last && st.last.end ? st.endInfo : null), L = st.last;
+    for (var s = 0; s < N; s++) {
+      var term = isTerm(s), lab = s === START ? 'S' : s === GOAL ? 'G' : s === PIT ? '−10' : '';
+      view.set(s, { kind: term ? 'term' : '', q: softmax(st.th[s]), maxAbs: 1, nums: true, dec: 2, arrow: !term, label: lab, value: s === PIT ? -10 : s === GOAL ? 0 : null,
+        aria: 'ô ' + rc(s) + (term ? '' : ', π = ' + softmax(st.th[s]).map(function (x) { return V_.fmt(x, 2); }).join(', ')) });
+      var col = term ? { bg: '', fg: '' } : V_.valueColor(st.V[s], VMAX);
+      vview.set(s, { id: lab, v: term ? '' : V_.fmt(st.V[s], 2), bg: col.bg, fg: col.fg, aria: 'ô ' + rc(s) + (term ? ', kết thúc' : ', V = ' + V_.fmt(st.V[s], 2)) });
+      vview.cls(s, 'term', term);
+    }
+    vview.clear('cur'); vview.clear('src');
+    if (c && L && L.kind !== 'pi') { vview.cls(c.s, 'cur', true); if (!c.term) vview.cls(c.s2, 'src', true); }
+    else vview.cls(L && !L.end ? st.s : START, 'cur', true);
+    view.agent(L && L.kind === 'pi' ? (L.end ? START : st.s) : c ? c.s : START);
+    if (c && L && L.kind !== 'td') view.mark(c.s, c.a); else view.mark(null);
+    V_.$('#scale').innerHTML = '<span>π = 0</span><span class="bar" style="background:linear-gradient(90deg,' + V_.cssVar('--surface-2') + ',' + V_.cssVar('--pos') + ')"></span><span>1</span>';
+    V_.scaleBar(V_.$('#vscale'), VMAX, true);
+    var body = V_.$('#rows');
+    body.innerHTML = st.rows.map(function (r, i) {
+      var now = i === st.rows.length - 1 && L && L.kind !== 'act';
+      return '<tr class="' + (now ? 'now' : 'done') + '"><td>' + r.t + '</td><td>' + rc(r.s) + '</td><td>' + AW[r.a] + '</td><td>' + V_.fmt(r.r, sigma() ? 2 : 0) + '</td><td>' + V_.fmt(r.v0, 2) + '</td><td>' + V_.fmt(r.vn, 2) + '</td><td class="' + (r.d < 0 ? 'neg' : r.d > 0 ? 'pos' : '') + '">' + V_.fmt(r.d, 2) + '</td></tr>';
+    }).join('') || '<tr><td colspan="7" style="color:var(--muted)">Chưa có bước nào trong tập này.</td></tr>';
+    var tb = V_.$('#tbox'); tb.scrollTop = tb.scrollHeight;
+    V_.$('#epn').textContent = st.k; V_.$('#tn').textContent = st.t;
+    var ph = V_.$('#phase');
+    ph.className = 'phase on';
+    ph.textContent = !L || L.kind === 'pi' ? '① Chọn hành động' : L.kind === 'act' ? '② Nhà phê bình: δ và V' : '③ Diễn viên: cập nhật θ';
+    if (!L || L.kind === 'pi') ph.className = 'phase ok';
+    showCalc(); insight(); drawChart();
+    V_.postHeight();
+  }
+
+  function showCalc() {
+    var el = V_.$('#calc'), L = st.last, g = gamma(), c = st.cur || (L && L.end ? st.endInfo : null);
+    if (!L) { el.innerHTML = '<span class="hint">Bấm “Bước tiếp”. Mỗi bước thời gian gồm 3 lần bấm: chọn hành động, nhà phê bình, diễn viên.</span>'; return; }
+    if (L.kind === 'act') {
+      V_.tex(el, '\\pi(\\cdot \\mid s) = ' + vec(c.p) + '\\ \\ (' + AN.join(',') + ')', true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">Ở $' + rc(c.s) + '$ lấy mẫu được $' + AN[c.a] + '$ (xác suất ' + V_.fmt(c.p[c.a], 2) + '), nhận $r = ' + num(c.ro, 2) + '$' + (sigma() ? ' (thật $' + c.r + '$, cộng nhiễu)' : '') + ', sang ' +
+        (c.s2 === GOAL ? 'đích.' : c.s2 === PIT ? 'hố.' : '$' + rc(c.s2) + '$.') + ' Khác REINFORCE: học <b>ngay bây giờ</b>, không đợi hết tập.</p>');
+      V_.texAll(el.lastChild); return;
+    }
+    if (L.kind === 'td') {
+      V_.tex(el, '\\begin{aligned}&\\delta = r + \\gamma V(s\') - V(s) = ' + numP(c.ro, 3) + ' + ' + num(g, 2) + '\\cdot ' + numP(c.vn, 3) + ' - ' + numP(c.v0, 3) + ' = ' + num(c.d, 3) +
+        '\\\\&V(s) \\leftarrow ' + num(c.v0, 3) + ' + ' + num(ac(), 2) + '\\cdot ' + numP(c.d, 3) + ' = ' + num(c.v1, 3) + '\\end{aligned}', true);
+      el.insertAdjacentHTML('beforeend', '<p class="hint">' + (c.term ? '$s\'$ là ô kết thúc nên $V(s\') = 0$. ' : c.trunc ? 'Tập bị cắt ở bước 50 nhưng $s\'$ không phải ô kết thúc, nên vẫn dùng $V(s\')$. ' : '') +
+        '$\\delta$ ' + (c.d > 0 ? '<b>dương</b>: kết quả tốt hơn nhà phê bình dự đoán.' : c.d < 0 ? '<b>âm</b>: kết quả tệ hơn nhà phê bình dự đoán.' : 'bằng 0.') + ' Đây là ước lượng lợi thế $A(s, a) \\approx r + \\gamma V(s\') - V(s)$ của (9.2).</p>');
+      V_.texAll(el.lastChild); return;
+    }
+    var b = beta();
+    V_.tex(el, '\\begin{aligned}&e_a - \\pi(\\cdot \\mid s) = ' + vec(c.gl) +
+      (b ? '\\\\&H = ' + num(c.eg.H, 3) + ',\\quad \\nabla H = -\\pi_k(\\ln\\pi_k + H) = ' + vec(c.eg.g) : '') +
+      '\\\\&\\theta(s, \\cdot) \\mathrel{+}= ' + num(aa(), 2) + '\\big(' + numP(c.d, 3) + '\\cdot(e_a - \\pi)' + (b ? ' + ' + num(b, 2) + '\\nabla H' : '') + '\\big)' +
+      '\\\\&\\pi(\\cdot \\mid s):\\ ' + vec(c.p) + '\\ \\to\\ ' + vec(c.q) + '\\end{aligned}', true);
+    el.insertAdjacentHTML('beforeend', '<p class="hint">$\\delta$ ' + (c.d < 0 ? '<b>âm</b> nên xác suất của $' + AN[c.a] + '$ ở ô này <b>giảm</b>.' : c.d > 0 ? '<b>dương</b> nên xác suất của $' + AN[c.a] + '$ ở ô này <b>tăng</b>.' : 'bằng 0 nên chỉ còn phần entropy.') +
+      (L.end ? ' Tập kết thúc với tổng thưởng ' + V_.fmt(st.hist[st.hist.length - 1], 0) + '.' : '') + '</p>');
+    V_.texAll(el.lastChild);
+  }
+
+  function greedyLen() {
+    var s = START, n = 0;
+    while (!isTerm(s) && n < 20) { var p = st.th[s], b = 0; for (var a = 1; a < 4; a++) if (p[a] > p[b]) b = a; s = mv(s, b); n++; }
+    return s === GOAL ? n : null;
+  }
+  function insight() {
+    var el = V_.$('#insight'), n = st.hist.length, h;
+    if (!n) h = st.last ? 'Lúc đầu $V = 0$ ở mọi ô nên $\\delta = r - 0 = -1$ gần như mọi bước: mọi hành động đã làm bị giảm nhẹ xác suất. Dần dần $V$ học được “còn bao xa tới đích”, khi đó bước <b>lại gần</b> đích có $\\delta > 0$, bước đi xa có $\\delta < 0$. So với REINFORCE: mỗi hành động được chấm điểm bằng <b>một</b> phần thưởng cộng dự đoán của nhà phê bình, không phải bằng tổng cả tập.' : 'Mọi ô bắt đầu với $\\pi$ đều và $V = 0$. Bấm “Bước tiếp” hoặc “Phát”.';
+    else {
+      var gl = greedyLen(), last = st.hist.slice(-20), avg = last.reduce(function (a, b) { return a + b; }, 0) / last.length;
+      h = 'Đã học ' + n + ' tập; trung bình ' + last.length + ' tập gần nhất: <b>' + V_.fmt(avg, 1) + '</b>. Đi theo hướng có xác suất lớn nhất từ $S$: ' + (gl == null ? '<b>chưa</b> tới đích.' : 'tới đích sau <b>' + gl + '</b> bước' + (gl === 6 ? ' (ngắn nhất).' : '.')) +
+        ' Ô sát đích có $V$ gần 0, càng xa càng âm: nhà phê bình đã “vẽ bản đồ” giá trị, nên diễn viên biết ngay mỗi bước là tốt hay xấu.';
+    }
+    el.innerHTML = h; V_.texAll(el);
+  }
+
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'Tổng thưởng', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 1, yMin: -50, yMax: 0, aria: 'Tổng thưởng mỗi tập' });
+  function smooth(h, w) { return h.map(function (_, i) { var s = 0, n = 0; for (var j = Math.max(0, i - w + 1); j <= i; j++) { s += h[j]; n++; } return s / n; }); }
+  function drawChart() { var h = st.hist; chart.set([smooth(h, h.length > 60 ? 10 : 1)]); }
+
+  // ---------- so sánh ----------
+  function runA2C(E, al, alc, g, sg, b, r) {
+    var th = [], V = [], hist = []; for (var s = 0; s < N; s++) { th.push([0, 0, 0, 0]); V.push(0); }
+    for (var e = 0; e < E; e++) {
+      var s0 = START, tot = 0, n = 0;
+      while (!isTerm(s0) && n < CAP) {
+        var p = softmax(th[s0]), a = sample(p, r), s2 = mv(s0, a), rr = rew(s2); tot += rr; n++;
+        var d = rr + sg * gauss(r) + (isTerm(s2) ? 0 : g * V[s2]) - V[s0]; V[s0] += alc * d;
+        var eg = b ? entGrad(p).g : null;
+        for (var k = 0; k < 4; k++) th[s0][k] += al * (d * ((k === a ? 1 : 0) - p[k]) + (b ? b * eg[k] : 0));
+        s0 = s2;
+      }
+      hist.push(tot);
+    }
+    return hist;
+  }
+  function runRF(E, al, g, sg, b, r) {
+    var th = [], hist = [], bs = 0, bn = 0; for (var s = 0; s < N; s++) th.push([0, 0, 0, 0]);
+    for (var e = 0; e < E; e++) {
+      var s0 = START, rows = [];
+      while (!isTerm(s0) && rows.length < CAP) { var a = sample(softmax(th[s0]), r), s2 = mv(s0, a); rows.push({ s: s0, a: a, r: rew(s2), ro: rew(s2) + sg * gauss(r) }); s0 = s2; }
+      var G = 0, t; for (t = rows.length - 1; t >= 0; t--) { G = rows[t].ro + g * G; rows[t].G = G; }
+      var bb = bn ? bs / bn : 0, tot = 0; rows.forEach(function (x) { tot += x.r; });
+      for (t = 0; t < rows.length; t++) {
+        var p = softmax(th[rows[t].s]), c = 0.1 * Math.pow(g, t) * (rows[t].G - bb), eg = b ? entGrad(p).g : null;
+        for (var k = 0; k < 4; k++) th[rows[t].s][k] += c * ((k === rows[t].a ? 1 : 0) - p[k]) + (b ? 0.1 * b * eg[k] : 0);
+      }
+      rows.forEach(function (x) { bs += x.G; bn++; });
+      hist.push(tot);
+    }
+    return hist;
+  }
+  var cmpChart = V_.LineChart(V_.$('#cmp-chart'), { series: [{ name: 'REINFORCE', color: '--s2' }, { name: 'A2C', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 1, yMin: -50, yMax: 0, aria: 'So sánh REINFORCE và A2C' });
+  V_.$('#cmp').addEventListener('click', function () {
+    var btn = V_.$('#cmp'); btn.disabled = true; btn.textContent = 'Đang chạy…';
+    setTimeout(function () {
+      var RU = 30, E = 300, g = gamma(), sg = sigma(), b = beta(), r = V_.seeded(9), a1 = new Array(E).fill(0), a2 = new Array(E).fill(0);
+      for (var i = 0; i < RU; i++) { runRF(E, 0.1, g, sg, b, r).forEach(function (v, k) { a1[k] += v / RU; }); runA2C(E, aa(), ac(), g, sg, b, r).forEach(function (v, k) { a2[k] += v / RU; }); }
+      var s1 = smooth(a1, 10), s2 = smooth(a2, 10);
+      cmpChart.set([s1, s2]);
+      var first = function (a) { for (var k = 0; k < a.length; k++) if (a[k] >= -7) return k + 1; return null; };
+      var f1 = first(s1), f2 = first(s2), m = function (a, k0, k1) { return a.slice(k0, k1).reduce(function (x, y) { return x + y; }, 0) / (k1 - k0); };
+      V_.$('#cmp-ins').innerHTML = 'Trung bình tập 51–100: REINFORCE <b>' + V_.fmt(m(a1, 50, 100), 1) + '</b>, A2C <b>' + V_.fmt(m(a2, 50, 100), 1) + '</b>; 50 tập cuối: ' + V_.fmt(m(a1, 250, 300), 1) + ' và ' + V_.fmt(m(a2, 250, 300), 1) + '. ' +
+        'Lần đầu đường trung bình đạt $-7$: REINFORCE ' + (f1 ? 'tập ' + f1 : 'chưa đạt') + ', A2C ' + (f2 ? 'tập ' + f2 : 'chưa đạt') + '. ' +
+        (sg ? 'Có nhiễu: $G_t$ cộng nhiễu của mọi bước còn lại nên REINFORCE chậm và kém hẳn, còn $\\delta_t$ chỉ chứa nhiễu của một bước.' : 'Không có nhiễu, A2C vẫn nhanh hơn vì cập nhật mỗi bước và mỗi hành động được chấm bằng $\\delta$ riêng. Bật nhiễu $\\sigma = 2$ để thấy khoảng cách lớn hơn ở cuối.');
+      V_.texAll(V_.$('#cmp-ins'));
+      btn.disabled = false; btn.textContent = 'Chạy lại so sánh';
+      V_.postHeight();
+    }, 30);
+  });
+
+  function finishEp() { player.stop(); var k = st.k, g = 0; while (st.k === k && g++ < 600) micro(); render(); }
+  function fast() { player.stop(); var k = st.k + 50, g = 0; while (st.k < k && g++ < 50 * 160) micro(); render(); }
+  function labels() { V_.$('#aa-v').textContent = V_.fmt(aa(), 2); V_.$('#ac-v').textContent = V_.fmt(ac(), 2); V_.$('#gamma-v').textContent = V_.fmt(gamma(), 2); V_.$('#beta-v').textContent = V_.fmt(beta(), 2); }
+
+  view = V_.QGrid(V_.$('#gbox'), R, C, { aria: 'Chính sách π(a|s) ở mỗi ô' });
+  vview = V_.GridView(V_.$('#vbox'), R, C);
+  var PER = [1, 1, 3, 6, 30];
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: function () { var sp = +V_.$('#speed').value; if (sp <= 2) micro(); else for (var i = 0; i < PER[sp - 1]; i++) stepTime(); render(); return true; } });
+  V_.$('#step').addEventListener('click', function () { player.stop(); micro(); render(); });
+  V_.$('#ep').addEventListener('click', finishEp);
+  V_.$('#fast').addEventListener('click', fast);
+  V_.$('#reset').addEventListener('click', reset);
+  V_.$('#noise').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    V_.$$('#noise button').forEach(function (x) { x.setAttribute('aria-pressed', x === b ? 'true' : 'false'); });
+    reset();
+  });
+  ['#aa', '#ac', '#gamma', '#beta'].forEach(function (id) { V_.$(id).addEventListener('input', labels); });
+  V_.onTheme(render);
+  labels();
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>

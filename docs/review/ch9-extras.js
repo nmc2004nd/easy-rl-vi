@@ -484,10 +484,31 @@
     ctx.typeset(root);
   }
 
+  // ======================================================================
+  // TAB "Mô phỏng": liên kết tới các trang docs/viz
+  // ======================================================================
+  var VIZ = [
+    ['a2c.html', 'Mục 9.3', 'A2C từng bước', 'Nhà phê bình và diễn viên cập nhật sau mỗi bước bằng sai số TD; so sánh với REINFORCE trên cùng lưới.'],
+    ['a3c.html', 'Mục 9.4', 'A3C: các Ảnh phân thân', 'Nhiều tiến trình bất đồng bộ, gradient cũ bao nhiêu phiên bản; so sánh 1, 2, 4, 8 tiến trình.']
+  ];
+  function renderViz(root, ctx) {
+    root.innerHTML = '';
+    root.classList.add('rx');
+    var b = h('<section class="blk"><h2>Mô phỏng thuật toán</h2>' +
+      '<p class="lead">Chạy từng bước các thuật toán của chương, kèm phép tính bằng số thật và mã giả tô sáng dòng đang chạy. Mở trong cùng tab; bấm “← Các mô phỏng” để quay lại danh sách.</p>' +
+      '<div class="lanes">' + VIZ.map(function (v) {
+        return '<a class="lane" style="display:block;text-decoration:none;color:inherit" href="../viz/' + v[0] + '"><div class="lt">' + v[2] +
+          ' <span>· ' + v[1] + '</span></div><div class="rxs">' + v[3] + '</div></a>';
+      }).join('') + '</div></section>');
+    root.appendChild(b);
+    ctx.typeset(b);
+  }
+
   window.ReviewExtras = {
     tabs: [
       { id: 'lab', label: 'Thí nghiệm', render: renderLab },
-      { id: 'map', label: 'Sơ đồ', render: renderMap }
+      { id: 'map', label: 'Sơ đồ', render: renderMap },
+      { id: 'viz', label: 'Mô phỏng', render: renderViz }
     ]
   };
 })();

@@ -103,6 +103,15 @@ Hình 9.5 là ví dụ về hành động rời rạc, trường hợp hành đ�
 
 Mẹo thứ hai là ta cần cơ chế khám phá. Trong thuật toán diễn viên-nhà phê bình, một phương pháp khám phá phổ biến là đặt một ràng buộc lên phân phối do $\pi$ đưa ra. Ràng buộc này dùng để làm entropy của phân phối không quá nhỏ, tức là mong xác suất các hành động khác nhau được chọn đều hơn một chút. Như vậy khi kiểm thử, tác tử mới thử nhiều hành động khác nhau hơn, mới khám phá môi trường khá tốt, từ đó có được kết quả khá tốt.
 
+<details class="viz-box">
+<summary>🎬 Mô phỏng A2C từng bước <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: A2C dạng bảng trên đúng lưới của trang REINFORCE ở chương 4. Mỗi bước: tính $\delta = r + \gamma V(s') - V(s)$, cập nhật nhà phê bình rồi diễn viên; có hệ số entropy và nhiễu phần thưởng, cùng phần so sánh với REINFORCE. [Mở trang riêng](viz/a2c.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/a2c.html?embed" style="height:2583px" title="Mô phỏng A2C từng bước" loading="lazy"></iframe>
+
+</details>
+
 ## 9.4 Thuật toán diễn viên-nhà phê bình lợi thế bất đồng bộ
 Học tăng cường có một vấn đề, đó là nó rất chậm, làm sao tăng tốc độ huấn luyện? Ví dụ, như hình 9.6, trong anime *Naruto*, có lần Naruto muốn đánh bại Akatsuki trong vòng một tuần, nên phải tăng tốc độ tu luyện, thầy của Naruto dạy cậu một cách: dùng Ảnh phân thân (Shadow Clone) để cùng tu luyện. Hai người cùng tu luyện, tốc độ tích lũy kinh nghiệm sẽ thành gấp đôi, vì vậy Naruto dùng 1000 Ảnh phân thân để tu luyện. Đây chính là sự thể hiện của thuật toán diễn viên-nhà phê bình lợi thế bất đồng bộ.
 
@@ -126,6 +135,15 @@ Chú ý, A3C dùng phương pháp khám phá song song, tất cả các diễn v
 </div>
 <div align=center>Hình 9.7 Quy trình vận hành của thuật toán diễn viên-nhà phê bình lợi thế bất đồng bộ</div>
 
+
+<details class="viz-box">
+<summary>🎬 Mô phỏng A3C: các Ảnh phân thân <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: nhiều tiến trình cùng học một mạng toàn cục dạng bảng, không chờ nhau; xem từng lần gửi gradient được tính trên phiên bản nào và áp vào phiên bản nào, và so sánh 1, 2, 4, 8 tiến trình. [Mở trang riêng](viz/a3c.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/a3c.html?embed" style="height:2266px" title="Mô phỏng A3C: các Ảnh phân thân" loading="lazy"></iframe>
+
+</details>
 
 ## 9.5 Gradient chính sách đạo hàm theo đường đi
 
