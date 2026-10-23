@@ -1,0 +1,554 @@
+{
+ "chapter": 12,
+ "title": "Chương 12 · DDPG và TD3",
+ "chapterLink": "../#/chapter12/chapter12_vi",
+ "exerciseLink": "../#/chapter12/chapter12_questions&keywords_vi",
+ "extras": "ch12-extras.js",
+ "cards": [
+  {
+   "id": "c12-disc-cont",
+   "tag": "Khái niệm",
+   "ref": "12.1 · Hình 12.1",
+   "front": "Hành động rời rạc và liên tục khác nhau thế nào? Ví dụ?",
+   "back": "Rời rạc: **đếm được** (CartPole 2 hành động, Frozen Lake 4, Pong 6 phím).\nLiên tục: **không đếm được** (lực đẩy xe, góc vô lăng, điện áp 4 cánh quạt của máy bay bốn cánh quạt).\nQ-learning, DQN không xử lý được hành động liên tục."
+  },
+  {
+   "id": "c12-stoch-det",
+   "tag": "So sánh",
+   "ref": "12.1 · Bài tập 12-1",
+   "front": "Chính sách **ngẫu nhiên** $\\pi_\\theta(a \\mid s)$ và **tất định** $\\mu_\\theta(s)$ khác nhau thế nào?",
+   "back": "Ngẫu nhiên: cùng $s$, mỗi hành động có một xác suất, rút ngẫu nhiên (như bốc thăm).\nTất định: tham số cố định thì cùng $s$ **luôn** cho cùng một hành động."
+  },
+  {
+   "id": "c12-heads",
+   "tag": "Khái niệm",
+   "ref": "12.1 · Hình 12.3 · Bài tập 12-2",
+   "front": "Tầng đầu ra cho hành động rời rạc và liên tục?",
+   "back": "Rời rạc: **softmax**, đầu ra là xác suất các hành động, tổng bằng 1.\nLiên tục: **tanh**, giới hạn trong $[-1, 1]$, rồi **co giãn** theo phạm vi hành động thật."
+  },
+  {
+   "id": "c12-tanh-calc",
+   "tag": "Tính tay",
+   "ref": "12.1",
+   "front": "Mạng đưa ra 2,8; phạm vi tốc độ xe là $[-2, 2]$. Hành động cuối cùng?",
+   "back": "$\\tanh(2{,}8) \\approx 0{,}993 \\approx 0{,}99$; nhân 2: $\\approx 1{,}98$ (sách làm tròn $0{,}99 \\cdot 2 = 1{,}98$)."
+  },
+  {
+   "id": "c12-tanh-sat",
+   "tag": "Vì sao",
+   "ref": "12.1 (bổ sung)",
+   "front": "Vì sao đầu vào tanh quá lớn (ví dụ 2,8) lại làm học chậm?",
+   "back": "$\\dfrac{\\mathrm d}{\\mathrm dz}\\tanh z = 1 - \\tanh^2 z$; tại $z = 2{,}8$: $1 - 0{,}993^2 \\approx 0{,}015$.\nGradient qua tầng tanh gần như **biến mất** (bão hòa): muốn đổi hành động thì tham số phải thay đổi rất nhiều."
+  },
+  {
+   "id": "c12-ddpg-name",
+   "tag": "Khái niệm",
+   "ref": "12.2 · Hình 12.4",
+   "front": "Tách tên **DDPG** (deep deterministic policy gradient) ra từng phần.",
+   "back": "**Sâu**: dùng mạng nơ-ron.\n**Tất định**: đưa ra một hành động xác định, dùng được cho hành động liên tục.\n**Gradient chính sách**: dùng mạng chính sách; khác REINFORCE (cập nhật mỗi tập), DDPG cập nhật **mỗi bước**."
+  },
+  {
+   "id": "c12-ddpg-dqn",
+   "tag": "Khái niệm",
+   "ref": "12.2 · Hình 12.5",
+   "front": "DDPG liên hệ với DQN thế nào?",
+   "back": "DDPG là **mở rộng của DQN** sang hành động liên tục: thêm một **mạng chính sách** $\\mu_\\theta(s)$ (tham số $\\theta$) đưa ra hành động trực tiếp, bên cạnh mạng Q $Q_w(s, a)$ (tham số $w$).\nMượn mẹo của DQN: **mạng mục tiêu** và **phát lại kinh nghiệm**. Đây là cấu trúc diễn viên-nhà phê bình."
+  },
+  {
+   "id": "c12-ac-roles",
+   "tag": "Khái niệm",
+   "ref": "12.2 · Hình 12.6",
+   "front": "Ví dụ sân khấu: diễn viên, giám khảo, khán giả là ai trong DDPG?",
+   "back": "**Diễn viên** = mạng chính sách $\\mu_\\theta$: đưa ra hành động, cập nhật $\\theta$ để **điểm giám khảo** cao hơn (chỉ chiều theo giám khảo).\n**Giám khảo** = mạng Q $Q_w(s, a)$: chấm điểm, cập nhật $w$ theo **phản hồi của khán giả** (phần thưởng $r$).\nLúc đầu cả hai ngẫu nhiên; nhờ phần thưởng, giám khảo chấm ngày càng chuẩn, diễn viên ngày càng giỏi."
+  },
+  {
+   "id": "c12-actor-loss",
+   "tag": "Công thức",
+   "ref": "12.2 · Hình 12.7–12.8",
+   "front": "Hàm mất mát của mạng chính sách trong DDPG?",
+   "back": "Tối đa hóa $Q$ nên mất mát là **$Q$ với dấu trừ**:\n$$\\mathcal L(\\theta) = -Q_w\\big(s, \\mu_\\theta(s)\\big)$$\nHàm hợp: thay $a = \\mu_\\theta(s)$ vào; chỉ tối ưu $\\theta$ (giữ $w$ cố định)."
+  },
+  {
+   "id": "c12-dpg",
+   "tag": "Công thức",
+   "ref": "12.2 (bổ sung)",
+   "front": "Gradient của mạng chính sách (định lý gradient chính sách tất định)?",
+   "back": "$$\\nabla_\\theta Q_w\\big(s, \\mu_\\theta(s)\\big) = \\nabla_a Q_w(s, a)\\big|_{a = \\mu_\\theta(s)}\\,\\nabla_\\theta\\mu_\\theta(s)$$\nQuy tắc chuỗi: giám khảo cho biết **hướng** đổi hành động ($\\nabla_a Q$), diễn viên đổi tham số để đi theo hướng đó (như đạo hàm theo đường đi ở chương 9)."
+  },
+  {
+   "id": "c12-critic-loss",
+   "tag": "Công thức",
+   "ref": "12.2 · Hình 12.7",
+   "front": "Hàm mất mát của mạng Q trong DDPG?",
+   "back": "Sai số bình phương trung bình với mục tiêu:\n$$Q_{\\text{target}} = r + \\gamma Q_{\\bar w}\\big(s', \\mu_{\\bar\\theta}(s')\\big),\\qquad \\mathcal L(w) = \\big(Q_w(s, a) - Q_{\\text{target}}\\big)^2$$\nGiống DQN, nhưng $a'$ do **diễn viên mục tiêu** đưa ra thay vì $\\arg\\max$."
+  },
+  {
+   "id": "c12-four-nets",
+   "tag": "Khái niệm",
+   "ref": "12.2 · Hình 12.8",
+   "front": "DDPG có mấy mạng? Vai trò?",
+   "back": "**4 mạng**: mạng Q ($w$), mạng chính sách ($\\theta$), target\\_Q ($\\bar w$), target\\_P ($\\bar\\theta$).\nHai mạng mục tiêu chỉ dùng để tính $Q_{\\text{target}}$ cho ổn định: target\\_P đưa ra $a' = \\mu_{\\bar\\theta}(s')$, target\\_Q tính $Q_{\\bar w}(s', a')$.\n> Ghi chú: bản gốc chỉ ghi $w$, $\\bar w$ cho cả hai; bản dịch bổ sung $\\theta$, $\\bar\\theta$."
+  },
+  {
+   "id": "c12-soft",
+   "tag": "Công thức",
+   "ref": "12.2 (bổ sung)",
+   "front": "Mạng mục tiêu của DDPG cập nhật \\\"hơi khác DQN\\\" thế nào?",
+   "back": "DQN: **chép cứng** mỗi $C$ bước ($\\bar w \\leftarrow w$).\nDDPG: **cập nhật mềm** mỗi bước:\n$$\\bar w \\leftarrow \\tau w + (1 - \\tau)\\bar w,\\qquad \\tau \\ll 1\\ (\\text{ví dụ } 0{,}005)$$\nMạng mục tiêu là trung bình động mũ của mạng thật, \\\"trễ\\\" khoảng $1/\\tau$ bước."
+  },
+  {
+   "id": "c12-offpolicy",
+   "tag": "Vì sao",
+   "ref": "12.2 · Câu hỏi phỏng vấn 12-2",
+   "front": "DDPG là on-policy hay off-policy? Vì sao?",
+   "back": "**Off-policy**: (1) dùng **phát lại kinh nghiệm**, dữ liệu cũ từ chính sách cũ; (2) khi tương tác thêm **nhiễu** vào hành động nên chính sách hành vi khác chính sách đang tối ưu.\nDữ liệu cần: $(s, a, r, s')$."
+  },
+  {
+   "id": "c12-noise",
+   "tag": "Khái niệm",
+   "ref": "12.2",
+   "front": "DDPG khám phá thế nào? Nhiễu OU hay Gauss?",
+   "back": "Chính sách tất định nên tự nó không khám phá: **thêm nhiễu vào hành động** khi huấn luyện.\nBài báo gốc dùng **nhiễu OU** (tương quan theo thời gian); kết quả gần đây cho thấy **nhiễu Gauss** trung bình 0, không tương quan cũng rất tốt và đơn giản hơn.\nCó thể giảm nhiễu dần; khi **kiểm thử thì không thêm nhiễu**."
+  },
+  {
+   "id": "c12-ddpg-problem",
+   "tag": "Vì sao",
+   "ref": "12.3 · Hình 12.9",
+   "front": "Vấn đề thường gặp của DDPG?",
+   "back": "Rất **nhạy với siêu tham số**. Hàm Q học được bắt đầu **ước lượng quá cao** nhiều, rồi chính sách bị phá hỏng vì nó **khai thác sai số** của hàm Q (diễn viên đi tìm đúng chỗ giám khảo chấm nhầm cao).\nKiểm tra: so $Q$ của mạng với $Q$ thật tính bằng Monte Carlo (trung bình $G$ của 1000 quỹ đạo)."
+  },
+  {
+   "id": "c12-td3",
+   "tag": "Khái niệm",
+   "ref": "12.3",
+   "front": "**TD3** (twin delayed DDPG) thêm 3 mẹo nào?",
+   "back": "1. **Q-learning kép có cắt**: học hai hàm Q, mục tiêu dùng $\\min$ của hai.\n2. **Cập nhật chính sách trễ**: cập nhật nhà phê bình thường xuyên hơn, thường 2 lần nhà phê bình thì 1 lần chính sách.\n3. **Làm trơn chính sách mục tiêu**: thêm nhiễu bị cắt vào hành động mục tiêu."
+  },
+  {
+   "id": "c12-td3-target",
+   "tag": "Công thức",
+   "ref": "12.3",
+   "front": "Mục tiêu của TD3 (Q-learning kép có cắt)?",
+   "back": "$$y(r, s', d) = r + \\gamma(1 - d)\\min_{i=1,2}Q_{\\phi_{i,\\text{targ}}}\\big(s', a_{\\text{TD3}}(s')\\big)$$\nCả hai hàm Q đều hồi quy về cùng mục tiêu $y$ này."
+  },
+  {
+   "id": "c12-td3-min",
+   "tag": "Vì sao",
+   "ref": "12.3 (bổ sung)",
+   "front": "Vì sao lấy $\\min$ của hai hàm Q lại chống ước lượng quá cao?",
+   "back": "Diễn viên tìm hành động $Q_1$ chấm cao nhất, nên thường rơi đúng chỗ $Q_1$ **chấm nhầm cao**. $Q_2$ có sai số khác nên ít khi cũng chấm nhầm cao ở đúng chỗ đó; lấy $\\min$ loại phần nhầm cao.\nĐổi lại hơi **ước lượng thấp**: với hai ước lượng không chệch độc lập, độ lệch chuẩn $\\sigma$: $\\mathbb E[\\min] = \\mu - \\sigma/\\sqrt\\pi$."
+  },
+  {
+   "id": "c12-td3-smooth",
+   "tag": "Công thức",
+   "ref": "12.3",
+   "front": "Làm trơn chính sách mục tiêu: công thức và tác dụng?",
+   "back": "$$a_{\\text{TD3}}(s') = \\operatorname{clip}\\big(\\mu_{\\theta,\\text{targ}}(s') + \\operatorname{clip}(\\epsilon, -c, c),\\ a_{\\text{low}},\\ a_{\\text{high}}\\big),\\quad \\epsilon \\sim \\mathcal N(0, \\sigma)$$\nLàm trơn $Q$ theo hành động: một \\\"gai\\\" nhầm hẹp trong $Q$ bị trung bình hóa với lân cận, nên chính sách khó khai thác sai số hơn. Đây là một dạng **chính quy hóa**."
+  },
+  {
+   "id": "c12-td3-delay",
+   "tag": "Vì sao",
+   "ref": "12.3",
+   "front": "Vì sao cập nhật chính sách **trễ** hơn nhà phê bình?",
+   "back": "Thực nghiệm: khi chính sách đứng yên, nhà phê bình thường hội tụ đúng; cập nhật cả hai cùng nhịp (không có mạng mục tiêu) thì bất ổn.\nCho nhà phê bình vài bước để \\\"chấm chuẩn\\\" trước khi diễn viên đi theo nó."
+  },
+  {
+   "id": "c12-sensitive",
+   "tag": "Khái niệm",
+   "ref": "12.3 · Hình 12.10",
+   "front": "Bài báo TD3 và bài báo SAC đều thấy thuật toán mình tốt hơn. Điều đó nói lên gì?",
+   "back": "Nhiều thuật toán học tăng cường **nhạy với tham số và điều kiện ban đầu**; ngay cả DDPG do tác giả TD3 tự cài (\\\"our DDPG\\\") cũng khác bản chính thức. TD3 ít nhạy hơn DDPG."
+  },
+  {
+   "id": "c12-d4pg",
+   "tag": "Khái niệm",
+   "ref": "Câu hỏi phỏng vấn 12-3",
+   "front": "D4PG cải tiến DDPG ở những điểm nào?",
+   "back": "1. **Nhà phê bình phân phối**: học phân phối của $Q$, không chỉ kỳ vọng.\n2. **Lợi tức $N$ bước** cho mục tiêu TD.\n3. **Nhiều diễn viên song song** ($K$ diễn viên) cùng ghi vào một bộ đệm.\n4. **Phát lại kinh nghiệm ưu tiên**.\n(Gần như các thành phần của Rainbow ở chương 7, áp cho DDPG.)"
+  }
+ ],
+ "quiz": [
+  {
+   "q": "Tầng đầu ra phù hợp cho hành động liên tục trong $[-2, 2]$:",
+   "options": [
+    "tanh rồi nhân 2",
+    "softmax",
+    "sigmoid rồi cộng 2",
+    "không cần tầng nào"
+   ],
+   "answer": 0,
+   "explain": "tanh giới hạn trong $[-1, 1]$.",
+   "ref": "12.1"
+  },
+  {
+   "q": "Chính sách tất định $\\mu_\\theta(s)$:",
+   "options": [
+    "Với tham số cố định, cùng $s$ luôn cho cùng hành động",
+    "Rút hành động theo xác suất",
+    "Chỉ dùng cho hành động rời rạc",
+    "Không có tham số"
+   ],
+   "answer": 0,
+   "explain": "Không chịu ảnh hưởng của xác suất.",
+   "ref": "12.1"
+  },
+  {
+   "q": "$\\tfrac{\\mathrm d}{\\mathrm dz}\\tanh z$ tại $z = 2{,}8$ xấp xỉ:",
+   "options": [
+    "$0{,}015$",
+    "$0{,}99$",
+    "$1$",
+    "$2{,}8$"
+   ],
+   "answer": 0,
+   "explain": "$1 - \\tanh^2(2{,}8)$: tanh bão hòa.",
+   "ref": "12.1 (bổ sung)"
+  },
+  {
+   "q": "DDPG cập nhật mạng chính sách:",
+   "options": [
+    "Sau mỗi bước",
+    "Sau mỗi tập",
+    "Chỉ một lần",
+    "Không bao giờ"
+   ],
+   "answer": 0,
+   "explain": "Khác REINFORCE.",
+   "ref": "12.2"
+  },
+  {
+   "q": "Mất mát của mạng chính sách trong DDPG là:",
+   "options": [
+    "$-Q_w\\big(s, \\mu_\\theta(s)\\big)$",
+    "$\\big(Q_w(s, a) - Q_{\\text{target}}\\big)^2$",
+    "$-\\log\\pi_\\theta(a \\mid s)$",
+    "$Q_w(s, a)$"
+   ],
+   "answer": 0,
+   "explain": "Tối đa hóa $Q$ = tối thiểu hóa $-Q$.",
+   "ref": "12.2"
+  },
+  {
+   "q": "Trong $Q_{\\text{target}}$ của DDPG, hành động tiếp theo $a'$ do ai đưa ra?",
+   "options": [
+    "Mạng chính sách mục tiêu $\\mu_{\\bar\\theta}(s')$",
+    "$\\arg\\max_{a'}Q$",
+    "Mạng chính sách đang học",
+    "Ngẫu nhiên"
+   ],
+   "answer": 0,
+   "explain": "Không cần giải $\\arg\\max$.",
+   "ref": "12.2"
+  },
+  {
+   "q": "DDPG có tổng cộng bao nhiêu mạng nơ-ron?",
+   "options": [
+    "4",
+    "2",
+    "3",
+    "1"
+   ],
+   "answer": 0,
+   "explain": "Q, chính sách và hai mạng mục tiêu.",
+   "ref": "12.2"
+  },
+  {
+   "q": "Cập nhật mềm $\\bar w \\leftarrow \\tau w + (1 - \\tau)\\bar w$ với $\\tau = 0{,}01$: mạng mục tiêu “nhớ” khoảng bao nhiêu bước gần nhất?",
+   "options": [
+    "Khoảng 100",
+    "Khoảng 1",
+    "Khoảng 10000",
+    "Mọi bước như nhau"
+   ],
+   "answer": 0,
+   "explain": "Trung bình động mũ, cửa sổ hiệu dụng cỡ $1/\\tau$.",
+   "ref": "12.2 (bổ sung)"
+  },
+  {
+   "q": "DDPG là off-policy vì:",
+   "options": [
+    "Dùng phát lại kinh nghiệm và hành động có thêm nhiễu",
+    "Dùng mạng chính sách",
+    "Cập nhật mỗi bước",
+    "Dùng tanh"
+   ],
+   "answer": 0,
+   "explain": "Dữ liệu đến từ chính sách khác chính sách đang tối ưu.",
+   "ref": "12.2"
+  },
+  {
+   "q": "Vấn đề chính của DDPG mà TD3 sửa:",
+   "options": [
+    "Ước lượng quá cao $Q$, chính sách khai thác sai số của $Q$",
+    "Không xử lý được hành động liên tục",
+    "Cần quá nhiều bộ nhớ",
+    "Không có mạng mục tiêu"
+   ],
+   "answer": 0,
+   "explain": "Hình 12.9.",
+   "ref": "12.3"
+  },
+  {
+   "q": "Trong TD3, mục tiêu dùng:",
+   "options": [
+    "$\\min$ của hai hàm Q mục tiêu",
+    "$\\max$ của hai hàm Q",
+    "trung bình hai hàm Q",
+    "chỉ $Q_1$"
+   ],
+   "answer": 0,
+   "explain": "Q-learning kép có cắt.",
+   "ref": "12.3"
+  },
+  {
+   "q": "Hai ước lượng không chệch độc lập $\\mathcal N(\\mu, \\sigma^2)$: $\\mathbb E[\\min]$ bằng:",
+   "options": [
+    "$\\mu - \\sigma/\\sqrt\\pi$",
+    "$\\mu$",
+    "$\\mu + \\sigma/\\sqrt\\pi$",
+    "$\\mu - \\sigma$"
+   ],
+   "answer": 0,
+   "explain": "Hơi ước lượng thấp; tab Chứng minh.",
+   "ref": "12.3 (bổ sung)"
+  },
+  {
+   "q": "TD3 thường cập nhật chính sách:",
+   "options": [
+    "Một lần sau mỗi hai lần cập nhật nhà phê bình",
+    "Hai lần mỗi lần cập nhật nhà phê bình",
+    "Cùng nhịp với nhà phê bình",
+    "Một lần mỗi tập"
+   ],
+   "answer": 0,
+   "explain": "Cập nhật chính sách trễ.",
+   "ref": "12.3"
+  }
+ ],
+ "proofs": [
+  {
+   "id": "p12-dpg",
+   "ref": "12.1–12.2 (bổ sung)",
+   "title": "Gradient chính sách tất định qua tầng tanh",
+   "start": "Bổ sung của người dịch. Diễn viên: $z = \\theta^{\\mathrm T}\\boldsymbol\\psi(s)$ (lớp cuối tuyến tính), $a = a_{\\max}\\tanh z$. Nhà phê bình $Q_w(s, a)$ cố định. Mục tiêu tối đa hóa $J(\\theta) = Q_w\\big(s, \\mu_\\theta(s)\\big)$.",
+   "goal": "$$\\nabla_\\theta J = \\frac{\\partial Q_w}{\\partial a}\\cdot a_{\\max}\\big(1 - \\tanh^2 z\\big)\\cdot\\boldsymbol\\psi(s)$$",
+   "steps": [
+    {
+     "tex": "\\nabla_\\theta J = \\frac{\\partial Q_w}{\\partial a}\\Big|_{a = \\mu_\\theta(s)}\\cdot\\frac{\\partial a}{\\partial z}\\cdot\\nabla_\\theta z"
+    },
+    {
+     "tex": "\\frac{\\partial a}{\\partial z} = a_{\\max}\\big(1 - \\tanh^2 z\\big)",
+     "why": {
+      "options": [
+       "$\\frac{\\mathrm d}{\\mathrm dz}\\tanh z = 1 - \\tanh^2 z$",
+       "Vì $\\tanh z = z$",
+       "Quy tắc thương",
+       "Mẹo đạo hàm logarit"
+      ],
+      "answer": 0,
+      "explain": "$\\tanh = \\sinh/\\cosh$, đạo hàm $1/\\cosh^2 = 1 - \\tanh^2$."
+     }
+    },
+    {
+     "tex": "\\nabla_\\theta z = \\boldsymbol\\psi(s)",
+     "why": {
+      "options": [
+       "Đạo hàm của hàm tuyến tính theo tham số",
+       "Vì $z$ hằng số",
+       "Do chuẩn hóa",
+       "Luật số lớn"
+      ],
+      "answer": 0,
+      "explain": "$z = \\theta^{\\mathrm T}\\boldsymbol\\psi$."
+     }
+    },
+    {
+     "tex": "\\text{Ví dụ } z = 2{,}8,\\ a_{\\max} = 2:\\quad a = 2\\tanh 2{,}8 \\approx 1{,}986,\\quad \\frac{\\partial a}{\\partial z} = 2(1 - 0{,}993^2) \\approx 0{,}029",
+     "why": {
+      "options": [
+       "Thay số: tanh bão hòa nên gradient rất nhỏ",
+       "Vì $a_{\\max} = 0$",
+       "Vì $Q$ phẳng",
+       "Do nhiễu"
+      ],
+      "answer": 0,
+      "explain": "Dù $\\partial Q/\\partial a$ lớn, gradient tới $\\theta$ bị nhân với khoảng $0{,}03$."
+     }
+    }
+   ],
+   "hints": [
+    "Quy tắc chuỗi qua ba tầng: $Q \\leftarrow a \\leftarrow z \\leftarrow \\theta$.",
+    "Đạo hàm của $\\tanh$?"
+   ],
+   "note": "Hệ quả thực tế: khi diễn viên dồn hành động ra sát biên ($z$ lớn), nó gần như ngừng học. Tab Thí nghiệm 1 vẽ $\\tanh$ và đạo hàm của nó."
+  },
+  {
+   "id": "p12-soft",
+   "ref": "12.2 (bổ sung)",
+   "title": "Cập nhật mềm là trung bình động mũ",
+   "start": "Bổ sung của người dịch. Mỗi bước: $\\bar w_t = \\tau w_t + (1 - \\tau)\\bar w_{t-1}$, với $0 < \\tau < 1$.",
+   "goal": "$$\\bar w_t = \\sum_{k=0}^{t-1}\\tau(1 - \\tau)^k w_{t-k} + (1 - \\tau)^t\\bar w_0$$",
+   "steps": [
+    {
+     "tex": "\\bar w_t = \\tau w_t + (1 - \\tau)\\big(\\tau w_{t-1} + (1 - \\tau)\\bar w_{t-2}\\big)"
+    },
+    {
+     "tex": "= \\tau w_t + \\tau(1 - \\tau)w_{t-1} + (1 - \\tau)^2\\bar w_{t-2}",
+     "why": {
+      "options": [
+       "Thay công thức cho $\\bar w_{t-1}$ rồi khai triển",
+       "Bất đẳng thức tam giác",
+       "Luật số lớn",
+       "Vì $\\tau = 1$"
+      ],
+      "answer": 0,
+      "explain": "Lặp lại thêm các bước."
+     }
+    },
+    {
+     "tex": "= \\sum_{k=0}^{t-1}\\tau(1 - \\tau)^k w_{t-k} + (1 - \\tau)^t\\bar w_0",
+     "why": {
+      "options": [
+       "Quy nạp: mỗi lần lặp thêm một số hạng nhân thêm $(1 - \\tau)$",
+       "Tổng cấp số cộng",
+       "Khai triển Taylor",
+       "Vì $w$ không đổi"
+      ],
+      "answer": 0,
+      "explain": "Trọng số giảm theo cấp số nhân với tuổi $k$ của tham số."
+     }
+    },
+    {
+     "tex": "\\sum_{k \\ge 0}\\tau(1 - \\tau)^k = 1,\\qquad \\sum_{k \\ge 0}k\\,\\tau(1 - \\tau)^k = \\frac{1 - \\tau}{\\tau}",
+     "why": {
+      "options": [
+       "Tổng cấp số nhân và kỳ vọng của phân phối hình học",
+       "Vì $\\tau = 0{,}5$",
+       "Bất đẳng thức Jensen",
+       "Do chuẩn hóa"
+      ],
+      "answer": 0,
+      "explain": "Trọng số cộng lại bằng 1; “tuổi” trung bình của tham số trong $\\bar w$ là $(1 - \\tau)/\\tau \\approx 1/\\tau$."
+     }
+    }
+   ],
+   "hints": [
+    "Thay $\\bar w_{t-1}$ bằng công thức của chính nó.",
+    "Trọng số của $w_{t-k}$ là gì?"
+   ],
+   "note": "Với $\\tau = 0{,}005$, mạng mục tiêu trễ khoảng 200 bước so với mạng thật, nhưng thay đổi **mượt** từng chút một thay vì nhảy bậc như chép cứng mỗi $C$ bước ở DQN. Tab Thí nghiệm 4 vẽ cả hai."
+  },
+  {
+   "id": "p12-min",
+   "ref": "12.3 (bổ sung)",
+   "title": "Lấy $\\min$ của hai ước lượng thì hơi ước lượng thấp",
+   "start": "Bổ sung của người dịch. $X_1, X_2 \\sim \\mathcal N(\\mu, \\sigma^2)$ độc lập: hai ước lượng không chệch của cùng một giá trị $\\mu$.",
+   "goal": "$$\\mathbb E\\big[\\min(X_1, X_2)\\big] = \\mu - \\frac{\\sigma}{\\sqrt\\pi},\\qquad \\mathbb E\\big[\\max(X_1, X_2)\\big] = \\mu + \\frac{\\sigma}{\\sqrt\\pi}$$",
+   "steps": [
+    {
+     "tex": "\\min(X_1, X_2) = \\frac{X_1 + X_2 - |X_1 - X_2|}{2}"
+    },
+    {
+     "tex": "X_1 - X_2 \\sim \\mathcal N(0,\\ 2\\sigma^2)",
+     "why": {
+      "options": [
+       "Hiệu hai biến chuẩn độc lập: trung bình trừ nhau, phương sai cộng",
+       "Vì $X_1 = X_2$",
+       "Luật số lớn",
+       "Bất đẳng thức Jensen"
+      ],
+      "answer": 0,
+      "explain": "$\\mu - \\mu = 0$, $\\sigma^2 + \\sigma^2 = 2\\sigma^2$."
+     }
+    },
+    {
+     "tex": "\\mathbb E|X_1 - X_2| = \\sqrt{2}\\,\\sigma\\cdot\\sqrt{\\tfrac2\\pi} = \\frac{2\\sigma}{\\sqrt\\pi}",
+     "why": {
+      "options": [
+       "$\\mathbb E|Z| = s\\sqrt{2/\\pi}$ với $Z \\sim \\mathcal N(0, s^2)$",
+       "Vì $|X| = X$",
+       "Do đối xứng nên bằng 0",
+       "Bất đẳng thức tam giác"
+      ],
+      "answer": 0,
+      "explain": "Ở đây $s = \\sqrt2\\,\\sigma$."
+     }
+    },
+    {
+     "tex": "\\mathbb E[\\min] = \\frac{2\\mu - 2\\sigma/\\sqrt\\pi}{2} = \\mu - \\frac{\\sigma}{\\sqrt\\pi};\\quad \\max = X_1 + X_2 - \\min \\Rightarrow \\mathbb E[\\max] = \\mu + \\frac{\\sigma}{\\sqrt\\pi}",
+     "why": {
+      "options": [
+       "Tính kỳ vọng tuyến tính, rồi dùng $\\max + \\min = X_1 + X_2$",
+       "Vì $\\min = \\max$",
+       "Luật số lớn",
+       "Vì $\\sigma = 0$"
+      ],
+      "answer": 0,
+      "explain": "Với $\\sigma = 1$: lệch $\\approx \\pm 0{,}564$."
+     }
+    }
+   ],
+   "hints": [
+    "Viết $\\min$ qua tổng và giá trị tuyệt đối của hiệu.",
+    "Phân phối của $X_1 - X_2$?"
+   ],
+   "note": "Lấy $\\max$ (như diễn viên chọn hành động $Q$ chấm cao nhất) cho độ lệch dương $+\\sigma/\\sqrt\\pi$; TD3 lấy $\\min$ của hai nhà phê bình nên chuyển thành độ lệch âm nhỏ. Ước lượng thấp an toàn hơn vì diễn viên không “săn” được chỗ bị chấm thấp. Tab Thí nghiệm 3 đo trực tiếp."
+  },
+  {
+   "id": "p12-smooth",
+   "ref": "12.3 (bổ sung)",
+   "title": "Làm trơn chính sách mục tiêu san phẳng “gai” sai số",
+   "start": "Bổ sung của người dịch. Hàm $Q$ học được có một gai sai số hẹp: $e(a) = h\\,\\exp\\!\\big(-\\tfrac{(a - a_0)^2}{2w^2}\\big)$. Làm trơn: thay $Q(s', a')$ bằng $\\mathbb E_\\epsilon\\big[Q(s', a' + \\epsilon)\\big]$ với $\\epsilon \\sim \\mathcal N(0, \\sigma^2)$ (bỏ qua phần cắt).",
+   "goal": "$$\\max_a\\,\\mathbb E_\\epsilon\\big[e(a + \\epsilon)\\big] = h\\,\\frac{w}{\\sqrt{w^2 + \\sigma^2}}$$",
+   "steps": [
+    {
+     "tex": "\\mathbb E_\\epsilon\\big[e(a + \\epsilon)\\big] = \\int h\\,e^{-\\frac{(a + \\epsilon - a_0)^2}{2w^2}}\\,\\frac{1}{\\sqrt{2\\pi}\\sigma}e^{-\\frac{\\epsilon^2}{2\\sigma^2}}\\,\\mathrm d\\epsilon"
+    },
+    {
+     "tex": "= h\\sqrt{2\\pi}\\,w\\cdot\\mathcal N\\big(a - a_0;\\ 0,\\ w^2 + \\sigma^2\\big)",
+     "why": {
+      "options": [
+       "Tích chập hai hàm Gauss là một hàm Gauss, phương sai cộng nhau",
+       "Vì $\\sigma = 0$",
+       "Luật số lớn",
+       "Bất đẳng thức Jensen"
+      ],
+      "answer": 0,
+      "explain": "Viết gai thành $h\\sqrt{2\\pi}w\\cdot\\mathcal N(\\cdot;\\ a_0, w^2)$ rồi chập với $\\mathcal N(0, \\sigma^2)$."
+     }
+    },
+    {
+     "tex": "= h\\,\\frac{w}{\\sqrt{w^2 + \\sigma^2}}\\,e^{-\\frac{(a - a_0)^2}{2(w^2 + \\sigma^2)}}",
+     "why": {
+      "options": [
+       "Viết lại mật độ Gauss: $\\mathcal N(x; 0, v) = e^{-x^2/2v}/\\sqrt{2\\pi v}$",
+       "Khai triển Taylor",
+       "Vì $w = \\sigma$",
+       "Quy tắc chuỗi"
+      ],
+      "answer": 0,
+      "explain": "Gai rộng ra thành $\\sqrt{w^2 + \\sigma^2}$ và thấp đi."
+     }
+    },
+    {
+     "tex": "\\max_a = h\\,\\frac{w}{\\sqrt{w^2 + \\sigma^2}}\\quad(\\text{tại } a = a_0)",
+     "why": {
+      "options": [
+       "Hàm mũ lớn nhất khi số mũ bằng 0",
+       "Vì $h = 0$",
+       "Do đối xứng",
+       "Vì $\\sigma \\to \\infty$"
+      ],
+      "answer": 0,
+      "explain": "Ví dụ $w = 0{,}05$, $\\sigma = 0{,}2$: chiều cao giảm còn khoảng $24\\%$."
+     }
+    }
+   ],
+   "hints": [
+    "Đây là tích chập của hai hàm dạng Gauss.",
+    "Phương sai của tổng hai biến Gauss độc lập?"
+   ],
+   "note": "Sai số **hẹp** (gai nhọn mà diễn viên dễ “săn”) bị san phẳng mạnh, còn cấu trúc **rộng** của $Q$ thật thì gần như giữ nguyên. Vì vậy sách gọi làm trơn chính sách mục tiêu là một kiểu chính quy hóa."
+  }
+ ]
+}
