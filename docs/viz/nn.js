@@ -110,6 +110,18 @@
     }
   };
 
+  // gradient của mất mát theo đầu vào, với g = ∂L/∂out cho sẵn (không cập nhật tham số); dùng cho ∇_a Q
+  MLP.prototype.inputGrad = function (x, g) {
+    var acts = this.forwardAll(x), L = this.W.length, d = Float64Array.from(g);
+    for (var l = L - 1; l >= 0; l--) {
+      var a = acts[l], nIn = this.sizes[l], nOut = this.sizes[l + 1], w = this.W[l], dPrev = new Float64Array(nIn);
+      for (var j = 0; j < nOut; j++) { var dj = d[j]; if (dj === 0) continue; for (var i = 0; i < nIn; i++) dPrev[i] += w[i * nOut + j] * dj; }
+      if (l > 0) for (var i2 = 0; i2 < nIn; i2++) if (a[i2] <= 0) dPrev[i2] = 0;
+      d = dPrev;
+    }
+    return Array.prototype.slice.call(d);
+  };
+
   var NN = { MLP: MLP, seeded: seeded };
   if (typeof module !== 'undefined' && module.exports) module.exports = NN; else root.NN = NN;
 })(this);

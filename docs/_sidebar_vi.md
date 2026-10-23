@@ -46,6 +46,7 @@
 - [Chương 12 Thuật toán gradient chính sách tất định sâu (DDPG)](chapter12/chapter12_vi)
 - [Chương 12 Bài tập](chapter12/chapter12_questions&keywords_vi)
 - [🧠 Chương 12 Ôn tập (flashcard + quiz)](review/index.html?ch=12 ':ignore :target=_self')
+- [🎬 Chương 12 Mô phỏng thuật toán](viz/index.html#ch12 ':ignore :target=_self')
 - [Dự án 3 Dùng phương pháp Policy-Based giải Pendulum-v0](chapter12/project3_vi)
 - [Chương 13 Phân tích bài báo AlphaStar](chapter13/chapter13_vi)
 - [ICLR'25 Oral Học tăng cường chơi Minecraft](chapter14/ls-imagine_vi)

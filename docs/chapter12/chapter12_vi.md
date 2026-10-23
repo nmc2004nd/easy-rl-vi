@@ -87,6 +87,15 @@ Dữ liệu cần dùng để huấn luyện ở đây là $s$, $a$, $r$, $s'$, 
 
 DDPG huấn luyện một chính sách tất định theo cách off-policy. Vì chính sách là tất định, nên nếu tác tử dùng on-policy để khám phá, lúc đầu rất có thể nó sẽ không thử đủ nhiều hành động để tìm ra tín hiệu học hữu ích. Để chính sách của DDPG khám phá tốt hơn, khi huấn luyện ta thêm nhiễu vào hành động của chúng. Tác giả gốc của DDPG khuyến nghị dùng [nhiễu OU](https://en.wikipedia.org/wiki/Ornstein–Uhlenbeck_process) (nhiễu Ornstein-Uhlenbeck) có tương quan theo thời gian, nhưng kết quả gần đây cho thấy nhiễu Gauss không tương quan, trung bình bằng 0 cho hiệu quả rất tốt. Vì cái sau đơn giản hơn, nên ta thích dùng nó hơn. Để thuận tiện có được dữ liệu huấn luyện chất lượng cao hơn, ta có thể giảm nhiễu trong quá trình huấn luyện. Khi kiểm thử, để xem chính sách thể hiện thế nào khi tận dụng những gì nó đã học được, ta không thêm nhiễu vào hành động.
 
+<details class="viz-box">
+<summary>🎬 Mô phỏng DDPG trên con lắc <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: bốn mạng nơ-ron thật học trong trình duyệt trên con lắc (như Dự án 3); xem giám khảo $Q_w(\vartheta, a)$, diễn viên $\mu_\theta(\vartheta, \omega)$ và phép tính của từng lần cập nhật. [Mở trang riêng](viz/ddpg.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/ddpg.html?embed" style="height:1983px" title="Mô phỏng DDPG trên con lắc" loading="lazy"></iframe>
+
+</details>
+
 ## 12.3 Gradient chính sách tất định sâu trễ kép
 
 Tuy DDPG đôi khi thể hiện rất tốt, nhưng nó thường rất nhạy cảm với siêu tham số và các loại điều chỉnh khác. Như hình 12.9, vấn đề thường gặp của DDPG là hàm Q đã học tốt bắt đầu ước lượng quá cao giá trị Q một cách đáng kể, rồi dẫn đến chính sách bị phá hỏng, vì nó khai thác sai số trong hàm Q.
@@ -129,6 +138,15 @@ Như hình 12.10, ta có thể so sánh thuật toán TD3 với các thuật to�
 
 Tác giả TD3 đã cung cấp [bản cài đặt PyTorch](https://github.com/sfujim/TD3/) tương ứng, code viết rất tốt, ta có thể học nó như một thư viện chuẩn của học tăng cường. TD3 huấn luyện chính sách tất định theo cách off-policy. Vì chính sách này là tất định, nên nếu tác tử muốn khám phá chính sách, lúc đầu có thể nó sẽ không thử thực hiện đủ nhiều loại hành động để tìm ra tín hiệu học hữu ích. Để chính sách TD3 khám phá tốt hơn, khi huấn luyện ta thêm nhiễu vào hành động của chúng, thường là nhiễu Gauss không tương quan có trung bình bằng 0. Để thuận tiện có được dữ liệu huấn luyện chất lượng cao, ta có thể giảm độ lớn của nhiễu trong quá trình huấn luyện.
 Khi kiểm thử, để xem mức độ chính sách tận dụng kiến thức đã học, ta không thêm nhiễu vào hành động.
+
+<details class="viz-box">
+<summary>🎬 Mô phỏng DDPG và TD3: bật/tắt từng mẹo <span>(bấm để mở)</span></summary>
+
+> Phần bổ sung của người dịch: bật/tắt Q kép có cắt, cập nhật trễ, làm trơn trên con lắc; đo ước lượng $Q$ so với giá trị thật như hình 12.9 và bảng bỏ từng mẹo (tính sẵn). [Mở trang riêng](viz/td3.html ':ignore :target=_blank').
+
+<iframe class="viz-frame" src="viz/td3.html?embed" style="height:2881px" title="Mô phỏng DDPG và TD3: bật/tắt từng mẹo" loading="lazy"></iframe>
+
+</details>
 
 ## Tài liệu tham khảo
 * [百度强化学习 (Khóa học học tăng cường của Baidu)](https://aistudio.baidu.com/aistudio/education/lessonvideo/460292)

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DDPG trên con lắc · Mô phỏng</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<link rel="stylesheet" href="viz.css">
+<style>
+  :root { --c3: #1f9d6b; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --c3: #3cc28d; } }
+  :root[data-theme="dark"] { --c3: #3cc28d; }
+  .two-col { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+  .stage canvas { width: 100%; max-width: 260px; height: auto; display: block; margin: 0 auto; border-radius: 12px; background: var(--surface-2); }
+  .gcap { font-weight: 600; font-size: .9rem; margin: 8px 0 4px; text-align: center; }
+  .hm { max-width: 460px; margin: 0 auto; }
+  .hm svg { display: block; width: 100%; height: auto; }
+  .hm text { font-family: inherit; font-size: 11px; fill: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="no-embed">
+    <div class="top">
+      <h1>DDPG trên con lắc</h1>
+      <div class="crumbs"><a href="index.html">← Các mô phỏng</a> · <a href="../#/chapter12/chapter12_vi?id=_122-gradient-chính-sách-tất-định-sâu">Mục 12.2</a> · <a href="../#/chapter12/project3_vi">Dự án 3</a></div>
+    </div>
+    <p class="lead">Hình 12.5–12.8 trên môi trường con lắc (như Pendulum của Gym, Dự án 3): trạng thái là góc $\vartheta$ (0 là thẳng đứng) và vận tốc góc $\omega$; hành động là <b>mô-men liên tục</b> $a \in [-2, 2]$; phần thưởng $-(\vartheta^2 + 0{,}1\,\omega^2 + 0{,}001\,a^2)$ mỗi bước, 200 bước mỗi tập. Mô-men yếu nên phải lắc qua lắc lại lấy đà mới lên được. <b>Bốn mạng nơ-ron thật</b> ($32 \times 32$) học trong trình duyệt: diễn viên $\mu_\theta$, nhà phê bình $Q_w$ và hai mạng mục tiêu.</p>
+  </div>
+  <div class="only-embed open-full"><a href="ddpg.html" target="_blank" rel="noopener">Mở trang riêng ↗</a></div>
+
+  <div class="blk">
+    <div class="ctrl">
+      <label for="noise">nhiễu khám phá $\sigma$</label><input id="noise" type="range" min="0" max="0.3" step="0.02" value="0.1"><span class="val" id="noise-v"></span>
+    </div>
+    <div class="ctrl">
+      <button type="button" class="btn pri" id="play"></button>
+      <button type="button" class="btn" id="step">Bước tiếp</button>
+      <button type="button" class="btn" id="ep1">+1 tập (nhanh)</button>
+      <button type="button" class="btn" id="ep5">+5 tập</button>
+      <button type="button" class="btn" id="reset">Đặt lại</button>
+      <label for="speed">Tốc độ</label><input id="speed" type="range" min="1" max="5" step="1" value="4">
+    </div>
+    <p class="note" style="margin:4px 0">$\gamma = 0{,}99$, $\tau = 0{,}005$, lô 64, Adam $10^{-3}$ cho cả hai mạng, phần thưởng nhân 0,1 khi học. 1000 bước đầu chọn hành động ngẫu nhiên để có dữ liệu. Thường cần khoảng 15–25 tập (vài chục giây) để con lắc lên và đứng được; tốt là khoảng $-150$ trở lên mỗi tập.</p>
+    <div class="stats"><span>Tập <b id="epn">1</b></span><span>Bước <b id="tn">0</b></span><span>Tổng bước <b id="sn">0</b></span><span>Tập này <b id="rv">0</b></span><span id="busy" class="phase ok">Sẵn sàng</span></div>
+    <div class="pstrip has-side" id="pstrip"></div>
+    <div class="withcode">
+      <div class="wc-main">
+        <div class="two-col">
+          <div><p class="gcap">Con lắc</p><div class="stage"><canvas id="cv" width="260" height="260" aria-label="Con lắc"></canvas></div></div>
+          <div><p class="gcap">Giám khảo $Q_w(\vartheta, a)$ khi $\omega = 0$</p><div class="hm" id="qmap"></div></div>
+        </div>
+        <p class="gcap">Diễn viên $\mu_\theta(\vartheta, \omega)$: xanh là mô-men dương, cam là âm (đậm: sát $\pm 2$)</p>
+        <div class="hm" id="pmap"></div>
+        <div class="calc" id="calc"></div>
+        <div class="insight" id="insight"></div>
+      </div>
+      <div class="wc-code" id="pseudo"></div>
+    </div>
+  </div>
+
+  <div class="blk">
+    <h2>Tổng thưởng mỗi tập</h2>
+    <div id="chart"></div>
+    <p class="note">Tốt nhất có thể khoảng $-120$ đến $-150$ (tùy góc xuất phát); chính sách ngẫu nhiên khoảng $-1200$.</p>
+  </div>
+</div>
+<script src="viz.js"></script>
+<script src="nn.js"></script>
+<script src="ddpg-agent.js"></script>
+<script>
+(function () {
+  'use strict';
+  var V_ = Viz, PD = DDPG.PD, RS = 0.1, WARM = 1000;
+  function cfg() { return { hidden: 32, lrA: 1e-3, lrC: 1e-3, gamma: 0.99, tau: 0.005, batch: 64, buf: 50000, noise: +V_.$('#noise').value, warm: WARM, rScale: RS, rand: NN.seeded(7) }; }
+  var st, player, busy = false;
+  function reset() {
+    player && player.stop();
+    st = { ag: new DDPG.Agent(cfg()), ep: 1, t: 0, R: 0, hist: [], last: null, phase: 'act' };
+    st.r = st.ag.rand; st.s = PD.reset(st.r);
+    buildPseudo(); render();
+  }
+  function envStep(keep) {
+    var ag = st.ag, x = PD.obs(st.s), rnd = ag.steps < WARM, a0 = ag.mu(ag.actor, x), a = rnd ? (2 * st.r() - 1) * PD.MAXU : ag.act(x, ag.o.noise), o = PD.step(st.s, a);
+    ag.store(x, a, o.r * RS, PD.obs(o.s)); ag.steps++;
+    var L = ag.learn(keep);
+    st.last = { x: x, s: st.s, a: a, a0: a0, rnd: rnd, r: o.r, L: L };
+    st.s = o.s; st.R += o.r; st.t++;
+    if (st.t >= PD.T) { st.hist.push(st.R); st.R = 0; st.t = 0; st.ep++; st.s = PD.reset(st.r); st.last.end = true; }
+  }
+
+  // ---------- mã giả ----------
+  var pseudo, KW = function (t) { return '<span class="kw">' + t + '</span>'; };
+  function buildPseudo() {
+    var lines = [
+      ['init', 0, 'khởi tạo $\\theta$, $w$; $\\bar\\theta \\leftarrow \\theta$, $\\bar w \\leftarrow w$; bộ đệm rỗng'],
+      ['act', 0, KW('mỗi bước') + ': $a = \\operatorname{clip}\\big(\\mu_\\theta(s) + \\epsilon, -2, 2\\big)$, $\\epsilon \\sim \\mathcal N(0, (2\\sigma)^2)$; nhận $r$, $s\'$; lưu $(s, a, r, s\')$'],
+      ['samp', 1, 'lấy lô 64 mẫu từ bộ đệm'],
+      ['y', 1, '$y = r + \\gamma\\,Q_{\\bar w}\\big(s\', \\mu_{\\bar\\theta}(s\')\\big)$ <span class="cm">(target_P, target_Q)</span>'],
+      ['critic', 1, '<b>giám khảo</b>: giảm $\\big(Q_w(s, a) - y\\big)^2$'],
+      ['actor', 1, '<b>diễn viên</b>: giảm $-Q_w\\big(s, \\mu_\\theta(s)\\big)$, $\\nabla_\\theta = \\nabla_a Q_w\\cdot\\nabla_\\theta\\mu_\\theta$'],
+      ['soft', 1, '$\\bar w \\leftarrow \\tau w + (1 - \\tau)\\bar w$, $\\bar\\theta \\leftarrow \\tau\\theta + (1 - \\tau)\\bar\\theta$']
+    ];
+    var box = V_.$('#pseudo'), open = pseudo ? pseudo.el.open : true;
+    box.innerHTML = '';
+    pseudo = V_.Pseudo(box, { strip: V_.$('#pstrip'), title: 'DDPG (hình 12.8)', lines: lines, open: open });
+  }
+
+  // ---------- vẽ ----------
+  var cv = V_.$('#cv'), g = cv.getContext('2d');
+  function drawPend() {
+    var W = cv.width, H = cv.height, cx = W / 2, cy = H / 2, L = 90, th = st.s.th;
+    g.clearRect(0, 0, W, H);
+    var x2 = cx + L * Math.sin(th), y2 = cy - L * Math.cos(th);
+    g.strokeStyle = V_.cssVar('--border'); g.setLineDash([4, 4]); g.beginPath(); g.moveTo(cx, cy); g.lineTo(cx, cy - L - 10); g.stroke(); g.setLineDash([]);
+    g.strokeStyle = V_.cssVar('--s1'); g.lineWidth = 10; g.lineCap = 'round'; g.beginPath(); g.moveTo(cx, cy); g.lineTo(x2, y2); g.stroke();
+    g.fillStyle = V_.cssVar('--text'); g.beginPath(); g.arc(cx, cy, 6, 0, 7); g.fill();
+    if (st.last) {
+      var a = st.last.a, rr = 28, s0 = -Math.PI / 2, e = s0 - a / 2 * 1.4;
+      g.strokeStyle = a >= 0 ? V_.cssVar('--c3') : V_.cssVar('--s2'); g.lineWidth = 4; g.beginPath(); g.arc(cx, cy, rr, Math.min(s0, e), Math.max(s0, e)); g.stroke();
+    }
+    g.fillStyle = V_.cssVar('--muted'); g.font = '12px "Be Vietnam Pro", sans-serif';
+    g.fillText('ϑ = ' + V_.fmt(PD.angNorm(th), 2) + '   ω = ' + V_.fmt(st.s.w, 2), 8, H - 10);
+    if (st.last) g.fillText('a = ' + V_.fmt(st.last.a, 2), 8, 18);
+  }
+  function heat(box, nx, ny, f, opt) {
+    var W = 420, H = opt.h || 200, m = { l: 30, r: 8, t: 6, b: 24 }, iw = W - m.l - m.r, ih = H - m.t - m.b, vals = [], lo = Infinity, hi = -Infinity;
+    for (var j = 0; j < ny; j++) for (var i = 0; i < nx; i++) { var v = f((i + 0.5) / nx, 1 - (j + 0.5) / ny); vals.push(v); if (v < lo) lo = v; if (v > hi) hi = v; }
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + opt.aria + '">', k = 0;
+    for (var j2 = 0; j2 < ny; j2++) for (var i2 = 0; i2 < nx; i2++) {
+      var v2 = vals[k++], col, op;
+      if (opt.div) { col = v2 >= 0 ? 'var(--c3)' : 'var(--s2)'; op = 0.05 + 0.85 * Math.min(1, Math.abs(v2) / opt.div); }
+      else { col = 'var(--s1)'; op = 0.05 + 0.85 * (v2 - lo) / Math.max(1e-6, hi - lo); }
+      s += '<rect x="' + (m.l + i2 * iw / nx).toFixed(1) + '" y="' + (m.t + j2 * ih / ny).toFixed(1) + '" width="' + (iw / nx + 0.4).toFixed(1) + '" height="' + (ih / ny + 0.4).toFixed(1) + '" fill="' + col + '" fill-opacity="' + op.toFixed(3) + '"/>';
+    }
+    s += opt.extra ? opt.extra(m, iw, ih) : '';
+    s += '<text x="' + m.l + '" y="' + (H - 6) + '">' + opt.x0 + '</text><text x="' + (m.l + iw / 2) + '" y="' + (H - 6) + '" text-anchor="middle">' + opt.xm + '</text><text x="' + (W - m.r) + '" y="' + (H - 6) + '" text-anchor="end">' + opt.x1 + '</text>';
+    s += '<text x="' + (m.l - 4) + '" y="' + (m.t + 10) + '" text-anchor="end">' + opt.y1 + '</text><text x="' + (m.l - 4) + '" y="' + (m.t + ih) + '" text-anchor="end">' + opt.y0 + '</text>';
+    box.innerHTML = s + '</svg>';
+    return { lo: lo, hi: hi };
+  }
+  function drawMaps() {
+    var ag = st.ag, PI = Math.PI;
+    heat(V_.$('#qmap'), 36, 24, function (u, v) { var th = -PI + 2 * PI * u, a = -2 + 4 * v; return ag.q(ag.c1, [Math.cos(th), Math.sin(th), 0], a); },
+      { aria: 'Q theo góc và mô-men', x0: '−π', xm: 'góc ϑ (0: thẳng đứng)', x1: 'π', y0: '−2', y1: '2', h: 210,
+        extra: function (m, iw, ih) { var p = ''; for (var k = 0; k <= 72; k++) { var th = -PI + 2 * PI * k / 72, a = ag.mu(ag.actor, [Math.cos(th), Math.sin(th), 0]); p += (k ? 'L' : 'M') + (m.l + k / 72 * iw).toFixed(1) + ' ' + (m.t + (2 - a) / 4 * ih).toFixed(1); } return '<path d="' + p + '" fill="none" stroke="var(--text)" stroke-width="2.5"/>'; } });
+    var th0 = PD.angNorm(st.s.th), w0 = st.s.w;
+    heat(V_.$('#pmap'), 48, 24, function (u, v) { var th = -PI + 2 * PI * u, w = -8 + 16 * v; return ag.mu(ag.actor, [Math.cos(th), Math.sin(th), w / 8]); },
+      { div: 2, aria: 'Chính sách theo góc và vận tốc góc', x0: '−π', xm: 'góc ϑ', x1: 'π', y0: 'ω −8', y1: '8', h: 180,
+        extra: function (m, iw, ih) { return '<circle cx="' + (m.l + (th0 + PI) / (2 * PI) * iw).toFixed(1) + '" cy="' + (m.t + (8 - Math.max(-8, Math.min(8, w0))) / 16 * ih).toFixed(1) + '" r="5" fill="none" stroke="var(--text)" stroke-width="2"/>'; } });
+  }
+  function num(x, d) { return V_.tz(x, d == null ? 3 : d); }
+  function numP(x, d) { return V_.tz(x, d == null ? 3 : d, true); }
+  function showCalc() {
+    var el = V_.$('#calc'), L = st.last;
+    if (!L) { el.innerHTML = '<span class="hint">Bấm “Bước tiếp” để xem một bước: tương tác, rồi một lần cập nhật cả giám khảo và diễn viên.</span>'; return; }
+    var rows = ['&\\vartheta = ' + num(PD.angNorm(L.s.th), 2) + ',\\ \\omega = ' + num(L.s.w, 2) + ':\\quad ' + (L.rnd ? 'a = ' + num(L.a, 2) + '\\ (\\text{ngẫu nhiên, khởi động})' : '\\mu_\\theta(s) = ' + num(L.a0, 2) + ',\\ a = ' + num(L.a, 2) + '\\ (\\text{có nhiễu})') + ',\\quad r = ' + num(L.r, 2)];
+    var I = L.L && L.L.info;
+    if (I) {
+      rows.push('&\\text{mẫu đầu của lô: } y = 0.1\\,r + \\gamma Q_{\\bar w}(s\', \\mu_{\\bar\\theta}(s\')) = ' + num(I.e.r) + ' + 0.99\\cdot' + numP(I.q1t) + ' = ' + num(I.y) + ',\\quad Q_w(s, a) = ' + num(I.q1));
+      rows.push('&\\text{mất mát giám khảo (TB lô): } ' + num(I.lossC, 4));
+      if (I.doActor && I.dqda != null) rows.push('&\\text{diễn viên: } a = \\mu_\\theta(s) = ' + num(I.aa, 2) + ',\\ \\tfrac{\\partial Q}{\\partial a} = ' + num(I.dqda) + ',\\ \\tfrac{\\partial a}{\\partial z} = ' + num(I.dadz) + ',\\quad -Q\\ \\text{TB lô} = ' + num(I.lossA));
+    }
+    V_.tex(el, '\\begin{aligned}' + rows.join('\\\\') + '\\end{aligned}', true);
+    if (!I) el.insertAdjacentHTML('beforeend', '<p class="hint">Bộ đệm chưa đủ dữ liệu, chưa cập nhật.</p>');
+  }
+  function insight() {
+    var el = V_.$('#insight'), n = st.hist.length, h;
+    if (st.ag.steps < WARM) h = 'Đang khởi động: ' + st.ag.steps + '/' + WARM + ' bước đầu chọn mô-men ngẫu nhiên để lấp bộ đệm; giám khảo đã bắt đầu học, nhưng diễn viên chưa điều khiển. Bấm “+5 tập” để tua nhanh.';
+    else if (!n || Math.max.apply(null, st.hist.slice(-3)) < -600) h = 'Giám khảo (bản đồ trên) dần học được: góc gần 0 (thẳng đứng) thì $Q$ cao. Đường đen là hành động diễn viên chọn ở mỗi góc khi $\\omega = 0$; nó dịch dần về phía vùng sáng. Diễn viên chưa biết lấy đà nên con lắc chưa lên được.';
+    else { var l = st.hist.slice(-5), avg = l.reduce(function (a, b) { return a + b; }, 0) / l.length; h = 'Trung bình ' + l.length + ' tập gần nhất: <b>' + V_.fmt(avg, 0) + '</b>. ' + (avg > -300 ? 'Con lắc đã lên và đứng được. Bản đồ dưới cho thấy diễn viên học “lấy đà”: cùng một góc, mô-men đổi dấu theo vận tốc góc, tức đẩy theo chiều đang quay để tích năng lượng, rồi hãm lại gần đỉnh.' : 'Đang tiến bộ; đôi khi đã đưa được lên đỉnh.'); }
+    el.innerHTML = h; V_.texAll(el);
+  }
+  var chart = V_.LineChart(V_.$('#chart'), { series: [{ name: 'Tổng thưởng', color: '--s1' }], xName: 'Tập', xLabel: 'Tập', dec: 0, yMin: -1800, yMax: 0, aria: 'Tổng thưởng mỗi tập' });
+  function render() {
+    var L = st.last; pseudo.hl(!L ? 'init' : L.L ? (L.L.doActor ? ['act', 'samp', 'y', 'critic', 'actor', 'soft'] : ['act', 'samp', 'y', 'critic', 'soft']) : ['act']);
+    drawPend(); drawMaps(); showCalc(); insight();
+    V_.$('#epn').textContent = st.ep; V_.$('#tn').textContent = st.t; V_.$('#sn').textContent = st.ag.steps; V_.$('#rv').textContent = V_.fmt(st.R, 0); V_.$('#noise-v').textContent = V_.fmt(+V_.$('#noise').value, 2);
+    chart.set([st.hist]);
+    V_.postHeight();
+  }
+  function setBusy(t) { var el = V_.$('#busy'); el.textContent = t || 'Sẵn sàng'; el.className = 'phase ' + (t ? 'on' : 'ok'); }
+  function runEpisodes(k) {
+    if (busy) return; busy = true; player.stop(); var target = st.ep + k;
+    (function chunk() {
+      var t0 = Date.now(); while (st.ep < target && Date.now() - t0 < 50) envStep(false);
+      setBusy('Đang học… tập ' + st.ep + ' (bước ' + st.t + '/200)');
+      if (st.ep < target) { if (st.t % 40 === 0) render(); setTimeout(chunk, 0); }
+      else { busy = false; setBusy(null); render(); }
+    })();
+  }
+  var PER = [1, 1, 3, 8, 25];
+  player = V_.Player({ btn: V_.$('#play'), speed: V_.$('#speed'), step: function () { if (busy) return false; var n = PER[+V_.$('#speed').value - 1]; for (var i = 0; i < n; i++) envStep(i === n - 1); render(); return true; } });
+  V_.$('#step').addEventListener('click', function () { if (busy) return; player.stop(); envStep(true); render(); });
+  V_.$('#ep1').addEventListener('click', function () { runEpisodes(1); });
+  V_.$('#ep5').addEventListener('click', function () { runEpisodes(5); });
+  V_.$('#reset').addEventListener('click', function () { if (!busy) reset(); });
+  V_.$('#noise').addEventListener('input', function () { V_.$('#noise-v').textContent = V_.fmt(+V_.$('#noise').value, 2); if (st) st.ag.o.noise = +V_.$('#noise').value; });
+  V_.onTheme(render);
+  V_.texAll();
+  reset();
+})();
+</script>
+</body>
+</html>
