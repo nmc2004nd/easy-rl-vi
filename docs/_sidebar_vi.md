@@ -30,6 +30,7 @@
 - [🧠 Chương 6 Ôn tập (flashcard + quiz)](review/index.html?ch=6 ':ignore :target=_self')
 - [🎬 Chương 6 Mô phỏng thuật toán](viz/index.html#ch6 ':ignore :target=_self')
 - [Chương 7 DQN (Các kỹ thuật nâng cao)](chapter7/chapter7_vi)
+- [Chương 7 Ghi chú trọng tâm](chapter7/chapter7_notes_vi)
 - [Chương 7 Bài tập](chapter7/chapter7_questions&keywords_vi)
 - [🧠 Chương 7 Ôn tập (flashcard + quiz)](review/index.html?ch=7 ':ignore :target=_self')
 - [🎬 Chương 7 Mô phỏng thuật toán](viz/index.html#ch7 ':ignore :target=_self')
