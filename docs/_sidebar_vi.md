@@ -1,5 +1,6 @@
 - Mục lục
 - [Chương 1 Cơ bản về học tăng cường](chapter1/chapter1_vi)
+- [Chương 1 Ghi chú trọng tâm](chapter1/chapter1_notes_vi)
 - [Chương 1 Bài tập](chapter1/chapter1_questions&keywords_vi)
 - [🧠 Chương 1 Ôn tập (flashcard + quiz)](review/index.html?ch=1 ':ignore :target=_self')
 - [Chương 2 Quá trình quyết định Markov (MDP)](chapter2/chapter2_vi)
