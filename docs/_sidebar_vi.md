@@ -25,6 +25,7 @@
 - [🧠 Chương 5 Ôn tập (flashcard + quiz)](review/index.html?ch=5 ':ignore :target=_self')
 - [🎬 Chương 5 Mô phỏng thuật toán](viz/index.html#ch5 ':ignore :target=_self')
 - [Chương 6 DQN (Khái niệm cơ bản)](chapter6/chapter6_vi)
+- [Chương 6 Ghi chú trọng tâm](chapter6/chapter6_notes_vi)
 - [Chương 6 Bài tập](chapter6/chapter6_questions&keywords_vi)
 - [🧠 Chương 6 Ôn tập (flashcard + quiz)](review/index.html?ch=6 ':ignore :target=_self')
 - [🎬 Chương 6 Mô phỏng thuật toán](viz/index.html#ch6 ':ignore :target=_self')
