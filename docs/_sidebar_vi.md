@@ -20,6 +20,7 @@
 - [🧠 Chương 4 Ôn tập (flashcard + quiz)](review/index.html?ch=4 ':ignore :target=_self')
 - [🎬 Chương 4 Mô phỏng thuật toán](viz/index.html#ch4 ':ignore :target=_self')
 - [Chương 5 Thuật toán tối ưu chính sách cận kề (PPO)](chapter5/chapter5_vi)
+- [Chương 5 Ghi chú trọng tâm](chapter5/chapter5_notes_vi)
 - [Chương 5 Bài tập](chapter5/chapter5_questions&keywords_vi)
 - [🧠 Chương 5 Ôn tập (flashcard + quiz)](review/index.html?ch=5 ':ignore :target=_self')
 - [🎬 Chương 5 Mô phỏng thuật toán](viz/index.html#ch5 ':ignore :target=_self')
