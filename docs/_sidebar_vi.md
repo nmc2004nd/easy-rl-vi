@@ -4,6 +4,7 @@
 - [Chương 1 Bài tập](chapter1/chapter1_questions&keywords_vi)
 - [🧠 Chương 1 Ôn tập (flashcard + quiz)](review/index.html?ch=1 ':ignore :target=_self')
 - [Chương 2 Quá trình quyết định Markov (MDP)](chapter2/chapter2_vi)
+- [Chương 2 Ghi chú trọng tâm](chapter2/chapter2_notes_vi)
 - [Chương 2 Bài tập](chapter2/chapter2_questions&keywords_vi)
 - [🧠 Chương 2 Ôn tập (flashcard + quiz)](review/index.html?ch=2 ':ignore :target=_self')
 - [🎬 Chương 2 Mô phỏng thuật toán](viz/index.html ':ignore :target=_self')
