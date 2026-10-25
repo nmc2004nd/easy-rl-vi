@@ -9,6 +9,7 @@
 - [🧠 Chương 2 Ôn tập (flashcard + quiz)](review/index.html?ch=2 ':ignore :target=_self')
 - [🎬 Chương 2 Mô phỏng thuật toán](viz/index.html ':ignore :target=_self')
 - [Chương 3 Phương pháp dạng bảng](chapter3/chapter3_vi)
+- [Chương 3 Ghi chú trọng tâm](chapter3/chapter3_notes_vi)
 - [Chương 3 Bài tập](chapter3/chapter3_questions&keywords_vi)
 - [🧠 Chương 3 Ôn tập (flashcard + quiz)](review/index.html?ch=3 ':ignore :target=_self')
 - [🎬 Chương 3 Mô phỏng thuật toán](viz/index.html#ch3 ':ignore :target=_self')
