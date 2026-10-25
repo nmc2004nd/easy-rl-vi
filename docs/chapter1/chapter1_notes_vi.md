@@ -94,7 +94,7 @@ $$
 | Ý nghĩa | đứng ở $s$, theo $\pi$ thì được bao nhiêu | ở $s$, làm $a$ trước, **rồi mới** theo $\pi$ |
 | Dùng để | đánh giá trạng thái | **chọn hành động trực tiếp**: $\arg\max_a Q(s,a)$ |
 
-- $\gamma$: "100 đồng hôm nay đáng giá hơn 100 đồng 10 ngày nữa". $\gamma$ nhỏ → tác tử thiển cận; $\gamma$ gần 1 → nhìn xa.
+- $\gamma$: "100 đồng hôm nay đáng giá hơn 100 đồng 10 ngày nữa". $\gamma$ nhỏ → tác tử thiển cận; $\gamma$ gần 1 → nhìn xa. *(ghi chú của người dịch)*
 - Chỉ số $\pi$ trong $\mathbb{E}_\pi$: giá trị **phụ thuộc chính sách**. Đổi chính sách thì giá trị đổi.
 
 ⚠️ **Dễ nhầm (ghi chú của người dịch):** **phần thưởng** $r$ là thứ môi trường cho **ngay một bước**; **giá trị** $V$, $Q$ là **dự đoán tổng phần thưởng tương lai** (kỳ vọng của $G_t$). Một trạng thái có phần thưởng 0 vẫn có thể có giá trị rất cao, nếu nó dẫn tới đích.
