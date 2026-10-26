@@ -45,6 +45,7 @@
 - [🧠 Chương 9 Ôn tập (flashcard + quiz)](review/index.html?ch=9 ':ignore :target=_self')
 - [🎬 Chương 9 Mô phỏng thuật toán](viz/index.html#ch9 ':ignore :target=_self')
 - [Chương 10 Phần thưởng thưa](chapter10/chapter10_vi)
+- [Chương 10 Ghi chú trọng tâm](chapter10/chapter10_notes_vi)
 - [Chương 10 Bài tập](chapter10/chapter10_questions&keywords_vi)
 - [🧠 Chương 10 Ôn tập (flashcard + quiz)](review/index.html?ch=10 ':ignore :target=_self')
 - [🎬 Chương 10 Mô phỏng thuật toán](viz/index.html#ch10 ':ignore :target=_self')
