@@ -50,6 +50,7 @@
 - [🧠 Chương 10 Ôn tập (flashcard + quiz)](review/index.html?ch=10 ':ignore :target=_self')
 - [🎬 Chương 10 Mô phỏng thuật toán](viz/index.html#ch10 ':ignore :target=_self')
 - [Chương 11 Học bắt chước](chapter11/chapter11_vi)
+- [Chương 11 Ghi chú trọng tâm](chapter11/chapter11_notes_vi)
 - [Chương 11 Bài tập](chapter11/chapter11_questions&keywords_vi)
 - [🧠 Chương 11 Ôn tập (flashcard + quiz)](review/index.html?ch=11 ':ignore :target=_self')
 - [🎬 Chương 11 Mô phỏng thuật toán](viz/index.html#ch11 ':ignore :target=_self')
