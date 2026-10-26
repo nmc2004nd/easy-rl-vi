@@ -55,6 +55,7 @@
 - [🧠 Chương 11 Ôn tập (flashcard + quiz)](review/index.html?ch=11 ':ignore :target=_self')
 - [🎬 Chương 11 Mô phỏng thuật toán](viz/index.html#ch11 ':ignore :target=_self')
 - [Chương 12 Thuật toán gradient chính sách tất định sâu (DDPG)](chapter12/chapter12_vi)
+- [Chương 12 Ghi chú trọng tâm](chapter12/chapter12_notes_vi)
 - [Chương 12 Bài tập](chapter12/chapter12_questions&keywords_vi)
 - [🧠 Chương 12 Ôn tập (flashcard + quiz)](review/index.html?ch=12 ':ignore :target=_self')
 - [🎬 Chương 12 Mô phỏng thuật toán](viz/index.html#ch12 ':ignore :target=_self')
