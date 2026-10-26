@@ -40,6 +40,7 @@
 - [Chương 8 Bài tập](chapter8/chapter8_questions&keywords_vi)
 - [🧠 Chương 8 Ôn tập (flashcard + quiz)](review/index.html?ch=8 ':ignore :target=_self')
 - [Chương 9 Thuật toán diễn viên-nhà phê bình (Actor-Critic)](chapter9/chapter9_vi)
+- [Chương 9 Ghi chú trọng tâm](chapter9/chapter9_notes_vi)
 - [Chương 9 Bài tập](chapter9/chapter9_questions&keywords_vi)
 - [🧠 Chương 9 Ôn tập (flashcard + quiz)](review/index.html?ch=9 ':ignore :target=_self')
 - [🎬 Chương 9 Mô phỏng thuật toán](viz/index.html#ch9 ':ignore :target=_self')
