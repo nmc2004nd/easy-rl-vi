@@ -1,4 +1,5 @@
 - Mục lục
+- [🗺️ Bản đồ kiến thức RL](explorer/index.html ':ignore :target=_self')
 - [Chương 1 Cơ bản về học tăng cường](chapter1/chapter1_vi)
 - [Chương 1 Ghi chú trọng tâm](chapter1/chapter1_notes_vi)
 - [Chương 1 Bài tập](chapter1/chapter1_questions&keywords_vi)
