@@ -42,7 +42,7 @@ Sách chia làm hai phần:
 | [5 Phương pháp Monte Carlo](mathrl/ch05_vi) | ước lượng trung bình, MC Basic, MC Exploring Starts, MC ε-tham lam, khám phá và khai thác | đã có |
 | [6 Xấp xỉ ngẫu nhiên](mathrl/ch06_vi) | ước lượng trung bình tăng dần, Robbins-Monro, định lý Dvoretzky, SGD, MBGD | đã có |
 | [7 Phương pháp sai phân thời gian](mathrl/ch07_vi) | TD, Sarsa, Expected Sarsa, Sarsa n bước, Q-learning, theo và ngoài chính sách | đã có |
-| 8 Phương pháp hàm giá trị | xấp xỉ hàm, phân phối dừng, DQN | đang biên soạn |
+| [8 Phương pháp hàm giá trị](mathrl/ch08_vi) | xấp xỉ hàm, phân phối dừng, TD-Linear, sai số Bellman chiếu, LSTD, DQN | đã có |
 | 9 Phương pháp gradient chính sách | hàm mục tiêu, định lý gradient chính sách, REINFORCE | đang biên soạn |
 | 10 Phương pháp diễn viên-nhà phê bình | QAC, A2C, diễn viên-nhà phê bình ngoài chính sách, DPG | đang biên soạn |
 

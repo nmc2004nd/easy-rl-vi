@@ -261,7 +261,7 @@ for each episode do
         r, s' ← env.step(s, a)
         # Sarsa cần cả a' của chính sách hiện tại
         a' ~ π(·|s')
-        y ← r + γ·q(s',a')                # mục tiêu TD của Sarsa
+        y ← r + γ·q(s',a')   # mục tiêu TD của Sarsa
         q(s,a) ← q(s,a) − α·[ q(s,a) − y ]
         # cập nhật chính sách ngay tại s
         π(·|s) ← ε-greedy(q(s,·))
@@ -526,7 +526,7 @@ for each episode do
         # π vừa là chính sách hành vi vừa là mục tiêu
         a ~ π(·|s)
         r, s' ← env.step(s, a)
-        y ← r + γ·max_a' q(s',a')         # mục tiêu TD của Q-learning
+        y ← r + γ·max_a' q(s',a')   # mục tiêu TD của Q-learning
         q(s,a) ← q(s,a) − α·[ q(s,a) − y ]
         π(·|s) ← ε-greedy(q(s,·))
         s ← s'
@@ -543,7 +543,7 @@ Output: chính sách mục tiêu tối ưu π_T cho mọi trạng thái
 # dữ liệu có thể thu sẵn
 for each episode (s_0, a_0, r_1, s_1, a_1, r_2, …) sinh bởi π_b do
     for t = 0, 1, 2, … do
-        y ← r_{t+1} + γ·max_a q(s_{t+1},a)        # mục tiêu TD
+        y ← r_{t+1} + γ·max_a q(s_{t+1},a)   # mục tiêu TD
         q(s_t,a_t) ← q(s_t,a_t) − α·[ q(s_t,a_t) − y ]
         # mục tiêu: tham lam, không cần khám phá
         π_T(a|s_t) ← 1 if a = argmax_a' q(s_t,a') else 0
@@ -690,6 +690,6 @@ Chương này giới thiệu lớp thuật toán học tăng cường quan trọ
 
 ## Đọc tiếp
 
-- Quay lại [Chương 6 Xấp xỉ ngẫu nhiên](mathrl/ch06_vi) · Chương 8 Phương pháp hàm giá trị *(đang biên soạn)*
+- Quay lại [Chương 6 Xấp xỉ ngẫu nhiên](mathrl/ch06_vi) · Tiếp theo [Chương 8 Phương pháp hàm giá trị](mathrl/ch08_vi)
 - Đối chiếu với EasyRL: [Chương 3 Phương pháp dạng bảng](chapter3/chapter3_vi) (TD, Sarsa, Q-learning, TD n bước) và [Dự án 1: Q-learning tìm đường bên vách đá](chapter3/project1_vi). Lưu ý EasyRL chương 3 đánh chỉ số phần thưởng theo $r_{t+1}$ như sách này; xem [bảng quy đổi ký hiệu](notation_vi).
 - Thử tương tác: [mô phỏng chương 3](chapter3/chapter3_viz_vi) có Sarsa, Q-learning và TD n bước trên thế giới lưới.
