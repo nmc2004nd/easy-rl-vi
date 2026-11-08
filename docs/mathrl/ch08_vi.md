@@ -840,6 +840,6 @@ Chương này tiếp tục với học TD, nhưng chuyển từ phương pháp *
 
 ## Đọc tiếp
 
-- Quay lại [Chương 7 Phương pháp sai phân thời gian](mathrl/ch07_vi) · Chương 9 Phương pháp gradient chính sách *(đang biên soạn)*
+- Quay lại [Chương 7 Phương pháp sai phân thời gian](mathrl/ch07_vi) · Tiếp theo [Chương 9 Phương pháp gradient chính sách](mathrl/ch09_vi)
 - Đối chiếu với EasyRL: [Chương 6 DQN (khái niệm cơ bản)](chapter6/chapter6_vi), [Chương 7 DQN (kỹ thuật nâng cao)](chapter7/chapter7_vi), [Chương 8 DQN (hành động liên tục)](chapter8/chapter8_vi) và [Dự án 2 DQN giải CartPole](chapter7/project2_vi). EasyRL viết mạng mục tiêu là $\hat Q$; xem [bảng quy đổi ký hiệu](notation_vi).
 - Thử tương tác: [mô phỏng chương 6](chapter6/chapter6_viz_vi) có DQN.
