@@ -45,6 +45,7 @@ Sách chia làm hai phần:
 | [8 Phương pháp hàm giá trị](mathrl/ch08_vi) | xấp xỉ hàm, phân phối dừng, TD-Linear, sai số Bellman chiếu, LSTD, DQN | đã có |
 | [9 Phương pháp gradient chính sách](mathrl/ch09_vi) | thước đo $\bar v_\pi$, $\bar r_\pi$, định lý gradient chính sách, REINFORCE | đã có |
 | [10 Phương pháp diễn viên–nhà phê bình](mathrl/ch10_vi) | QAC, A2C, lấy mẫu theo trọng số quan trọng, diễn viên–nhà phê bình ngoài chính sách, DPG | đã có |
+| [Phụ lục A–D](mathrl/appendix_vi) | xác suất cơ bản, xác suất theo độ đo, hội tụ của dãy và martingale, giảm gradient | đã có |
 
 ## Đối chiếu với EasyRL
 

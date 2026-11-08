@@ -564,6 +564,6 @@ Kết quả: trung bình thường $0.596$, trung bình có trọng số $-0.007
 
 ## Đọc tiếp
 
-- Quay lại [Chương 9 Phương pháp gradient chính sách](mathrl/ch09_vi) · [Giới thiệu phần này](mathrl/README_vi)
+- Tiếp theo [Phụ lục Kiến thức nền toán học](mathrl/appendix_vi) · Quay lại [Chương 9 Phương pháp gradient chính sách](mathrl/ch09_vi) · [Giới thiệu phần này](mathrl/README_vi)
 - Đối chiếu với EasyRL: [Chương 9 Diễn viên–nhà phê bình](chapter9/chapter9_vi) (A2C, A3C), [Chương 12 DDPG](chapter12/chapter12_vi) (DDPG, TD3) và [Dự án 3 Pendulum](chapter12/project3_vi). EasyRL viết $A(s,a)$ cho hàm lợi thế $\delta_\pi(s,a)$ và $\mu_\theta(s)$ cho $\mu(s,\theta)$; xem [bảng quy đổi ký hiệu](notation_vi).
 - Thử tương tác: [mô phỏng chương 9](chapter9/chapter9_viz_vi) có A2C và A3C; [mô phỏng chương 12](chapter12/chapter12_viz_vi) có DDPG và TD3.
