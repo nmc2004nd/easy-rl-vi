@@ -26,6 +26,7 @@
   - [Chương 2 Giá trị trạng thái và phương trình Bellman](mathrl/ch02_vi)
   - [Chương 3 Giá trị tối ưu và phương trình tối ưu Bellman](mathrl/ch03_vi)
   - [Chương 4 Lặp giá trị và lặp chính sách](mathrl/ch04_vi)
+  - [Chương 5 Phương pháp Monte Carlo](mathrl/ch05_vi)
 - Dựa trên chính sách
   - [Chương 4 Gradient chính sách](chapter4/chapter4_vi)
     - [Ghi chú trọng tâm](chapter4/chapter4_notes_vi)

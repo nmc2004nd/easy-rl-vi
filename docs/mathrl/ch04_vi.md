@@ -644,6 +644,6 @@ Cuối cùng, các thuật toán của chương này **cần mô hình**. Từ c
 
 ## Đọc tiếp
 
-- Quay lại [Chương 3 Giá trị trạng thái tối ưu và phương trình tối ưu Bellman](mathrl/ch03_vi) · Chương 5 Phương pháp Monte Carlo *(đang biên soạn)*
+- Quay lại [Chương 3 Giá trị trạng thái tối ưu và phương trình tối ưu Bellman](mathrl/ch03_vi) · Tiếp theo [Chương 5 Phương pháp Monte Carlo](mathrl/ch05_vi)
 - Đối chiếu với EasyRL: [Chương 2](chapter2/chapter2_vi), mục 2.3.11 (lặp chính sách), 2.3.12 (lặp giá trị), 2.3.13 (so sánh hai thuật toán). EasyRL không có lặp chính sách cắt cụt.
 - Thử tương tác: [mô phỏng chương 2](chapter2/chapter2_viz_vi) có lặp chính sách và lặp giá trị trên thế giới lưới.
