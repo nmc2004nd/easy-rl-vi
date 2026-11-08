@@ -719,6 +719,12 @@
       var g = btn.dataset.g;
       filter.querySelectorAll('button').forEach(function (b) { b.setAttribute('aria-pressed', b === btn ? 'true' : 'false'); });
       section.querySelectorAll('.home-row').forEach(function (row) { row.hidden = g !== 'all' && row.dataset.g !== g; });
+      // Ẩn tiêu đề nguồn (EasyRL / Zhao) khi không còn chương nào của nguồn đó hiện ra.
+      section.querySelectorAll('.home-src').forEach(function (head) {
+        var any = false;
+        for (var el = head.nextElementSibling; el && !el.classList.contains('home-src'); el = el.nextElementSibling) if (!el.hidden) any = true;
+        head.hidden = !any;
+      });
     });
   }
 
