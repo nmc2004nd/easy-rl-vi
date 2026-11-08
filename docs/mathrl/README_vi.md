@@ -40,7 +40,7 @@ Sách chia làm hai phần:
 | [3 Giá trị tối ưu và phương trình tối ưu Bellman](mathrl/ch03_vi) | chính sách tối ưu, ánh xạ co, định lý điểm bất động, yếu tố ảnh hưởng chính sách tối ưu | đã có |
 | [4 Lặp giá trị và lặp chính sách](mathrl/ch04_vi) | lặp giá trị, lặp chính sách, lặp chính sách cắt cụt | đã có |
 | [5 Phương pháp Monte Carlo](mathrl/ch05_vi) | ước lượng trung bình, MC Basic, MC Exploring Starts, MC ε-tham lam, khám phá và khai thác | đã có |
-| 6 Xấp xỉ ngẫu nhiên | ước lượng trung bình, Robbins-Monro, SGD | đang biên soạn |
+| [6 Xấp xỉ ngẫu nhiên](mathrl/ch06_vi) | ước lượng trung bình tăng dần, Robbins-Monro, định lý Dvoretzky, SGD, MBGD | đã có |
 | 7 Phương pháp sai phân thời gian | TD, Sarsa, TD n bước, Q-learning | đang biên soạn |
 | 8 Phương pháp hàm giá trị | xấp xỉ hàm, phân phối dừng, DQN | đang biên soạn |
 | 9 Phương pháp gradient chính sách | hàm mục tiêu, định lý gradient chính sách, REINFORCE | đang biên soạn |

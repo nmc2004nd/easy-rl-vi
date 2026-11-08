@@ -548,6 +548,6 @@ Cuối cùng, chương bàn về đánh đổi khám phá–khai thác qua tính
 
 ## Đọc tiếp
 
-- Quay lại [Chương 4 Lặp giá trị và lặp chính sách](mathrl/ch04_vi) · Chương 6 Xấp xỉ ngẫu nhiên *(đang biên soạn)*
+- Quay lại [Chương 4 Lặp giá trị và lặp chính sách](mathrl/ch04_vi) · Tiếp theo [Chương 6 Xấp xỉ ngẫu nhiên](mathrl/ch06_vi)
 - Đối chiếu với EasyRL: [Chương 3 Phương pháp dạng bảng](chapter3/chapter3_vi), phần Monte Carlo và ε-tham lam.
 - Thử tương tác: [mô phỏng chương 3](chapter3/chapter3_viz_vi) có điều khiển Monte Carlo trên thế giới lưới.
