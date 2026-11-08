@@ -13,14 +13,16 @@
 <style>
   :root {
     --bg: #f6f7f9;
+    color-scheme: light;
     --surface: #ffffff;
     --surface-2: #eef1f4;
     --text: #1d2430;
     --muted: #5d6878;
     --border: #dde2e8;
-    --accent: #42b983;
-    --accent-soft: #e3f5ec;
-    --accent-text: #1f7a52;
+    --accent: #4f46e5;
+  --on-accent: #ffffff;
+    --accent-soft: #eceeff;
+    --accent-text: #4338ca;
     --again: #d9534f;
     --again-soft: #fbe9e8;
     --hard: #c98a12;
@@ -31,15 +33,17 @@
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #12161c;
-      --surface: #1a2028;
-      --surface-2: #232b35;
-      --text: #e6eaef;
-      --muted: #9aa5b3;
-      --border: #2e3844;
-      --accent: #4cc893;
-      --accent-soft: #1b3329;
-      --accent-text: #7fdcb2;
+      --bg: #0d0f1f;
+      color-scheme: dark;
+      --surface: #13162e;
+      --surface-2: #1c2042;
+      --text: #e4e8f4;
+      --muted: #98a2bb;
+      --border: #272b52;
+      --accent: #5b5bf0;
+    --on-accent: #ffffff;
+      --accent-soft: #1f2356;
+      --accent-text: #aab4ff;
       --again: #f07470;
       --again-soft: #3a2223;
       --hard: #e3ac45;
@@ -50,15 +54,17 @@
     }
   }
   :root[data-theme="dark"] {
-    --bg: #12161c;
-    --surface: #1a2028;
-    --surface-2: #232b35;
-    --text: #e6eaef;
-    --muted: #9aa5b3;
-    --border: #2e3844;
-    --accent: #4cc893;
-    --accent-soft: #1b3329;
-    --accent-text: #7fdcb2;
+    --bg: #0d0f1f;
+    color-scheme: dark;
+    --surface: #13162e;
+    --surface-2: #1c2042;
+    --text: #e4e8f4;
+    --muted: #98a2bb;
+    --border: #272b52;
+    --accent: #5b5bf0;
+    --on-accent: #ffffff;
+    --accent-soft: #1f2356;
+    --accent-text: #aab4ff;
     --again: #f07470;
     --again-soft: #3a2223;
     --hard: #e3ac45;
@@ -135,7 +141,7 @@
     border: 1px solid var(--border); background: var(--surface); color: var(--text); border-radius: 10px; padding: 9px 16px;
     font: inherit; font-weight: 600; cursor: pointer;
   }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
   .btn:hover { filter: brightness(.97); }
   .row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
   .muted { color: var(--muted); }
@@ -224,6 +230,11 @@
     .panel { padding: 18px 16px; }
     .pstep .katex, .pgiven .katex-display .katex, .pitem .katex-display .katex { font-size: .95em; }
   }
+  /* Nhúng trong trang của sách (iframe hoặc ?embed): bỏ tiêu đề và link điều hướng vì trang cha đã có */
+  body.embed { background: transparent; }
+  body.embed header { display: none; }
+  body.embed .wrap { max-width: none; padding: 2px 1px 8px; }
+  body.embed .toast { position: absolute; top: 8px; bottom: auto; }
 </style>
 </head>
 <body>
@@ -277,6 +288,18 @@
   var STORE_KEY = 'easyrl-vi:review:v1';
   var params = new URLSearchParams(location.search);
   var CH = String(parseInt(params.get('ch') || '1', 10) || 1);
+
+  // Khi nằm trong khung của sách: báo chiều cao để khung tự giãn, không có thanh cuộn riêng.
+  var EMBED = params.has('embed') || window.self !== window.top;
+  if (EMBED) {
+    document.body.classList.add('embed');
+    var postHeight = function () {
+      if (window.parent === window) return;
+      window.parent.postMessage({ vizHeight: Math.ceil(document.body.getBoundingClientRect().height), vizPath: location.pathname }, '*');
+    };
+    if (window.ResizeObserver) new ResizeObserver(postHeight).observe(document.body);
+    window.addEventListener('load', postHeight);
+  }
 
   var data = null;          // nội dung chương (thẻ + quiz)
   var store = loadStore();  // tiến độ của người học

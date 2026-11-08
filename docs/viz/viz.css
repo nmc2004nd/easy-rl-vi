@@ -4,14 +4,16 @@
  */
 :root {
   --bg: #f6f7f9;
+  color-scheme: light;
   --surface: #ffffff;
   --surface-2: #eef1f4;
   --text: #1d2430;
   --muted: #5d6878;
   --border: #dde2e8;
-  --accent: #42b983;
-  --accent-soft: #e3f5ec;
-  --accent-text: #1f7a52;
+  --accent: #4f46e5;
+  --on-accent: #ffffff;
+  --accent-soft: #eceeff;
+  --accent-text: #4338ca;
   --s1: #2a78d6;
   --s2: #eb6834;
   --hl: #c98a12;
@@ -24,15 +26,17 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #12161c;
-    --surface: #1a2028;
-    --surface-2: #232b35;
-    --text: #e6eaef;
-    --muted: #9aa5b3;
-    --border: #2e3844;
-    --accent: #4cc893;
-    --accent-soft: #1b3329;
-    --accent-text: #7fdcb2;
+    --bg: #0d0f1f;
+    color-scheme: dark;
+    --surface: #13162e;
+    --surface-2: #1c2042;
+    --text: #e4e8f4;
+    --muted: #98a2bb;
+    --border: #272b52;
+    --accent: #5b5bf0;
+    --on-accent: #ffffff;
+    --accent-soft: #1f2356;
+    --accent-text: #aab4ff;
     --s1: #3987e5;
     --s2: #d95926;
     --hl: #e3ac45;
@@ -45,15 +49,17 @@
   }
 }
 :root[data-theme="dark"] {
-  --bg: #12161c;
-  --surface: #1a2028;
-  --surface-2: #232b35;
-  --text: #e6eaef;
-  --muted: #9aa5b3;
-  --border: #2e3844;
-  --accent: #4cc893;
-  --accent-soft: #1b3329;
-  --accent-text: #7fdcb2;
+  --bg: #0d0f1f;
+  color-scheme: dark;
+  --surface: #13162e;
+  --surface-2: #1c2042;
+  --text: #e4e8f4;
+  --muted: #98a2bb;
+  --border: #272b52;
+  --accent: #5b5bf0;
+    --on-accent: #ffffff;
+  --accent-soft: #1f2356;
+  --accent-text: #aab4ff;
   --s1: #3987e5;
   --s2: #d95926;
   --hl: #e3ac45;
@@ -103,8 +109,7 @@ body.embed .blk { box-shadow: none; }
        padding: 6px 12px; border-radius: 10px; cursor: pointer; min-height: 36px; }
 .btn:hover { border-color: var(--muted); }
 .btn:disabled { opacity: .45; cursor: default; }
-.btn.pri { background: var(--accent); border-color: var(--accent); color: #fff; }
-body.embed .btn.pri, :root:not([data-theme="dark"]) .btn.pri { color: #fff; }
+.btn.pri { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .btn:focus-visible, .cell:focus-visible, .seg button:focus-visible { outline: 2px solid var(--s1); outline-offset: 2px; }
 input[type=range] { flex: 1; min-width: 120px; accent-color: var(--s1); }
 select.btn { padding-right: 8px; }

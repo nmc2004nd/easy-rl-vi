@@ -82,6 +82,11 @@
     var cb = function () { themeCbs.forEach(function (f) { f(); }); };
     if (mq.addEventListener) mq.addEventListener('change', cb); else if (mq.addListener) mq.addListener(cb);
   }
+  // Trang sách đổi nền sáng/tối bằng cách đặt data-theme lên khung nhúng: vẽ lại màu theo nền mới.
+  if (window.MutationObserver) {
+    new MutationObserver(function () { themeCbs.forEach(function (f) { f(); }); })
+      .observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }
 
   // ---------- lưới ô vuông ----------
   var ARW = ['↑', '→', '↓', '←']; // lên, phải, xuống, trái
