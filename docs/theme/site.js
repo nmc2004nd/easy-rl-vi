@@ -42,7 +42,7 @@
   };
   var SUB_ICON = [
     [/_notes_vi$/, 'notebook-pen'], [/_questions&keywords_vi$/, 'circle-help'], [/_review_vi$/, 'layers'],
-    [/_viz_vi$/, 'monitor-play'], [/\/project\d+_vi$/, 'code-xml']
+    [/_viz_vi$/, 'monitor-play'], [/_code_vi$/, 'terminal'], [/\/project\d+_vi$/, 'code-xml']
   ];
   function navIcon(name, cls) {
     var paths = (window.NAV_ICONS || {})[name];

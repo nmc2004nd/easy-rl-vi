@@ -18,6 +18,7 @@
     - [Bài tập](chapter3/chapter3_questions&keywords_vi)
     - [Ôn tập](chapter3/chapter3_review_vi)
     - [Mô phỏng](chapter3/chapter3_viz_vi)
+    - [Code](chapter3/chapter3_code_vi)
     - [Dự án 1 Dùng Q-learning giải bài toán tìm đường bên vách đá](chapter3/project1_vi)
 - Dựa trên chính sách
   - [Chương 4 Gradient chính sách](chapter4/chapter4_vi)
@@ -79,6 +80,7 @@
   - [Chương 2 Giá trị trạng thái và phương trình Bellman](mathrl/ch02_vi)
   - [Chương 3 Giá trị tối ưu và phương trình tối ưu Bellman](mathrl/ch03_vi)
   - [Chương 4 Lặp giá trị và lặp chính sách](mathrl/ch04_vi)
+    - [Code](mathrl/ch04_code_vi)
   - [Chương 5 Phương pháp Monte Carlo](mathrl/ch05_vi)
   - [Chương 6 Xấp xỉ ngẫu nhiên](mathrl/ch06_vi)
   - [Chương 7 Phương pháp sai phân thời gian](mathrl/ch07_vi)
