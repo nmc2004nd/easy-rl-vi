@@ -742,6 +742,6 @@ So với phương trình theo giá trị trạng thái, phương trình (2.15) c
 ## Đọc tiếp
 
 - Quay lại [Chương 1 Khái niệm cơ bản](mathrl/ch01_vi) · [Giới thiệu phần này](mathrl/README_vi)
-- Chương 3 Giá trị tối ưu và phương trình tối ưu Bellman *(đang biên soạn)*
+- Tiếp theo [Chương 3 Giá trị trạng thái tối ưu và phương trình tối ưu Bellman](mathrl/ch03_vi)
 - Đối chiếu với EasyRL: [Chương 2 Quá trình quyết định Markov](chapter2/chapter2_vi) (MRP, phương trình kỳ vọng Bellman, đánh giá chính sách) và [ghi chú trọng tâm chương 2](chapter2/chapter2_notes_vi).
 - Thử tương tác: [mô phỏng chương 2](chapter2/chapter2_viz_vi), gồm đánh giá chính sách trên thế giới lưới.
