@@ -86,16 +86,22 @@ $$
 **Thuật toán 4.1: Lặp giá trị**
 
 ```
-Khởi tạo: biết mô hình p(r|s,a) và p(s'|s,a) với mọi (s,a). Chọn giá trị đoán ban đầu v_0.
-Mục tiêu: tìm giá trị trạng thái tối ưu và một chính sách tối ưu giải phương trình tối ưu Bellman.
+Input:  mô hình p(r|s,a), p(s'|s,a) với mọi (s,a); giá trị ban đầu v_0
+Output: v* và một chính sách tối ưu π*
 
-Trong khi v_k chưa hội tụ (‖v_k − v_{k−1}‖ còn lớn hơn một ngưỡng nhỏ cho trước), ở vòng thứ k:
-    Với mỗi trạng thái s ∈ S:
-        Với mỗi hành động a ∈ A(s):
-            Giá trị q:  q_k(s,a) = Σ_r p(r|s,a) r + γ Σ_s' p(s'|s,a) v_k(s')
-        Hành động có giá trị lớn nhất:  a*_k(s) = argmax_a q_k(s,a)
-        Cập nhật chính sách:  π_{k+1}(a|s) = 1 nếu a = a*_k(s), ngược lại = 0
-        Cập nhật giá trị:     v_{k+1}(s) = max_a q_k(s,a)
+k ← 0
+while ‖v_k − v_{k−1}‖ > θ do          # θ: ngưỡng hội tụ nhỏ
+    for each s ∈ S do
+        for each a ∈ A(s) do
+            q_k(s,a) ← Σ_r p(r|s,a)·r + γ·Σ_s' p(s'|s,a)·v_k(s')
+        end for
+        a*_k(s) ← argmax_a q_k(s,a)
+        # cập nhật chính sách (tham lam)
+        π_{k+1}(a|s) ← 1 if a = a*_k(s) else 0
+        v_{k+1}(s) ← max_a q_k(s,a)   # cập nhật giá trị
+    end for
+    k ← k + 1
+end while
 ```
 
 ⚠️ **Dễ nhầm: $v_k$ có phải là giá trị trạng thái không?** **Không.** Dù $v_k$ rốt cuộc hội tụ tới giá trị trạng thái tối ưu, nó **không** được bảo đảm thỏa phương trình Bellman của bất kỳ chính sách nào. Chẳng hạn, nói chung $v_k \ne r_{\pi_{k+1}} + \gamma P_{\pi_{k+1}} v_k$ và $v_k \ne r_{\pi_k} + \gamma P_{\pi_k} v_k$. Nó chỉ là **giá trị trung gian** do thuật toán sinh ra. Vì $v_k$ không phải giá trị trạng thái nên $q_k$ cũng **không phải** giá trị hành động. Đây là lý do chuẩn ký hiệu viết $v_k$, $q_k$ (chỉ số vòng lặp) thay vì $v_\pi$, $q_\pi$.
@@ -292,21 +298,31 @@ $$
 **Thuật toán 4.2: Lặp chính sách**
 
 ```
-Khởi tạo: biết mô hình p(r|s,a) và p(s'|s,a) với mọi (s,a). Chọn chính sách ban đầu π_0.
-Mục tiêu: tìm giá trị trạng thái tối ưu và một chính sách tối ưu.
+Input:  mô hình p(r|s,a), p(s'|s,a) với mọi (s,a); chính sách ban đầu π_0
+Output: v* và một chính sách tối ưu π*
 
-Trong khi v_{π_k} chưa hội tụ, ở vòng thứ k:
-    Đánh giá chính sách:
-        Khởi tạo: giá trị đoán ban đầu tùy ý v_{π_k}^(0)
-        Trong khi v_{π_k}^(j) chưa hội tụ, ở vòng thứ j:
-            Với mỗi trạng thái s ∈ S:
-                v_{π_k}^(j+1)(s) = Σ_a π_k(a|s) [ Σ_r p(r|s,a) r + γ Σ_s' p(s'|s,a) v_{π_k}^(j)(s') ]
-    Cải thiện chính sách:
-        Với mỗi trạng thái s ∈ S:
-            Với mỗi hành động a ∈ A(s):
-                q_{π_k}(s,a) = Σ_r p(r|s,a) r + γ Σ_s' p(s'|s,a) v_{π_k}(s')
-            a*_k(s) = argmax_a q_{π_k}(s,a)
-            π_{k+1}(a|s) = 1 nếu a = a*_k(s), ngược lại = 0
+k ← 0
+while v_{π_k} chưa hội tụ do
+    # Đánh giá chính sách: giải phương trình Bellman của π_k bằng phép lặp
+    v^(0) ← giá trị đoán tùy ý;  j ← 0
+    while v^(j) chưa hội tụ do
+        for each s ∈ S do
+            v^(j+1)(s) ← Σ_a π_k(a|s) [ Σ_r p(r|s,a)·r
+                                        + γ·Σ_s' p(s'|s,a)·v^(j)(s') ]
+        end for
+        j ← j + 1
+    end while
+    v_{π_k} ← v^(j)
+    # Cải thiện chính sách
+    for each s ∈ S do
+        for each a ∈ A(s) do
+            q_{π_k}(s,a) ← Σ_r p(r|s,a)·r + γ·Σ_s' p(s'|s,a)·v_{π_k}(s')
+        end for
+        a*_k(s) ← argmax_a q_{π_k}(s,a)
+        π_{k+1}(a|s) ← 1 if a = a*_k(s) else 0
+    end for
+    k ← k + 1
+end while
 ```
 
 ### 4.2.3 Ví dụ minh họa
@@ -458,22 +474,33 @@ Nói gọn: lặp chính sách cắt cụt **giống hệt lặp chính sách, c
 **Thuật toán 4.3: Lặp chính sách cắt cụt**
 
 ```
-Khởi tạo: biết mô hình p(r|s,a) và p(s'|s,a) với mọi (s,a). Chọn chính sách ban đầu π_0.
-Mục tiêu: tìm giá trị trạng thái tối ưu và một chính sách tối ưu.
+Input:  mô hình p(r|s,a), p(s'|s,a) với mọi (s,a);
+        chính sách ban đầu π_0;
+        số bước j_truncate
+Output: v* và một chính sách tối ưu π*
 
-Trong khi v_k chưa hội tụ, ở vòng thứ k:
-    Đánh giá chính sách:
-        Khởi tạo: chọn v_k^(0) = v_{k−1}. Số vòng tối đa là j_truncate.
-        Trong khi j < j_truncate:
-            Với mỗi trạng thái s ∈ S:
-                v_k^(j+1)(s) = Σ_a π_k(a|s) [ Σ_r p(r|s,a) r + γ Σ_s' p(s'|s,a) v_k^(j)(s') ]
-        Đặt v_k = v_k^(j_truncate)
-    Cải thiện chính sách:
-        Với mỗi trạng thái s ∈ S:
-            Với mỗi hành động a ∈ A(s):
-                q_k(s,a) = Σ_r p(r|s,a) r + γ Σ_s' p(s'|s,a) v_k(s')
-            a*_k(s) = argmax_a q_k(s,a)
-            π_{k+1}(a|s) = 1 nếu a = a*_k(s), ngược lại = 0
+k ← 0
+while v_k chưa hội tụ do
+    # Đánh giá chính sách, chỉ chạy j_truncate bước
+    # khởi tạo từ giá trị vòng trước
+    v^(0) ← v_{k−1}
+    for j = 0, 1, …, j_truncate − 1 do
+        for each s ∈ S do
+            v^(j+1)(s) ← Σ_a π_k(a|s) [ Σ_r p(r|s,a)·r
+                                        + γ·Σ_s' p(s'|s,a)·v^(j)(s') ]
+        end for
+    end for
+    v_k ← v^(j_truncate)
+    # Cải thiện chính sách
+    for each s ∈ S do
+        for each a ∈ A(s) do
+            q_k(s,a) ← Σ_r p(r|s,a)·r + γ·Σ_s' p(s'|s,a)·v_k(s')
+        end for
+        a*_k(s) ← argmax_a q_k(s,a)
+        π_{k+1}(a|s) ← 1 if a = a*_k(s) else 0
+    end for
+    k ← k + 1
+end while
 ```
 
 Lưu ý: $v_k$ và $v_k^{(j)}$ trong thuật toán **không phải** giá trị trạng thái, mà là xấp xỉ của giá trị trạng thái thật, vì bước đánh giá chỉ chạy hữu hạn vòng.
