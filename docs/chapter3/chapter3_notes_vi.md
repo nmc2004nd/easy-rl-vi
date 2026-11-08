@@ -1,6 +1,8 @@
 # Chương 3 Ghi chú trọng tâm
 
 > Ghi chú của người dịch: đây là bản ghi chú tổng hợp kiến thức trọng tâm của [chương 3](chapter3/chapter3_vi), do người dịch biên soạn để đọc lại nhanh. Chương lý thuyết dẫn dắt từ ví dụ đến khái niệm; trang này chỉ giữ khái niệm, công thức, so sánh và chỗ dễ nhầm. Các ý không có trong sách được ghi rõ.
+>
+> Ký hiệu: trang này giữ ký hiệu của sách gốc ($V_\pi$, $V(s)$, $Q_\pi$, $Q(s,a)$, $R(s,a)$). Cách viết chuẩn chung và bảng quy đổi: [Quy ước ký hiệu](notation_vi?id=_31-chương-13-theo-bolei-zhou-và-li-kejiao).
 
 ## 1. Bức tranh chung
 

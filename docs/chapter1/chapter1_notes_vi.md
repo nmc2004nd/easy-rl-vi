@@ -1,6 +1,8 @@
 # Chương 1 Ghi chú trọng tâm
 
 > Ghi chú của người dịch: đây là bản ghi chú tổng hợp kiến thức trọng tâm của [chương 1](chapter1/chapter1_vi), do người dịch biên soạn để đọc lại nhanh. Chương lý thuyết dẫn dắt từ ví dụ đến khái niệm; trang này đi ngược lại: khái niệm, công thức, so sánh, chỗ dễ nhầm. Các ý không có trong sách được ghi rõ.
+>
+> Ký hiệu: trang này giữ ký hiệu của sách gốc ($V_\pi$, $Q_\pi$, $Q(s,a)$, $R(s,a)$). Cách viết chuẩn chung và bảng quy đổi: [Quy ước ký hiệu](notation_vi?id=_31-chương-13-theo-bolei-zhou-và-li-kejiao).
 
 ## 1. Bài toán học tăng cường
 

@@ -1,6 +1,8 @@
 # Chương 4 Ghi chú trọng tâm
 
 > Ghi chú của người dịch: đây là bản ghi chú tổng hợp kiến thức trọng tâm của [chương 4](chapter4/chapter4_vi), do người dịch biên soạn để đọc lại nhanh. Chương lý thuyết dẫn dắt từ ví dụ đến khái niệm; trang này chỉ giữ khái niệm, công thức, so sánh và chỗ dễ nhầm. Các ý không có trong sách được ghi rõ.
+>
+> Ký hiệu: trang này giữ ký hiệu của sách gốc ($Q(s,a)$, $\pi_\theta$, $R(\tau)$, $A^\theta$). Lưu ý: phần thưởng $r_t$ ở đây ứng với $R_{t+1}$ trong chuẩn chung. Cách viết chuẩn chung và bảng quy đổi: [Quy ước ký hiệu](notation_vi?id=_32-chương-411-theo-hung-yi-lee).
 
 ## 1. Bức tranh chung
 

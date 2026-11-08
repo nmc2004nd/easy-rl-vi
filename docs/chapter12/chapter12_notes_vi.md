@@ -1,6 +1,8 @@
 # Chương 12 Ghi chú trọng tâm
 
 > Ghi chú của người dịch: đây là bản ghi chú tổng hợp kiến thức trọng tâm của [chương 12](chapter12/chapter12_vi), do người dịch biên soạn để đọc lại nhanh. Chương lý thuyết dẫn dắt từ ví dụ đến khái niệm; trang này chỉ giữ khái niệm, công thức, so sánh và chỗ dễ nhầm. Các ý không có trong sách được ghi rõ.
+>
+> Ký hiệu: trang này giữ ký hiệu của sách gốc ($\pi_\theta$, $\mu_\theta$, $Q_w$). Cách viết chuẩn chung và bảng quy đổi: [Quy ước ký hiệu](notation_vi?id=_33-chương-12-ddpg-td3).
 
 ## 1. Bức tranh chung
 
