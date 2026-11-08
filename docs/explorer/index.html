@@ -152,6 +152,8 @@ aside.sidebar { overflow-y: auto; padding: 10px 10px 40px; background: var(--pan
 .node-item.active { background: var(--accent-soft); }
 .node-item.active .ni-name { color: var(--accent); font-weight: 600; }
 .ni-name { display: block; color: var(--ink); }
+.new-tag { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 999px; font-size: 10.5px; font-weight: 700; line-height: 16px; letter-spacing: .02em; color: #fff; background: linear-gradient(135deg, #3d8bff, #7c4dff); vertical-align: 1px; }
+.meta-new { color: var(--accent); }
 .ni-year { display: block; margin-top: 1px; font-size: 11.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
 
 /* ===== Vùng nội dung ===== */
@@ -328,7 +330,7 @@ aside.sidebar { overflow-y: auto; padding: 10px 10px 40px; background: var(--pan
       <span class="brand-icon">RL</span>
       <span>
         <div class="brand-title">Bản đồ kiến thức RL</div>
-        <div class="brand-sub">39 mục · 1951–2024</div>
+        <div class="brand-sub">48 mục · 1951–2025</div>
       </span>
     </div>
 
@@ -401,8 +403,8 @@ const PARTITIONS = [
     descZh: 'DDPG / TD3 / SAC —— 连续动作空间的确定性策略 + 双 Q 网络',
     descEn: 'DDPG / TD3 / SAC — deterministic / Gaussian policies for continuous actions' },
   { id: 'model_based_modern', nameZh: 'Model-Based 现代 DRL', nameEn: 'Model-Based DRL',
-    descZh: '学习环境模型 + 用模型规划 —— MuZero, Dreamer 等',
-    descEn: 'Learn a world model + plan with it — MuZero, Dreamer, etc.' },
+    descZh: '学习环境模型 + 用模型规划 —— Dreamer V3/4, TD-MPC2 等',
+    descEn: 'Learn a world model + plan with it — Dreamer V3/4, TD-MPC2, etc.' },
   { id: 'offline', nameZh: '离线强化学习 Offline RL', nameEn: 'Offline RL',
     descZh: '只用固定数据集训练,不与环境交互 —— 真实部署最重要的方向',
     descEn: 'Train only on a fixed dataset, no online interaction — critical for real deployment' },
@@ -410,8 +412,8 @@ const PARTITIONS = [
     descZh: '稀疏奖励下的内在动机机制 —— ICM, RND',
     descEn: 'Intrinsic motivation for sparse-reward problems — ICM, RND' },
   { id: 'llm_alignment', nameZh: 'LLM 对齐时代 LLM Alignment', nameEn: 'LLM Alignment Era',
-    descZh: '2022 后大语言模型对齐的 RL 方法 —— RLHF, DPO, GRPO',
-    descEn: 'RL methods for aligning LLMs since 2022 — RLHF, DPO, GRPO' }
+    descZh: '2022 后大语言模型对齐与推理的 RL 方法 —— RLHF, DPO, GRPO, RLVR, DAPO, GSPO',
+    descEn: 'RL for aligning and reasoning LLMs since 2022 — RLHF, DPO, GRPO, RLVR, DAPO, GSPO' }
 ];
 
 const SLOT_DEFS = [
@@ -1439,6 +1441,218 @@ const NODES = [
   flashcardEn:'Eliminates the Critic model by calculating baselines from the statistical mean/std of multiple completions.',
   textbookZh:'传统 PPO 需要维护一个跟 Actor 一样庞大的 Critic 模型来估计状态价值基线，在 LLM 训练中会导致显存爆炸。GRPO 利用大模型的并行批处理能力，对同一问题生成一组回答，将其分数的平均值作为隐式 Baseline，彻底砍掉了 Critic。',
   textbookEn:'Standard PPO requires a massive Critic model for baselining. GRPO leverages LLM batch generation to produce G completions per prompt, using their mean/std as the baseline. This drops the Critic entirely, saving ~50% memory.'
+},
+
+// ===== 2024–2025 ADDITIONS (easy-rl-vi) =====
+{
+  id:"pqn", group:"value_based", year:"2024", author:"Gallici et al., Oxford & UCL", isNew:true,
+  nameZh:"并行 Q 网络 (PQN)", nameEn:"Parallelised Q-Network (PQN)",
+  parents:["dqn"], inheritedFrom:"dqn",
+  whatChangedZh:"去掉目标网络和大型回放池，用 LayerNorm 保证 TD 稳定，并用大量并行环境在线收集数据。",
+  whatChangedEn:"Drops the target network and the large replay buffer; LayerNorm keeps TD stable while many vectorised environments supply fresh data.",
+  keyInsightZh:"DQN 的两根“拐杖”可以扔掉：网络归一化本身就能让 off-policy TD 收敛。",
+  keyInsightEn:"DQN's two crutches are optional: normalisation alone can make off-policy TD converge.",
+  coreFormula:"L(\\theta)=\\big(\\mathrm{sg}[R^\\lambda_t]-Q_\\theta(s_t,a_t)\\big)^2,\\quad R^\\lambda_t=r_t+\\gamma\\big[(1-\\lambda)\\max_{a'}Q_\\theta(s_{t+1},a')+\\lambda R^\\lambda_{t+1}\\big]",
+  variables:[
+    {id:"sg", viz:"td_error_diagram", symbol:"\\mathrm{sg}[\\cdot]", meaningZh:"停止梯度：目标由当前网络计算，没有单独的目标网络", meaningEn:"Stop-gradient: targets come from the current network, no separate target net"},
+    {id:"R_lambda", viz:"td_error_diagram", symbol:"R^\\lambda_t", meaningZh:"λ-回报：在 n 步回报之间做几何加权", meaningEn:"λ-return: geometric mix of n-step returns"},
+    {id:"Q_ln", viz:"td_error_diagram", symbol:"Q_\\theta", meaningZh:"带 LayerNorm 的 Q 网络，是去掉目标网络后仍能收敛的关键", meaningEn:"Q-network with LayerNorm, the key to convergence without a target net"}
+  ],
+  moduleSlots:{ environment:"MDP", value_estimation:"λ-return", policy_representation:"NN", exploration:"ε-greedy", update_rule:"vanilla SGD", value_distribution:"scalar Q", data_source:"parallel-envs" },
+  flashcardZh:"极简 DQN：没有目标网络、没有大回放池，靠 LayerNorm 与并行环境，最快比 DQN 快约 50 倍。",
+  flashcardEn:"Minimal DQN: no target net, no big replay buffer. LayerNorm plus vectorised envs, up to ~50x faster than DQN.",
+  textbookZh:"论文证明在 Q 网络中加入 LayerNorm（及 L2 正则）后，即使使用 off-policy 数据，TD 也可以在没有目标网络的情况下收敛。PQN 因此回到经典在线 Q-learning：在成百上千个并行环境中同时交互，每批新数据计算 λ-回报后直接更新，再丢弃。结果在 Atari 上可与 Rainbow 竞争，在 Craftax 上可与 PPO-RNN 竞争，而且充分利用 GPU。",
+  textbookEn:"The paper shows that adding LayerNorm (and L2 regularisation) to the Q-network makes TD provably convergent without a target network, even with off-policy data. PQN therefore returns to classic online Q-learning: hundreds of vectorised environments act in parallel, each fresh batch is turned into λ-returns, used once and discarded. It is competitive with Rainbow on Atari and PPO-RNN on Craftax while fully using the GPU.",
+  references:[
+    {type:"PAPER", title:"Gallici et al. — Simplifying Deep Temporal Difference Learning (ICLR 2025)", url:"https://arxiv.org/abs/2407.04811"}
+  ]
+},
+{
+  id:"tdmpc2", group:"model_based_modern", year:"2024", author:"Hansen, Su & Wang, UC San Diego", isNew:true,
+  nameZh:"TD-MPC2", nameEn:"TD-MPC2",
+  parents:["dyna_q", "sac"], inheritedFrom:"dyna_q",
+  whatChangedZh:"在无解码器的隐空间世界模型中做模型预测控制 (MPPI)，并用 TD 学到的 Q 值作为规划末端价值。",
+  whatChangedEn:"Runs model-predictive control (MPPI) inside a decoder-free latent world model, using a TD-learned Q as the terminal value.",
+  keyInsightZh:"不必重建像素：只学对“回报”有用的隐状态，短程规划 + 长程 Q 值。一组超参数跑通 104 个任务。",
+  keyInsightEn:"No pixel reconstruction: learn only reward-relevant latents, plan short, bootstrap long with Q. One hyperparameter set for 104 tasks.",
+  coreFormula:"\\max_{a_{0:H}}\\ \\mathbb{E}\\Big[\\sum_{t=0}^{H-1}\\gamma^t R(\\mathbf z_t,a_t)+\\gamma^H Q(\\mathbf z_H,a_H)\\Big],\\quad \\mathbf z_{t+1}=d(\\mathbf z_t,a_t)",
+  variables:[
+    {id:"z_t", viz:"td_error_diagram", symbol:"\\mathbf z_t", meaningZh:"编码器得到的隐状态（SimNorm 归一化），不重建像素", meaningEn:"Latent state from the encoder (SimNorm-normalised), no pixel reconstruction"},
+    {id:"d_dyn", viz:"td_error_diagram", symbol:"d(\\mathbf z_t,a_t)", meaningZh:"隐空间动力学模型，用于向前推演 H 步", meaningEn:"Latent dynamics model used to roll out H steps"},
+    {id:"Q_term", viz:"td_error_diagram", symbol:"\\gamma^H Q(\\mathbf z_H,a_H)", meaningZh:"规划末端的 Q 值，替代无限长的推演", meaningEn:"Terminal Q-value replacing an infinite rollout"}
+  ],
+  moduleSlots:{ environment:"MDP", value_estimation:"TD(0)", policy_representation:"MPPI planning", exploration:"entropy", update_rule:"vanilla SGD", value_distribution:"scalar Q", data_source:"off-policy" },
+  flashcardZh:"连续控制的“世界模型 + 规划”代表。单个 317M 参数智能体可完成 80 个任务。",
+  flashcardEn:"Leading world-model-plus-planning method for continuous control. A single 317M-parameter agent handles 80 tasks.",
+  textbookZh:"TD-MPC2 学习一个隐式世界模型：编码器、隐动力学、奖励头、Q 集成和策略先验，全部只用奖励预测、价值预测与隐状态一致性训练，不重建观测。决策时用 MPPI 在隐空间采样动作序列，按“前 H 步奖励 + 末端 Q”打分并迭代优化。LayerNorm、SimNorm 与离散回归损失让同一组超参数适用于 104 个任务，模型规模越大效果越好。",
+  textbookEn:"TD-MPC2 learns an implicit world model (encoder, latent dynamics, reward head, Q-ensemble, policy prior) trained only with reward prediction, value prediction and latent consistency, never reconstructing observations. At decision time MPPI samples action sequences in latent space, scores them by H-step reward plus terminal Q, and iteratively refines them. LayerNorm, SimNorm and discrete-regression losses let a single hyperparameter set work across 104 tasks, and performance grows with model size.",
+  references:[
+    {type:"PAPER", title:"Hansen, Su & Wang — TD-MPC2: Scalable, Robust World Models for Continuous Control (ICLR 2024)", url:"https://arxiv.org/abs/2310.16828"}
+  ]
+},
+{
+  id:"dreamer4", group:"model_based_modern", year:"2025", author:"Hafner, Yan & Lillicrap", isNew:true,
+  nameZh:"Dreamer 4", nameEn:"Dreamer 4",
+  parents:["dreamerv3"], inheritedFrom:"dreamerv3",
+  whatChangedZh:"用可扩展的 Transformer 视频世界模型（shortcut forcing 目标）取代 RSSM，并完全用离线数据训练。",
+  whatChangedEn:"Replaces the RSSM with a scalable transformer video world model (shortcut forcing objective) and trains purely from offline data.",
+  keyInsightZh:"先从大量视频里学会“世界怎么动”，再在想象中练习：首个只用离线数据就在 Minecraft 里挖到钻石的智能体。",
+  keyInsightEn:"Learn how the world moves from video, then practise in imagination: the first agent to get Minecraft diamonds from offline data only.",
+  coreFormula:"z_t \\sim p_\\theta(z_t \\mid z_{\\lt t}, a_{\\lt t}),\\quad \\max_\\pi\\ \\mathbb{E}_{p_\\theta,\\,\\pi}\\Big[\\sum_t \\gamma^t \\hat r_t\\Big]",
+  variables:[
+    {id:"z_t4", viz:"td_error_diagram", symbol:"z_t", meaningZh:"视频帧经分词器压缩后的隐表示", meaningEn:"Latent tokens of a video frame produced by the tokenizer"},
+    {id:"p_theta4", viz:"td_error_diagram", symbol:"p_\\theta", meaningZh:"用 shortcut forcing 训练的 Transformer 世界模型，几步采样即可实时推演", meaningEn:"Transformer world model trained with shortcut forcing, sampling in a few steps in real time"},
+    {id:"r_hat4", viz:"td_error_diagram", symbol:"\\hat r_t", meaningZh:"世界模型预测的奖励，用于想象中的强化学习", meaningEn:"Reward predicted by the world model for RL in imagination"}
+  ],
+  moduleSlots:{ environment:"POMDP", value_estimation:"λ-return", policy_representation:"NN", exploration:"entropy", update_rule:"imagined-AC", value_distribution:"scalar V", data_source:"offline" },
+  flashcardZh:"世界模型规模化：在单张 GPU 上实时推演，比 VPT 少用约 100 倍数据，仅凭离线数据挖到钻石。",
+  flashcardEn:"Scaled world model: real-time imagination on one GPU, ~100x less data than VPT, diamonds from offline data alone.",
+  textbookZh:"Dreamer 4 分三步：1) 在大量（多数无动作标签的）视频上预训练分词器和世界模型，只需少量带动作的数据学会动作条件；2) 在世界模型中加入策略与奖励头并微调；3) 完全在想象轨迹上做强化学习。shortcut forcing 让模型只用几步采样就能生成下一帧，实现单卡实时推演。在需要两万多步鼠标键盘操作的“挖钻石”任务上，它首次只用离线数据成功。",
+  textbookEn:"Dreamer 4 works in three phases: 1) pretrain a tokenizer and world model on large, mostly action-free video, learning action conditioning from a small labelled subset; 2) add policy and reward heads and fine-tune; 3) run RL purely on imagined rollouts. Shortcut forcing lets the model generate the next frame in a few sampling steps, enabling real-time imagination on a single GPU. It is the first agent to obtain Minecraft diamonds, a task of 20,000+ mouse and keyboard actions, from offline data alone.",
+  references:[
+    {type:"PAPER", title:"Hafner, Yan & Lillicrap — Training Agents Inside of Scalable World Models (2025)", url:"https://arxiv.org/abs/2509.24527"},
+    {type:"WEB", title:"Dreamer 4 project page", url:"https://danijar.com/project/dreamer4/"}
+  ]
+},
+{
+  id:"fql", group:"offline", year:"2025", author:"Park, Li & Levine, UC Berkeley", isNew:true,
+  nameZh:"流匹配 Q 学习 (FQL)", nameEn:"Flow Q-Learning (FQL)",
+  parents:["bcq"], inheritedFrom:"bcq",
+  whatChangedZh:"用流匹配 (flow matching) 模型拟合行为分布，再蒸馏出一个一步策略去最大化 Q，避免对多步流做反向传播。",
+  whatChangedEn:"Fits the behaviour distribution with a flow-matching model, then distils a one-step policy that maximises Q, avoiding backprop through the multi-step flow.",
+  keyInsightZh:"表达力交给流模型，优化交给一步策略：既能表示多峰动作分布，又训练快、推理快。",
+  keyInsightEn:"Let the flow model carry expressiveness and the one-step policy carry optimisation: multimodal actions, fast training and inference.",
+  coreFormula:"\\mathcal{L}_\\pi(\\omega)=\\mathbb{E}_{s,z}\\big[-Q_\\phi(s,\\mu_\\omega(s,z))+\\alpha\\,\\|\\mu_\\omega(s,z)-\\mu_\\theta(s,z)\\|_2^2\\big]",
+  variables:[
+    {id:"mu_omega", viz:"td_error_diagram", symbol:"\\mu_\\omega(s,z)", meaningZh:"一步策略：把噪声 z 直接映射为动作，测试时使用", meaningEn:"One-step policy mapping noise z straight to an action, used at test time"},
+    {id:"mu_theta", viz:"td_error_diagram", symbol:"\\mu_\\theta(s,z)", meaningZh:"行为克隆的流策略：从同一噪声 z 解 ODE 得到的动作", meaningEn:"Behaviour-cloned flow policy: action obtained by solving the ODE from the same noise z"},
+    {id:"alpha_fql", viz:"td_error_diagram", symbol:"\\alpha", meaningZh:"蒸馏强度：越大越贴近数据集行为（越保守）", meaningEn:"Distillation weight: larger stays closer to the data (more conservative)"}
+  ],
+  moduleSlots:{ environment:"MDP", value_estimation:"TD(0)", policy_representation:"flow-matching", exploration:"none", update_rule:"vanilla SGD", value_distribution:"scalar Q", data_source:"offline" },
+  flashcardZh:"离线 RL 的新基线：流模型负责模仿，一步策略负责最大化 Q。在 73 个 OGBench/D4RL 任务上表现强劲。",
+  flashcardEn:"New offline-RL baseline: the flow imitates, the one-step policy maximises Q. Strong across 73 OGBench and D4RL tasks.",
+  textbookZh:"扩散或流模型能表示复杂的多峰动作分布，但若直接用 Q 梯度训练，需要穿过整个迭代采样链反向传播，既慢又不稳定。FQL 拆成两部分：流模型只做行为克隆；另一个一步策略在最大化 Q 的同时，被约束去模仿流模型对同一噪声给出的动作。测试时只用一步策略，因此推理成本与普通高斯策略相当。",
+  textbookEn:"Diffusion and flow models express complex multimodal action distributions, but training them directly with Q-gradients means backpropagating through the whole iterative sampler, which is slow and unstable. FQL splits the job: the flow model only does behaviour cloning, while a separate one-step policy maximises Q and is regularised to match the flow's action for the same noise. Only the one-step policy runs at test time, so inference costs as much as a Gaussian policy.",
+  references:[
+    {type:"PAPER", title:"Park, Li & Levine — Flow Q-Learning (ICML 2025)", url:"https://arxiv.org/abs/2502.02538"}
+  ]
+},
+{
+  id:"deep_crl", group:"cont_control", year:"2025", author:"Wang, Javali, Bortkiewicz, Trzciński & Eysenbach, Princeton", isNew:true,
+  nameZh:"千层对比强化学习 (Deep CRL)", nameEn:"1000-Layer Contrastive RL",
+  parents:["sac"], inheritedFrom:"sac",
+  whatChangedZh:"在自监督的目标条件对比 RL 中，用残差连接 + LayerNorm 把网络加深到 1024 层。",
+  whatChangedEn:"Scales networks in self-supervised, goal-conditioned contrastive RL to 1024 layers with residual connections and LayerNorm.",
+  keyInsightZh:"RL 也能“越深越强”：不需要人工奖励，加深网络后智能体出现了全新的行为（比如翻墙而过）。",
+  keyInsightEn:"RL can scale with depth too: with no hand-made reward, deeper agents discover qualitatively new behaviours (like vaulting over walls).",
+  coreFormula:"\\mathcal{L}_{\\text{critic}}=-\\sum_i \\log\\frac{e^{\\phi(s_i,a_i)^\\top\\psi(g_i)}}{\\sum_j e^{\\phi(s_i,a_i)^\\top\\psi(g_j)}},\\quad \\max_\\pi\\ \\phi\\big(s,\\pi(s,g)\\big)^\\top\\psi(g)",
+  variables:[
+    {id:"phi_sa", viz:"td_error_diagram", symbol:"\\phi(s,a)", meaningZh:"状态-动作编码器（深层残差网络）", meaningEn:"State-action encoder (deep residual network)"},
+    {id:"psi_g", viz:"td_error_diagram", symbol:"\\psi(g)", meaningZh:"目标编码器：同一轨迹未来到达的状态是正样本", meaningEn:"Goal encoder: future states of the same trajectory are positives"},
+    {id:"infonce", viz:"td_error_diagram", symbol:"\\mathcal{L}_{\\text{critic}}", meaningZh:"InfoNCE 对比损失，内积相当于“能否到达目标”的打分", meaningEn:"InfoNCE contrastive loss; the inner product scores how reachable the goal is"}
+  ],
+  moduleSlots:{ environment:"goal-conditioned MDP", value_estimation:"contrastive", policy_representation:"NN", exploration:"none", update_rule:"vanilla SGD", value_distribution:"similarity score", data_source:"off-policy" },
+  flashcardZh:"NeurIPS 2025 最佳论文。大多数 RL 只用 2–5 层网络，这里加深到 1024 层，在目标到达任务上大幅提升。",
+  flashcardEn:"NeurIPS 2025 Best Paper. Most RL uses 2–5 layers; going to 1024 layers sharply improves goal-reaching.",
+  textbookZh:"该方法不依赖人工奖励，而是学习“从 (s, a) 出发能否到达目标 g”：同一条轨迹中未来出现的状态作为正样本，其他轨迹的作为负样本，用对比损失训练评论家，策略则选择使内积最大的动作。作者发现，只要使用残差连接、LayerNorm 和 Swish 激活，网络可以稳定加深到 1024 层；更深的网络不仅分数更高，还会解锁浅层网络始终学不会的技能。",
+  textbookEn:"Instead of a hand-designed reward, the method learns whether goal g is reachable from (s, a): future states of the same trajectory are positives, states from other trajectories negatives, and the critic is trained with a contrastive loss while the actor picks actions maximising the inner product. With residual connections, LayerNorm and Swish activations the networks train stably up to 1024 layers; deeper networks score higher and unlock skills that shallow ones never learn.",
+  references:[
+    {type:"PAPER", title:"Wang et al. — 1000 Layer Networks for Self-Supervised RL (NeurIPS 2025)", url:"https://arxiv.org/abs/2503.14858"},
+    {type:"WEB", title:"NeurIPS 2025 Best Paper Awards", url:"https://blog.neurips.cc/2025/11/26/announcing-the-neurips-2025-best-paper-awards/"}
+  ]
+},
+{
+  id:"deepseek_r1", group:"llm_alignment", year:"2025", author:"DeepSeek-AI", isNew:true,
+  nameZh:"可验证奖励强化学习 (RLVR / DeepSeek-R1)", nameEn:"RL with Verifiable Rewards (DeepSeek-R1)",
+  parents:["grpo"], inheritedFrom:"grpo",
+  whatChangedZh:"用规则判定答案对错（以及格式）作为奖励，取代学习出的奖励模型；R1-Zero 甚至跳过 SFT，直接从基座模型做 RL。",
+  whatChangedEn:"Replaces the learned reward model with a rule that checks answer correctness (plus format); R1-Zero even skips SFT and runs RL straight from the base model.",
+  keyInsightZh:"只告诉模型“对”或“错”，长链推理、自我检查、反思等能力会在 RL 中自己长出来。",
+  keyInsightEn:"Tell the model only right or wrong, and long chains of thought, self-checking and reflection emerge on their own during RL.",
+  coreFormula:"r(x,y)=\\mathbf{1}\\big[\\mathrm{ans}(y)=y^\\star\\big]+r_{\\text{fmt}}(y),\\qquad \\hat{A}_i=\\frac{r_i-\\mathrm{mean}(r_{1:G})}{\\mathrm{std}(r_{1:G})}",
+  variables:[
+    {id:"verifier", viz:"td_error_diagram", symbol:"\\mathbf{1}[\\mathrm{ans}(y)=y^\\star]", meaningZh:"规则验证器：数学答案比对或代码单元测试，难以被“刷分”", meaningEn:"Rule-based verifier: answer matching or unit tests, hard to reward-hack"},
+    {id:"r_fmt", viz:"td_error_diagram", symbol:"r_{\\text{fmt}}(y)", meaningZh:"格式奖励：要求把推理过程写在 &lt;think&gt; 标签中", meaningEn:"Format reward: reasoning must be inside &lt;think&gt; tags"},
+    {id:"A_group_r1", viz:"td_error_diagram", symbol:"\\hat{A}_i", meaningZh:"沿用 GRPO 的组内标准化优势", meaningEn:"Group-normalised advantage inherited from GRPO"}
+  ],
+  moduleSlots:{ environment:"MDP", value_estimation:"MC", policy_representation:"NN", exploration:"entropy", update_rule:"PPO-clip", value_distribution:"Advantage", data_source:"verifiable-reward" },
+  flashcardZh:"推理模型的起点。R1-Zero 在 AIME 2024 上的 pass@1 从 15.6% 升到 77.9%，论文登上 2025 年 9 月 Nature 封面。",
+  flashcardEn:"The starting point of reasoning models. R1-Zero raised AIME 2024 pass@1 from 15.6% to 77.9%; the paper made the Nature cover in September 2025.",
+  textbookZh:"DeepSeek-R1-Zero 从 DeepSeek-V3-Base 出发，直接用 GRPO 训练，奖励只来自规则：最终答案是否正确，以及输出是否符合格式。随着训练进行，回答越来越长，并自然出现反思、验证等行为（“顿悟时刻”）。但 R1-Zero 可读性差、会混用语言，于是正式的 R1 采用多阶段流程：少量冷启动 SFT 数据 → 推理 RL → 拒绝采样 + SFT → 覆盖所有场景的 RL。此后 RLVR 成为训练推理模型的主流范式。",
+  textbookEn:"DeepSeek-R1-Zero starts from DeepSeek-V3-Base and is trained directly with GRPO, with rewards coming only from rules: is the final answer correct, and is the output well formatted. As training goes on, responses grow longer and behaviours such as reflection and verification emerge (the \"aha moment\"). R1-Zero had poor readability and mixed languages, so the released R1 uses a multi-stage pipeline: a little cold-start SFT, reasoning RL, rejection sampling plus SFT, then RL for all scenarios. RLVR has since become the mainstream recipe for reasoning models.",
+  references:[
+    {type:"PAPER", title:"DeepSeek-AI — DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via RL (Nature 645, 2025)", url:"https://arxiv.org/abs/2501.12948"}
+  ]
+},
+{
+  id:"dapo", group:"llm_alignment", year:"2025", author:"Yu et al., ByteDance Seed & Tsinghua AIR", isNew:true,
+  nameZh:"解耦裁剪与动态采样策略优化 (DAPO)", nameEn:"Decoupled Clip and Dynamic Sampling Policy Optimization (DAPO)",
+  parents:["grpo"], inheritedFrom:"grpo",
+  whatChangedZh:"四项改动：上下界解耦的裁剪 (Clip-Higher)、动态采样、token 级损失、超长回答的奖励整形；并去掉 KL 项。",
+  whatChangedEn:"Four changes: decoupled clip bounds (Clip-Higher), dynamic sampling, token-level loss, overlong reward shaping; the KL term is removed.",
+  keyInsightZh:"GRPO 跑长链推理会熵塌缩、浪费样本。放宽上界保留探索，丢掉全对或全错的组，让每个 token 平等计入损失。",
+  keyInsightEn:"GRPO on long CoT collapses entropy and wastes samples. Raise the upper clip to keep exploring, drop all-right or all-wrong groups, weigh every token equally.",
+  coreFormula:"\\mathcal{J}=\\mathbb{E}\\Big[\\tfrac{1}{\\sum_i|o_i|}\\sum_{i=1}^{G}\\sum_{t=1}^{|o_i|}\\min\\big(r_{i,t}\\hat A_{i,t},\\ \\mathrm{clip}(r_{i,t},1-\\varepsilon_{\\text{low}},1+\\varepsilon_{\\text{high}})\\hat A_{i,t}\\big)\\Big]\\ \\ \\text{s.t.}\\ 0\\lt \\big|\\{o_i:\\text{correct}\\}\\big|\\lt G",
+  variables:[
+    {id:"eps_high", viz:"td_error_diagram", symbol:"\\varepsilon_{\\text{high}}", meaningZh:"Clip-Higher：上界单独放宽（如 0.28），让低概率 token 有机会被提升", meaningEn:"Clip-Higher: a looser upper bound (e.g. 0.28) lets low-probability tokens grow"},
+    {id:"tok_norm", viz:"td_error_diagram", symbol:"\\tfrac{1}{\\sum_i|o_i|}", meaningZh:"token 级归一化：长回答中的每个 token 与短回答中的同等重要", meaningEn:"Token-level normalisation: each token in a long answer counts as much as one in a short answer"},
+    {id:"dyn_sample", viz:"td_error_diagram", symbol:"0\\lt |\\{o_i:\\text{correct}\\}|\\lt G", meaningZh:"动态采样：全对或全错的组优势为 0，丢弃并重新采样", meaningEn:"Dynamic sampling: all-correct or all-wrong groups have zero advantage and are resampled"}
+  ],
+  moduleSlots:{ environment:"MDP", value_estimation:"MC", policy_representation:"NN", exploration:"entropy", update_rule:"PPO-clip", value_distribution:"Advantage", data_source:"verifiable-reward" },
+  flashcardZh:"开源的大规模 LLM RL 系统。Qwen2.5-32B 在 AIME 2024 拿到 50 分，用一半训练步数超过 R1-Zero-Qwen-32B 的 47 分。",
+  flashcardEn:"Open-source large-scale LLM RL system. Qwen2.5-32B reaches 50 on AIME 2024, beating R1-Zero-Qwen-32B (47) with half the steps.",
+  textbookZh:"作者复现 GRPO 时发现几个问题：对称裁剪会压制低概率 token 的增长，导致熵塌缩；一组回答全对或全错时优势全为 0，梯度白白浪费；按样本平均会让长回答中的 token 权重被稀释；被截断的超长回答带来噪声奖励。DAPO 分别用 Clip-Higher、动态采样、token 级策略梯度损失和超长奖励整形解决，代码、数据与训练框架全部开源。",
+  textbookEn:"Reproducing GRPO, the authors hit several problems: symmetric clipping suppresses growth of low-probability tokens and collapses entropy; groups that are all right or all wrong give zero advantage and waste gradient; sample-level averaging dilutes tokens in long answers; truncated overlong answers inject reward noise. DAPO fixes them with Clip-Higher, dynamic sampling, a token-level policy-gradient loss and overlong reward shaping, and open-sources code, data and training framework.",
+  references:[
+    {type:"PAPER", title:"Yu et al. — DAPO: An Open-Source LLM Reinforcement Learning System at Scale (2025)", url:"https://arxiv.org/abs/2503.14476"}
+  ]
+},
+{
+  id:"dr_grpo", group:"llm_alignment", year:"2025", author:"Liu et al., Sea AI Lab", isNew:true,
+  nameZh:"Dr. GRPO（无偏 GRPO）", nameEn:"Dr. GRPO (GRPO Done Right)",
+  parents:["grpo"], inheritedFrom:"grpo",
+  whatChangedZh:"去掉 GRPO 中按回答长度 1/|o_i| 的归一化和按组标准差的归一化，消除优化偏差。",
+  whatChangedEn:"Removes GRPO's per-response length normalisation 1/|o_i| and the group-std normalisation, eliminating optimisation bias.",
+  keyInsightZh:"“回答越来越长”不全是推理变强：长度归一化会让错误的长回答受罚更轻。去掉它，token 效率更高。",
+  keyInsightEn:"Growing answer length is not all better reasoning: length normalisation penalises long wrong answers less. Remove it for better token efficiency.",
+  coreFormula:"\\hat A_i=r_i-\\mathrm{mean}(r_{1:G}),\\quad \\mathcal{J}=\\mathbb{E}\\Big[\\tfrac1G\\sum_{i=1}^{G}\\sum_{t=1}^{|o_i|}\\min\\big(\\rho_{i,t}\\hat A_i,\\ \\mathrm{clip}(\\rho_{i,t},1-\\varepsilon,1+\\varepsilon)\\hat A_i\\big)\\Big]",
+  variables:[
+    {id:"A_nostd", viz:"td_error_diagram", symbol:"\\hat A_i", meaningZh:"只减均值、不除标准差：避免过分放大太简单或太难的题", meaningEn:"Mean-centred only, no std division: avoids over-weighting too-easy or too-hard questions"},
+    {id:"no_len", viz:"td_error_diagram", symbol:"\\sum_{t=1}^{|o_i|}", meaningZh:"直接求和，不再除以 |o_i|：错误的长回答不再被“稀释”惩罚", meaningEn:"Plain sum, no 1/|o_i|: long wrong answers no longer get a diluted penalty"},
+    {id:"rho_it", viz:"td_error_diagram", symbol:"\\rho_{i,t}", meaningZh:"token 级重要性比率，与 PPO 相同", meaningEn:"Token-level importance ratio, as in PPO"}
+  ],
+  moduleSlots:{ environment:"MDP", value_estimation:"MC", policy_representation:"NN", exploration:"entropy", update_rule:"PPO-clip", value_distribution:"Advantage", data_source:"verifiable-reward" },
+  flashcardZh:"对 R1-Zero 式训练的批判性分析：GRPO 的两个归一化会制造偏差，修正后在相同精度下回答更短。",
+  flashcardEn:"A critical look at R1-Zero-style training: GRPO's two normalisations create bias; fixing them gives shorter answers at the same accuracy.",
+  textbookZh:"论文《Understanding R1-Zero-Like Training》指出两点偏差：1) 长度偏差：损失按 1/|o_i| 平均，正确的短回答获得更大更新，而错误的长回答惩罚被摊薄，模型因此越答越长；2) 难度偏差：除以组内标准差会放大全组分数接近的问题。Dr. GRPO 把这两项去掉，回到无偏的策略梯度形式，在保持推理能力的同时显著减少无效的长输出。",
+  textbookEn:"The paper \"Understanding R1-Zero-Like Training\" identifies two biases: 1) length bias, where averaging by 1/|o_i| gives short correct answers bigger updates and dilutes the penalty on long wrong ones, so answers keep growing; 2) difficulty bias, where dividing by the group std over-weights questions whose scores are nearly uniform. Dr. GRPO removes both, returning to an unbiased policy-gradient form that keeps reasoning ability while cutting wasteful long outputs.",
+  references:[
+    {type:"PAPER", title:"Liu et al. — Understanding R1-Zero-Like Training: A Critical Perspective (2025)", url:"https://arxiv.org/abs/2503.20783"}
+  ]
+},
+{
+  id:"gspo", group:"llm_alignment", year:"2025", author:"Zheng et al., Qwen Team, Alibaba", isNew:true,
+  nameZh:"组序列策略优化 (GSPO)", nameEn:"Group Sequence Policy Optimization (GSPO)",
+  parents:["grpo"], inheritedFrom:"grpo",
+  whatChangedZh:"把重要性比率从 token 级改为序列级（按长度开 |y| 次方根），裁剪、奖励和优化都在整条回答上进行。",
+  whatChangedEn:"Moves the importance ratio from token level to sequence level (length-normalised by the |y|-th root); clipping, reward and optimisation all act on whole responses.",
+  keyInsightZh:"奖励是给整条回答的，比率也应该按整条回答算。token 级比率噪声大，在 MoE 模型上尤其容易崩。",
+  keyInsightEn:"The reward is given per response, so the ratio should be too. Token-level ratios are noisy and especially fragile on MoE models.",
+  coreFormula:"s_i(\\theta)=\\Big(\\frac{\\pi_\\theta(y_i\\mid x)}{\\pi_{\\theta_{\\text{old}}}(y_i\\mid x)}\\Big)^{1/|y_i|},\\quad \\mathcal{J}=\\mathbb{E}\\Big[\\tfrac1G\\sum_{i=1}^{G}\\min\\big(s_i\\hat A_i,\\ \\mathrm{clip}(s_i,1-\\varepsilon,1+\\varepsilon)\\hat A_i\\big)\\Big]",
+  variables:[
+    {id:"s_i", viz:"td_error_diagram", symbol:"s_i(\\theta)", meaningZh:"序列级重要性比率：等于 token 对数比率的平均再取指数", meaningEn:"Sequence-level ratio: the exponential of the mean token log-ratio"},
+    {id:"len_root", viz:"td_error_diagram", symbol:"1/|y_i|", meaningZh:"长度归一化：防止少数 token 让比率剧烈波动，并统一不同长度的裁剪范围", meaningEn:"Length normalisation: stops a few tokens from swinging the ratio and unifies clip ranges across lengths"},
+    {id:"A_seq", viz:"td_error_diagram", symbol:"\\hat A_i", meaningZh:"整条回答的组内相对优势，与 GRPO 相同", meaningEn:"Group-relative advantage of the whole response, as in GRPO"}
+  ],
+  moduleSlots:{ environment:"MDP", value_estimation:"MC", policy_representation:"NN", exploration:"entropy", update_rule:"sequence-clip", value_distribution:"Advantage", data_source:"verifiable-reward" },
+  flashcardZh:"Qwen3 系列使用的 RL 算法。序列级比率让 MoE 训练稳定，不再需要 Routing Replay。",
+  flashcardEn:"The RL algorithm behind the Qwen3 models. Sequence-level ratios stabilise MoE training without Routing Replay.",
+  textbookZh:"GRPO 给每个 token 计算重要性比率，但每个 token 只有一个样本，比率噪声随长度累积，在长回答和 MoE 模型（专家路由随参数变化）上容易导致训练崩溃。GSPO 用整条序列的似然比并做长度归一化，在序列级别裁剪。它对训练与推理之间的精度差异更宽容，适合部分 rollout、多轮 RL 和训推分离的框架，Qwen3 的 Instruct、Coder 与 Thinking 模型都受益于它。",
+  textbookEn:"GRPO computes an importance ratio per token, but each token is a single sample, so noise accumulates with length and can crash training on long answers and MoE models whose expert routing shifts with the weights. GSPO uses the length-normalised likelihood ratio of the whole sequence and clips at sequence level. It is more tolerant of precision mismatch between training and inference, which suits partial rollouts, multi-turn RL and disaggregated training-inference setups, and it contributed to Qwen3 Instruct, Coder and Thinking models.",
+  references:[
+    {type:"PAPER", title:"Zheng et al. — Group Sequence Policy Optimization (2025)", url:"https://arxiv.org/abs/2507.18071"},
+    {type:"WEB", title:"Qwen blog — GSPO", url:"https://qwenlm.github.io/blog/gspo/"}
+  ]
 }
 
 
@@ -1496,7 +1710,16 @@ const EDGES_PART1 = [
   ['actor_critic', 'icm', '前向预测误差作为内部奖励', 'Prediction error reward'],
   ['ppo', 'rlhf', '用偏好打分取代环境回报', 'Reward Model replaces Env'],
   ['rlhf', 'dpo', '解析解等价替换，消除 RM 和 PPO', 'Math cancels out RM/PPO'],
-  ['ppo', 'grpo', '多采样均值代替 Critic 网络', 'Group baseline drops Critic']
+  ['ppo', 'grpo', '多采样均值代替 Critic 网络', 'Group baseline drops Critic'],
+  ["dqn", "pqn", "去掉目标网络与回放池", "drop target net and replay"],
+  ["dyna_q", "tdmpc2", "隐空间规划 + TD 末端价值", "latent planning + TD terminal value"],
+  ["dreamerv3", "dreamer4", "RSSM → 可扩展视频世界模型", "RSSM → scalable video world model"],
+  ["bcq", "fql", "生成式约束 → 流模型蒸馏", "generative constraint → flow distillation"],
+  ["sac", "deep_crl", "自监督对比目标 + 千层网络", "self-supervised contrastive goals + 1000 layers"],
+  ["grpo", "deepseek_r1", "规则验证奖励取代 RM", "rule-based verifiable reward replaces RM"],
+  ["grpo", "dapo", "解耦裁剪 + 动态采样", "decoupled clip + dynamic sampling"],
+  ["grpo", "dr_grpo", "去掉长度与标准差归一化", "remove length and std normalisation"],
+  ["grpo", "gspo", "token 级比率 → 序列级比率", "token-level ratio → sequence-level ratio"]
 ];
 
 // ============================================================
@@ -1512,8 +1735,8 @@ const UI = {
     breakthrough: 'Điểm đột phá', inherits: 'Kế thừa từ', insight: 'Ý chính', formula: 'Công thức cốt lõi',
     variables: 'Ý nghĩa các ký hiệu (bấm để xem)', mechanism: 'Cơ chế', slots: 'Các thành phần',
     book: 'Đọc trong sách', outside: 'Nội dung mở rộng, không có trong giáo trình.',
-    refs: 'Tài liệu tham khảo', step: 'BƯỚC',
-    credit: 'Phỏng theo <a href="https://github.com/HanFei-hz/HanFei-hz.github.io/blob/master/assets/files/rl_explorer.html">RL Explorer</a> của HanFei-hz (giấy phép MIT, <a href="LICENSE-rl_explorer.txt">xem thông báo</a>). Phần tiếng Việt được dịch và hiệu đính một số điểm học thuật; phần tiếng Anh và tiếng Trung giữ nguyên bản.'
+    refs: 'Tài liệu tham khảo', step: 'BƯỚC', newTag: 'Mới', newNote: 'Bổ sung 2024–2025',
+    credit: 'Phỏng theo <a href="https://github.com/HanFei-hz/HanFei-hz.github.io/blob/master/assets/files/rl_explorer.html">RL Explorer</a> của HanFei-hz (giấy phép MIT, <a href="LICENSE-rl_explorer.txt">xem thông báo</a>). Phần tiếng Việt được dịch và hiệu đính một số điểm học thuật; phần tiếng Anh và tiếng Trung giữ nguyên bản. Các mục gắn nhãn <span class="new-tag">Mới</span> (2024–2025) do Easy RL tiếng Việt bổ sung, kèm liên kết bài báo gốc.'
   },
   en: {
     modeFlashcard: 'Flashcard', modeTextbook: 'Textbook',
@@ -1523,8 +1746,8 @@ const UI = {
     breakthrough: 'Breakthrough', inherits: 'Inherits from', insight: 'Key Insight', formula: 'Core Formula',
     variables: 'Variables', mechanism: 'Mechanism', slots: 'Module Slots',
     book: 'Read in the book', outside: 'Extension: not covered in the book.',
-    refs: 'References', step: 'STEP',
-    credit: 'Adapted from <a href="https://github.com/HanFei-hz/HanFei-hz.github.io/blob/master/assets/files/rl_explorer.html">RL Explorer</a> by HanFei-hz (MIT, <a href="LICENSE-rl_explorer.txt">notice</a>). English and Chinese text is unmodified from the original.'
+    refs: 'References', step: 'STEP', newTag: 'New', newNote: 'Added 2024–2025',
+    credit: 'Adapted from <a href="https://github.com/HanFei-hz/HanFei-hz.github.io/blob/master/assets/files/rl_explorer.html">RL Explorer</a> by HanFei-hz (MIT, <a href="LICENSE-rl_explorer.txt">notice</a>). English and Chinese text of the original nodes is unmodified. Nodes tagged <span class="new-tag">New</span> (2024–2025) were added by Easy RL Vietnamese, with links to the papers.'
   },
   zh: {
     modeFlashcard: '复习卡片', modeTextbook: '教科书',
@@ -1534,14 +1757,15 @@ const UI = {
     breakthrough: '相较前沿的突破', inherits: '继承自', insight: '核心洞察', formula: '核心公式',
     variables: '变量解析', mechanism: '机制详解', slots: '模块配方',
     book: '在书中阅读', outside: '扩展内容,教材中未涉及。',
-    refs: '参考资料', step: 'STEP',
-    credit: '改编自 HanFei-hz 的 <a href="https://github.com/HanFei-hz/HanFei-hz.github.io/blob/master/assets/files/rl_explorer.html">RL Explorer</a>(MIT,<a href="LICENSE-rl_explorer.txt">许可声明</a>)。中文与英文内容保持原样。'
+    refs: '参考资料', step: 'STEP', newTag: '新', newNote: '2024–2025 新增',
+    credit: '改编自 HanFei-hz 的 <a href="https://github.com/HanFei-hz/HanFei-hz.github.io/blob/master/assets/files/rl_explorer.html">RL Explorer</a>(MIT,<a href="LICENSE-rl_explorer.txt">许可声明</a>)。原有节点的中文与英文内容保持原样。标注 <span class="new-tag">新</span> 的节点（2024–2025）由 Easy RL 越南语版补充，并附论文链接。'
   }
 };
 
 const state = { lang: 'vi', mode: 'flashcard', currentNodeId: null, currentVarId: null };
 
 const t = (key) => UI[state.lang][key];
+const newTag = (node) => node.isNew ? ` <span class="new-tag">${t('newTag')}</span>` : '';
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 const getLangField = (obj, field) => obj[`${field}${capitalize(state.lang)}`];
 // Bỏ dấu để tìm "lap gia tri" vẫn ra "Lặp giá trị".
@@ -1643,7 +1867,7 @@ function renderSidebar() {
       html += `
         <div class="node-item ${isActive}" onclick="selectNode('${node.id}')" id="sb-${node.id}">
           <span class="ni-name">${getLangField(node, 'name')}</span>
-          <span class="ni-year">${node.year} · ${node.author.split(',')[0]}</span>
+          <span class="ni-year">${node.year} · ${node.author.split(',')[0]}${newTag(node)}</span>
         </div>`;
     });
     html += `</div>`;
@@ -1672,7 +1896,7 @@ function renderGraph() {
       html += `
         <div class="gn ${isActive}" onclick="selectNode('${node.id}')" id="gn-${node.id}">
           <div class="gn-name">${getLangField(node, 'name')}</div>
-          <div class="gn-meta">${node.year}</div>
+          <div class="gn-meta">${node.year}${newTag(node)}</div>
         </div>`;
     });
     html += `</div></div>`;
@@ -1733,6 +1957,7 @@ function renderDetail() {
       <div class="node-meta-row">
         <div class="meta-pill"><strong>${t('year')}:</strong> ${node.year}</div>
         <div class="meta-pill"><strong>${t('author')}:</strong> ${node.author}</div>
+        ${node.isNew ? `<div class="meta-pill meta-new">${t('newNote')}</div>` : ''}
       </div>
     </div>
 

@@ -10,10 +10,10 @@ window.RL_VI = {
     value_based: { name: "Học sâu dựa trên giá trị", desc: "Họ DQN: học hàm Q rồi chọn hành động tham lam. Một trong hai nhánh chính của học tăng cường sâu" },
     policy_based: { name: "Học sâu dựa trên chính sách", desc: "Họ gradient chính sách: tối ưu trực tiếp chính sách π. Nhánh chính còn lại" },
     cont_control: { name: "Điều khiển liên tục", desc: "DDPG, TD3, SAC: chính sách tất định hoặc Gauss cho không gian hành động liên tục" },
-    model_based_modern: { name: "Học sâu có mô hình", desc: "Học một mô hình thế giới rồi lập kế hoạch hoặc huấn luyện trong đó, ví dụ Dreamer" },
+    model_based_modern: { name: "Học sâu có mô hình", desc: "Học một mô hình thế giới rồi lập kế hoạch hoặc huấn luyện trong đó, ví dụ Dreamer V3, Dreamer 4, TD-MPC2" },
     offline: { name: "Học tăng cường ngoại tuyến", desc: "Chỉ huấn luyện trên tập dữ liệu cố định, không tương tác trực tuyến: quan trọng khi triển khai thực tế" },
     exploration: { name: "Tăng cường khám phá", desc: "Động lực nội tại cho bài toán phần thưởng thưa, ví dụ ICM" },
-    llm_alignment: { name: "Căn chỉnh mô hình ngôn ngữ lớn", desc: "Các phương pháp học tăng cường để căn chỉnh LLM từ năm 2022: RLHF, DPO, GRPO" }
+    llm_alignment: { name: "Căn chỉnh và suy luận cho LLM", desc: "Học tăng cường để căn chỉnh và dạy LLM suy luận từ năm 2022: RLHF, DPO, GRPO, rồi đến RLVR, DAPO, GSPO (2025)" }
   },
 
   slots: {
@@ -55,7 +55,17 @@ window.RL_VI = {
     "scalar-V": "V vô hướng",
     "scalar V": "V vô hướng",
     "V-plus-A": "V + A",
-    "Advantage": "lợi thế"
+    "Advantage": "lợi thế",
+    "λ-return": "lợi tức $\\lambda$",
+    "parallel-envs": "nhiều môi trường song song",
+    "MPPI planning": "lập kế hoạch MPPI",
+    "flow-matching": "mô hình flow matching",
+    "goal-conditioned MDP": "MDP theo mục tiêu",
+    "contrastive": "học đối sánh",
+    "similarity score": "điểm tương đồng",
+    "verifiable-reward": "phần thưởng kiểm chứng được",
+    "sequence-clip": "cắt theo chuỗi",
+    "ε-greedy": "ε-tham lam"
   },
 
   chainNames: {
@@ -657,6 +667,114 @@ window.RL_VI = {
         A_hat_ij: "Lợi thế trong nhóm của câu trả lời j cho prompt i",
         r_ij: "Điểm của câu trả lời, do quy tắc hoặc mô hình phần thưởng đưa ra",
         mean_r: "Điểm trung bình trong nhóm: thay cho đường cơ sở do critic dự đoán"
+      }
+    },
+    pqn: {
+      name: "Mạng Q song song (PQN)",
+      whatChanged: "Bỏ mạng mục tiêu và bộ đệm phát lại lớn: LayerNorm giữ cho TD ổn định, còn rất nhiều môi trường chạy song song cung cấp dữ liệu mới",
+      keyInsight: "Hai chiếc nạng của DQN có thể bỏ: chỉ riêng việc chuẩn hóa mạng đã đủ để TD khác chính sách hội tụ",
+      flashcard: "DQN tối giản: không mạng mục tiêu, không bộ đệm phát lại lớn. Dùng LayerNorm và môi trường song song, nhanh hơn DQN tới khoảng 50 lần.",
+      textbook: "Bài báo chứng minh khi thêm LayerNorm (và điều chuẩn $L_2$) vào mạng Q, TD hội tụ được mà không cần mạng mục tiêu, kể cả với dữ liệu khác chính sách. Vì thế PQN quay về Q-learning trực tuyến cổ điển: hàng trăm môi trường chạy song song, mỗi lô dữ liệu mới được đổi thành lợi tức $\\lambda$, dùng một lần rồi bỏ. Kết quả cạnh tranh với Rainbow trên Atari và PPO-RNN trên Craftax, đồng thời tận dụng tốt GPU.",
+      meanings: {
+        sg: "Dừng gradient: mục tiêu tính bằng chính mạng hiện tại, không cần mạng mục tiêu riêng",
+        R_lambda: "Lợi tức $\\lambda$: trung bình có trọng số hình học của các lợi tức $n$ bước",
+        Q_ln: "Mạng Q có LayerNorm: chìa khóa để vẫn hội tụ khi đã bỏ mạng mục tiêu"
+      }
+    },
+    tdmpc2: {
+      name: "TD-MPC2",
+      whatChanged: "Điều khiển dự báo theo mô hình (MPPI) ngay trong mô hình thế giới không gian ẩn, không cần bộ giải mã, và dùng Q học bằng TD làm giá trị ở cuối đường lập kế hoạch",
+      keyInsight: "Không cần dựng lại ảnh: chỉ học trạng thái ẩn có ích cho phần thưởng, lập kế hoạch ngắn và dùng Q cho phần dài. Một bộ siêu tham số chạy được 104 nhiệm vụ",
+      flashcard: "Đại diện của hướng “mô hình thế giới cộng lập kế hoạch” cho điều khiển liên tục. Một tác tử 317 triệu tham số làm được 80 nhiệm vụ.",
+      textbook: "TD-MPC2 học một mô hình thế giới ẩn gồm bộ mã hóa, động lực ẩn, đầu dự đoán phần thưởng, tập hợp hàm Q và chính sách tiên nghiệm. Mô hình chỉ được huấn luyện bằng dự đoán phần thưởng, dự đoán giá trị và tính nhất quán của trạng thái ẩn, không bao giờ tái tạo quan sát. Khi ra quyết định, MPPI lấy mẫu chuỗi hành động trong không gian ẩn, chấm điểm bằng tổng phần thưởng $H$ bước cộng $Q$ ở cuối, rồi tinh chỉnh dần. LayerNorm, SimNorm và hàm mất mát hồi quy rời rạc giúp một bộ siêu tham số dùng được cho 104 nhiệm vụ, và mô hình càng lớn càng tốt.",
+      meanings: {
+        z_t: "Trạng thái ẩn từ bộ mã hóa (chuẩn hóa SimNorm), không tái tạo ảnh",
+        d_dyn: "Mô hình động lực trong không gian ẩn, dùng để mô phỏng trước $H$ bước",
+        Q_term: "Giá trị Q ở cuối đường lập kế hoạch, thay cho việc mô phỏng vô hạn bước"
+      }
+    },
+    dreamer4: {
+      name: "Dreamer 4",
+      whatChanged: "Thay RSSM bằng mô hình thế giới video dạng Transformer có thể mở rộng (mục tiêu shortcut forcing) và huấn luyện hoàn toàn từ dữ liệu ngoại tuyến",
+      keyInsight: "Học “thế giới chuyển động thế nào” từ video, rồi luyện tập trong tưởng tượng: tác tử đầu tiên đào được kim cương trong Minecraft chỉ từ dữ liệu ngoại tuyến",
+      flashcard: "Mở rộng quy mô mô hình thế giới: mô phỏng theo thời gian thực trên một GPU, dùng ít hơn khoảng 100 lần dữ liệu so với VPT, lấy được kim cương chỉ từ dữ liệu ngoại tuyến.",
+      textbook: "Dreamer 4 gồm ba giai đoạn: 1) huấn luyện trước bộ mã hóa và mô hình thế giới trên rất nhiều video, phần lớn không có nhãn hành động, chỉ cần một phần nhỏ có nhãn để học cách hành động tác động lên thế giới; 2) thêm đầu chính sách và đầu phần thưởng rồi tinh chỉnh; 3) học tăng cường hoàn toàn trên các quỹ đạo tưởng tượng. Shortcut forcing cho phép sinh khung hình kế tiếp chỉ trong vài bước lấy mẫu, nên mô phỏng được theo thời gian thực trên một GPU. Đây là tác tử đầu tiên đào được kim cương trong Minecraft, nhiệm vụ cần hơn 20.000 thao tác chuột và bàn phím, chỉ từ dữ liệu ngoại tuyến.",
+      meanings: {
+        z_t4: "Biểu diễn ẩn của một khung hình video sau khi qua bộ mã hóa",
+        p_theta4: "Mô hình thế giới Transformer huấn luyện bằng shortcut forcing, chỉ cần vài bước lấy mẫu nên mô phỏng được theo thời gian thực",
+        r_hat4: "Phần thưởng do mô hình thế giới dự đoán, dùng cho học tăng cường trong tưởng tượng"
+      }
+    },
+    fql: {
+      name: "Q-learning dùng flow (FQL)",
+      whatChanged: "Dùng mô hình flow matching để học phân phối hành vi, rồi chưng cất ra một chính sách một bước để tối đa $Q$, tránh lan truyền ngược qua chuỗi flow nhiều bước",
+      keyInsight: "Để mô hình flow lo khả năng biểu diễn, chính sách một bước lo tối ưu: biểu diễn được hành động đa đỉnh mà vẫn huấn luyện và suy luận nhanh",
+      flashcard: "Mốc so sánh mới cho học tăng cường ngoại tuyến: flow bắt chước, chính sách một bước tối đa $Q$. Kết quả tốt trên 73 nhiệm vụ OGBench và D4RL.",
+      textbook: "Mô hình khuếch tán hay flow biểu diễn được phân phối hành động phức tạp, nhiều đỉnh, nhưng nếu huấn luyện thẳng bằng gradient của $Q$ thì phải lan truyền ngược qua toàn bộ chuỗi lấy mẫu lặp, vừa chậm vừa bất ổn. FQL tách làm hai: mô hình flow chỉ học bắt chước hành vi; một chính sách một bước khác vừa tối đa $Q$ vừa bị ràng buộc bám theo hành động mà flow đưa ra cho cùng một nhiễu. Khi chạy chỉ dùng chính sách một bước, nên chi phí suy luận ngang chính sách Gauss thông thường.",
+      meanings: {
+        mu_omega: "Chính sách một bước: biến nhiễu $z$ thành hành động ngay, dùng khi chạy thử",
+        mu_theta: "Chính sách flow học theo hành vi: hành động thu được khi giải phương trình vi phân từ cùng nhiễu $z$",
+        alpha_fql: "Trọng số chưng cất: càng lớn càng bám sát hành vi trong dữ liệu, tức càng thận trọng"
+      }
+    },
+    deep_crl: {
+      name: "Học tăng cường đối sánh 1000 lớp (Deep CRL)",
+      whatChanged: "Trong học tăng cường đối sánh tự giám sát theo mục tiêu, dùng kết nối phần dư và LayerNorm để đưa mạng lên tới 1024 lớp",
+      keyInsight: "Học tăng cường cũng có thể “càng sâu càng mạnh”: không cần phần thưởng do người thiết kế, mạng sâu hơn còn tự tìm ra hành vi mới, chẳng hạn nhảy qua tường",
+      flashcard: "Bài báo xuất sắc nhất NeurIPS 2025. Phần lớn công trình RL chỉ dùng mạng 2 đến 5 lớp; ở đây mạng sâu tới 1024 lớp và cải thiện mạnh khả năng đi tới mục tiêu.",
+      textbook: "Phương pháp không dùng phần thưởng thiết kế thủ công mà học xem từ $(s, a)$ có tới được mục tiêu $g$ hay không: trạng thái xuất hiện sau đó trên cùng quỹ đạo là mẫu dương, trạng thái của quỹ đạo khác là mẫu âm. Critic được huấn luyện bằng hàm mất mát đối sánh, còn actor chọn hành động làm tích vô hướng lớn nhất. Tác giả thấy chỉ cần kết nối phần dư, LayerNorm và hàm kích hoạt Swish là mạng huấn luyện ổn định tới 1024 lớp; mạng sâu hơn không chỉ đạt điểm cao hơn mà còn mở khóa những kỹ năng mạng nông không bao giờ học được.",
+      meanings: {
+        phi_sa: "Bộ mã hóa trạng thái và hành động (mạng phần dư rất sâu)",
+        psi_g: "Bộ mã hóa mục tiêu: trạng thái tương lai trên cùng quỹ đạo là mẫu dương",
+        infonce: "Hàm mất mát đối sánh InfoNCE: tích vô hướng đóng vai trò điểm số “có tới được mục tiêu không”"
+      }
+    },
+    deepseek_r1: {
+      name: "Học tăng cường với phần thưởng kiểm chứng được (RLVR / DeepSeek-R1)",
+      whatChanged: "Thay mô hình phần thưởng học được bằng quy tắc kiểm tra đáp án đúng hay sai (và định dạng); R1-Zero còn bỏ qua SFT, chạy học tăng cường thẳng từ mô hình nền",
+      keyInsight: "Chỉ cần báo cho mô hình biết đúng hay sai, khả năng suy luận dài, tự kiểm tra và phản tư sẽ tự xuất hiện trong quá trình học tăng cường",
+      flashcard: "Điểm khởi đầu của các mô hình suy luận. R1-Zero nâng pass@1 trên AIME 2024 từ 15,6% lên 77,9%; bài báo lên trang bìa Nature tháng 9 năm 2025.",
+      textbook: "DeepSeek-R1-Zero xuất phát từ DeepSeek-V3-Base và được huấn luyện thẳng bằng GRPO, phần thưởng chỉ đến từ quy tắc: đáp án cuối có đúng không và đầu ra có đúng định dạng không. Càng huấn luyện, câu trả lời càng dài và tự xuất hiện hành vi phản tư, kiểm tra lại (“khoảnh khắc aha”). Tuy vậy R1-Zero khó đọc và trộn lẫn ngôn ngữ, nên bản R1 chính thức dùng quy trình nhiều giai đoạn: một ít dữ liệu SFT khởi động, học tăng cường cho suy luận, lấy mẫu loại bỏ kết hợp SFT, rồi học tăng cường cho mọi tình huống. Từ đó RLVR trở thành cách huấn luyện chủ đạo cho mô hình suy luận.",
+      meanings: {
+        verifier: "Bộ kiểm chứng theo quy tắc: so đáp án toán hoặc chạy kiểm thử mã, khó bị “lách luật”",
+        r_fmt: "Phần thưởng định dạng: buộc phần suy luận nằm trong thẻ &lt;think&gt;",
+        A_group_r1: "Lợi thế chuẩn hóa theo nhóm, kế thừa từ GRPO"
+      }
+    },
+    dapo: {
+      name: "Tối ưu chính sách với cắt tách đôi và lấy mẫu động (DAPO)",
+      whatChanged: "Bốn thay đổi: tách riêng cận trên và cận dưới khi cắt (Clip-Higher), lấy mẫu động, hàm mất mát theo token, định hình phần thưởng cho câu trả lời quá dài; đồng thời bỏ số hạng KL",
+      keyInsight: "Chạy GRPO cho suy luận dài dễ làm entropy sụp và phí mẫu. Nới cận trên để còn khám phá, bỏ nhóm đúng hết hoặc sai hết, cho mọi token đóng góp như nhau",
+      flashcard: "Hệ thống học tăng cường quy mô lớn cho LLM, mã nguồn mở. Qwen2.5-32B đạt 50 điểm AIME 2024, vượt R1-Zero-Qwen-32B (47 điểm) mà chỉ dùng một nửa số bước huấn luyện.",
+      textbook: "Khi tái lập GRPO, nhóm tác giả gặp mấy vấn đề: cắt đối xứng kìm hãm token xác suất thấp, làm entropy sụp; nhóm câu trả lời đúng hết hoặc sai hết cho lợi thế bằng 0, gradient bị lãng phí; lấy trung bình theo mẫu làm loãng trọng số token trong câu trả lời dài; câu trả lời quá dài bị cắt cụt gây nhiễu phần thưởng. DAPO lần lượt giải quyết bằng Clip-Higher, lấy mẫu động, hàm mất mát gradient chính sách theo token và định hình phần thưởng cho câu quá dài, đồng thời công bố mã, dữ liệu và khung huấn luyện.",
+      meanings: {
+        eps_high: "Clip-Higher: nới riêng cận trên (ví dụ 0,28) để token xác suất thấp có cơ hội được nâng lên",
+        tok_norm: "Chuẩn hóa theo token: mỗi token trong câu trả lời dài có trọng số ngang token trong câu ngắn",
+        dyn_sample: "Lấy mẫu động: nhóm đúng hết hoặc sai hết có lợi thế bằng 0 nên bị bỏ và lấy mẫu lại"
+      }
+    },
+    dr_grpo: {
+      name: "Dr. GRPO (GRPO không thiên lệch)",
+      whatChanged: "Bỏ phép chuẩn hóa theo độ dài câu trả lời $1/|o_i|$ và phép chia cho độ lệch chuẩn của nhóm trong GRPO, nhờ đó loại bỏ thiên lệch khi tối ưu",
+      keyInsight: "Câu trả lời ngày càng dài không hẳn là suy luận giỏi hơn: chuẩn hóa theo độ dài khiến câu dài mà sai bị phạt nhẹ hơn. Bỏ nó đi thì dùng token hiệu quả hơn",
+      flashcard: "Phân tích phản biện cách huấn luyện kiểu R1-Zero: hai phép chuẩn hóa của GRPO gây thiên lệch, sửa lại thì câu trả lời ngắn hơn mà độ chính xác như cũ.",
+      textbook: "Bài báo “Understanding R1-Zero-Like Training” chỉ ra hai thiên lệch: 1) thiên lệch độ dài: lấy trung bình theo $1/|o_i|$ làm câu trả lời ngắn mà đúng được cập nhật mạnh hơn, còn câu dài mà sai bị phạt loãng đi, nên câu trả lời cứ dài ra; 2) thiên lệch độ khó: chia cho độ lệch chuẩn nhóm làm phóng đại các câu hỏi có điểm gần như đồng đều. Dr. GRPO bỏ cả hai, quay về dạng gradient chính sách không thiên lệch, giữ được khả năng suy luận mà giảm hẳn những đầu ra dài vô ích.",
+      meanings: {
+        A_nostd: "Chỉ trừ trung bình, không chia độ lệch chuẩn: tránh phóng đại các câu quá dễ hoặc quá khó",
+        no_len: "Cộng thẳng, không chia cho $|o_i|$: câu trả lời dài mà sai không còn bị phạt nhẹ đi",
+        rho_it: "Tỉ số trọng số quan trọng theo token, giống PPO"
+      }
+    },
+    gspo: {
+      name: "Tối ưu chính sách theo chuỗi trong nhóm (GSPO)",
+      whatChanged: "Chuyển tỉ số quan trọng từ mức token sang mức chuỗi (chuẩn hóa độ dài bằng căn bậc $|y|$); phép cắt, phần thưởng và tối ưu đều tính trên cả câu trả lời",
+      keyInsight: "Phần thưởng được trao cho cả câu trả lời thì tỉ số cũng nên tính theo cả câu. Tỉ số theo token nhiễu nhiều và đặc biệt dễ làm mô hình MoE mất ổn định",
+      flashcard: "Thuật toán học tăng cường dùng cho các mô hình Qwen3. Tỉ số theo chuỗi giúp huấn luyện MoE ổn định mà không cần Routing Replay.",
+      textbook: "GRPO tính tỉ số quan trọng cho từng token, nhưng mỗi token chỉ có một mẫu nên nhiễu cộng dồn theo độ dài, dễ làm hỏng quá trình huấn luyện với câu trả lời dài và với mô hình MoE (định tuyến chuyên gia thay đổi theo tham số). GSPO dùng tỉ số hợp lý của cả chuỗi có chuẩn hóa độ dài và cắt ở mức chuỗi. Cách này chịu được chênh lệch độ chính xác số giữa lúc huấn luyện và lúc suy luận, hợp với rollout từng phần, học tăng cường nhiều lượt và hệ thống tách riêng huấn luyện với suy luận; các mô hình Qwen3 Instruct, Coder và Thinking đều hưởng lợi từ nó.",
+      meanings: {
+        s_i: "Tỉ số quan trọng theo chuỗi: bằng hàm mũ của trung bình log-tỉ số các token",
+        len_root: "Chuẩn hóa độ dài: tránh vài token làm tỉ số dao động mạnh và giúp mọi độ dài dùng chung một khoảng cắt",
+        A_seq: "Lợi thế tương đối trong nhóm của cả câu trả lời, giống GRPO"
       }
     }
   },

@@ -3,7 +3,7 @@
 <h1>Sách Nấm <span class="hl">EasyRL</span></h1>
 <p class="home-lead">Giáo trình học tăng cường bằng tiếng Việt, đi từ quá trình quyết định Markov đến DQN, PPO và DDPG, kèm ghi chú, bài tập, ôn tập và mô phỏng tương tác.</p>
 <div class="home-cta"><a class="btn btn-primary" href="#/chapter1/chapter1_vi"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" fill="currentColor"/></svg>Bắt đầu từ Chương 1</a><a class="btn btn-ghost" href="#/explorer_vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 5.5c2.7-1.3 5.3-1.3 8 0v14c-2.7-1.3-5.3-1.3-8 0zM22 5.5c-2.7-1.3-5.3-1.3-8 0v14c2.7-1.3 5.3-1.3 8 0z"/></svg>Xem bản đồ kiến thức</a></div>
-<div class="home-stats"><span><b data-count="16">16</b>chương</span><span><b data-count="39">39</b>thuật toán</span><span><b data-count="24">24</b>mô phỏng</span><span><b data-count="12">12</b>bộ ôn tập</span></div>
+<div class="home-stats"><span><b data-count="16">16</b>chương</span><span><b data-count="48">48</b>thuật toán</span><span><b data-count="24">24</b>mô phỏng</span><span><b data-count="12">12</b>bộ ôn tập</span></div>
 <p class="home-hint">Mẹo: bấm vào chú robot để thưởng cho nó.</p>
 <p class="home-note">Bản dịch không chính thức, phi thương mại, theo giấy phép <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>. Nội dung gốc thuộc về Qi Wang, Yiyuan Yang, John Jim và <a href="https://github.com/datawhalechina/easy-rl" target="_blank" rel="noopener">Datawhale</a>. <a href="#/README_vi">Giới thiệu và ghi công</a>.</p>
 </div>
@@ -14,7 +14,7 @@
 <a href="#/chapter1/chapter1_vi"><i class="home-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="currentColor"/><path d="M10 8.3v7.4l6-3.7z" fill="#fff"/></svg></i><b>Đọc bài và ghi chú</b><span>Đọc chương, rồi xem lại ý chính ở trang ghi chú trọng tâm.</span></a>
 <a href="#/chapter2/chapter2_viz_vi"><i class="home-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg></i><b>Thử mô phỏng</b><span>Tự chỉnh tham số và xem thuật toán chạy ngay trên trình duyệt.</span></a>
 <a href="#/chapter1/chapter1_review_vi"><i class="home-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3M7.5 15h9"/></svg></i><b>Ôn tập</b><span>Flashcard và quiz cho từng chương từ 1 đến 12.</span></a>
-<a href="#/explorer_vi"><i class="home-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M6 16v-4M10 16V9M14 16v-5M18 16V6M5 9l4-3 4 3 6-5"/></svg></i><b>Nhìn toàn cảnh</b><span>Bản đồ 39 thuật toán và khái niệm, kèm công thức và liên kết về sách.</span></a>
+<a href="#/explorer_vi"><i class="home-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h16M6 16v-4M10 16V9M14 16v-5M18 16V6M5 9l4-3 4 3 6-5"/></svg></i><b>Nhìn toàn cảnh</b><span>Bản đồ 48 thuật toán và khái niệm, kèm công thức và liên kết về sách.</span></a>
 </div>
 <h2 class="home-h2">Xem một tác tử đang học</h2>
 <div class="home-agent"></div>
