@@ -19,6 +19,10 @@
     - [Ôn tập](chapter3/chapter3_review_vi)
     - [Mô phỏng](chapter3/chapter3_viz_vi)
     - [Dự án 1 Dùng Q-learning giải bài toán tìm đường bên vách đá](chapter3/project1_vi)
+- Nền tảng toán học (Shiyu Zhao)
+  - [Giới thiệu](mathrl/README_vi)
+  - [Chương 1 Khái niệm cơ bản](mathrl/ch01_vi)
+  - [Chương 2 Giá trị trạng thái và phương trình Bellman](mathrl/ch02_vi)
 - Dựa trên chính sách
   - [Chương 4 Gradient chính sách](chapter4/chapter4_vi)
     - [Ghi chú trọng tâm](chapter4/chapter4_notes_vi)
