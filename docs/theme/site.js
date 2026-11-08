@@ -6,17 +6,54 @@
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
     github: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-3.2 19.5c.5.1.7-.2.7-.5v-1.7c-2.8.6-3.4-1.3-3.4-1.3-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.5 2.3 1.1 2.9.8.1-.6.3-1.1.6-1.3-2.2-.3-4.6-1.1-4.6-4.9 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.6 0 0 .8-.3 2.8 1a9.600 9.600 0 0 1 5 0c1.900-1.300 2.800-1 2.800-1 .5 1.300.2 2.300.1 2.600.6.7 1 1.600 1 2.700 0 3.800-2.300 4.600-4.600 4.900.4.300.7.900.7 1.900V21c0 .3.2.6.7.5A10 10 0 0 0 12 2z"/></svg>',
-    home: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M11.3 3.3a1 1 0 0 1 1.4 0l8 7.5A1 1 0 0 1 20 12.5h-1.5V20a1 1 0 0 1-1 1H14v-5.5h-4V21H6.5a1 1 0 0 1-1-1v-7.5H4a1 1 0 0 1-.7-1.7z"/></svg>',
-    book: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 2.5h12a1.5 1.5 0 0 1 1.5 1.5v16a1.5 1.5 0 0 1-1.5 1.5H6A2.5 2.5 0 0 1 3.5 19V5A2.5 2.5 0 0 1 6 2.5zm2 4v2h8v-2zm0 4v2h5v-2z"/></svg>',
-    map: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2 5.2c2.7-1.4 5.3-1.4 8.5 0v15c-3.2-1.4-5.8-1.4-8.5 0zM22 5.2c-2.7-1.4-5.3-1.4-8.5 0v15c3.2-1.4 5.8-1.4 8.5 0z"/></svg>',
-    list: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4h4v4H3zm6 1h12v2H9zM3 10h4v4H3zm6 1h12v2H9zM3 16h4v4H3zm6 1h12v2H9z"/></svg>',
     arrow: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
     logo: '<svg class="brand-logo" viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#22b8f0"/><stop offset="1" stop-color="#6a3cf0"/></linearGradient></defs><rect width="48" height="48" rx="14" fill="url(#lg)"/><path d="M8.5 25c0-9 7-15.5 15.5-15.5S39.5 16 39.5 25c0 1.4-1 2.3-2.4 2.3H10.9c-1.4 0-2.4-.9-2.4-2.3z" fill="#fff"/><circle cx="17" cy="19" r="2.6" fill="#22b8f0"/><circle cx="27.5" cy="15.5" r="2" fill="#22b8f0"/><circle cx="31.5" cy="22" r="2.3" fill="#22b8f0"/><path d="M18.5 27.3h11l-1 9.2a2.4 2.4 0 0 1-2.4 2.1h-4.2a2.4 2.4 0 0 1-2.4-2.1z" fill="#e3e6ff"/><path d="M21.5 31.5q2.5 2 5 0" stroke="#6a3cf0" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>',
     chevron: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>'
   };
   var REPO = 'https://github.com/nmc2004nd/easy-rl-vi';
   var LAST_KEY = 'easyrl-last';
-  var START_ICON = { '#/': 'home', '#/explorer_vi': 'map' };
+  // Mục lục gom từ hai nguồn: Sách Nấm EasyRL và sách của Shiyu Zhao.
+  // Mỗi nhóm có màu và icon riêng; mỗi trang có icon theo nội dung.
+  var NAV_GROUPS = {
+    'Bắt đầu': ['start', 'flag'],
+    'Nền tảng': ['base', 'blocks'],
+    'Dựa trên chính sách': ['policy', 'target'],
+    'Dựa trên giá trị': ['value', 'chart-column'],
+    'Nâng cao': ['adv', 'rocket'],
+    'Chuyên đề': ['topic', 'sparkles'],
+    'Nền tảng toán học': ['math', 'sigma']
+  };
+  var NAV_PARTS = {
+    base: ['Sách Nấm EasyRL', 'Wang, Yang, Jiang · Datawhale'],
+    math: ['Sách của Shiyu Zhao', 'Mathematical Foundations of RL']
+  };
+  var PAGE_ICON = {
+    '/': 'house', '/explorer_vi': 'map', '/notation_vi': 'whole-word',
+    '/chapter1/chapter1_vi': 'sprout', '/chapter2/chapter2_vi': 'network', '/chapter3/chapter3_vi': 'table-2',
+    '/chapter4/chapter4_vi': 'trending-up', '/chapter5/chapter5_vi': 'shield-check',
+    '/chapter6/chapter6_vi': 'brain', '/chapter7/chapter7_vi': 'brain-circuit', '/chapter8/chapter8_vi': 'sliders-horizontal',
+    '/chapter9/chapter9_vi': 'drama', '/chapter10/chapter10_vi': 'gift', '/chapter11/chapter11_vi': 'footprints',
+    '/chapter12/chapter12_vi': 'gauge', '/chapter13/chapter13_vi': 'gamepad-2', '/chapter14/ls-imagine_vi': 'pickaxe',
+    '/chapter15/chapter15_vi': 'eye', '/chapter16/chapter16_vi': 'globe',
+    '/mathrl/README_vi': 'book-open', '/mathrl/ch01_vi': 'layout-grid', '/mathrl/ch02_vi': 'square-function',
+    '/mathrl/ch03_vi': 'crown', '/mathrl/ch04_vi': 'repeat', '/mathrl/ch05_vi': 'dices', '/mathrl/ch06_vi': 'chart-scatter',
+    '/mathrl/ch07_vi': 'timer', '/mathrl/ch08_vi': 'chart-spline', '/mathrl/ch09_vi': 'mountain',
+    '/mathrl/ch10_vi': 'drama', '/mathrl/appendix_vi': 'library'
+  };
+  var SUB_ICON = [
+    [/_notes_vi$/, 'notebook-pen'], [/_questions&keywords_vi$/, 'circle-help'], [/_review_vi$/, 'layers'],
+    [/_viz_vi$/, 'monitor-play'], [/\/project\d+_vi$/, 'code-xml']
+  ];
+  function navIcon(name, cls) {
+    var paths = (window.NAV_ICONS || {})[name];
+    if (!paths) return '';
+    return '<svg class="' + cls + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
+  }
+  function pageIcon(path) {
+    if (PAGE_ICON[path]) return PAGE_ICON[path];
+    for (var i = 0; i < SUB_ICON.length; i++) if (SUB_ICON[i][0].test(path)) return SUB_ICON[i][1];
+    return null;
+  }
   var DONE_KEY = 'easyrl-done';
   var REWARD_KEY = 'easyrl-reward';
   var manuallyOpen = {};
@@ -450,6 +487,41 @@
     return decodeURIComponent(a.getAttribute('href').replace(/^#/, '').split('?')[0]);
   }
 
+  // Gắn màu nhóm, nhãn nguồn và icon trước mỗi mục. Chạy lại được nhiều lần.
+  function decorateNav(nav) {
+    var top = nav.querySelector(':scope > ul');
+    if (!top) return;
+    Array.prototype.slice.call(top.children).forEach(function (li) {
+      if (li.classList.contains('nav-part') || li.dataset.g) return;
+      var label = li.querySelector(':scope > p') || li.firstChild;
+      var text = label ? label.textContent.trim() : '';
+      var g = NAV_GROUPS[text];
+      if (!g) return;
+      li.dataset.g = g[0];
+      li.classList.add('nav-group');
+      var head = document.createElement('div');
+      head.className = 'nav-group-head';
+      head.innerHTML = navIcon(g[1], 'nav-group-ico') + '<span></span>';
+      head.lastChild.textContent = text;
+      li.replaceChild(head, label);
+      var part = NAV_PARTS[g[0]];
+      if (part) {
+        var p = document.createElement('li');
+        p.className = 'nav-part';
+        p.dataset.part = g[0];
+        p.innerHTML = '<b></b><small></small>';
+        p.firstChild.textContent = part[0];
+        p.lastChild.textContent = part[1];
+        top.insertBefore(p, li);
+      }
+    });
+    nav.querySelectorAll('a[href^="#/"]').forEach(function (a) {
+      if (a.querySelector('.nav-ico')) return;
+      var name = pageIcon(hrefPath(a));
+      if (name) a.insertAdjacentHTML('afterbegin', navIcon(name, 'nav-ico'));
+    });
+  }
+
   // Docsify dựng lại cột trái mỗi lần chuyển trang, nên trạng thái mở được áp lại ở đây.
   function enhanceSidebar() {
     var nav = document.querySelector('.sidebar-nav');
@@ -475,11 +547,7 @@
       li.classList.toggle('is-open', open);
       li.querySelector(':scope > .sub-toggle').setAttribute('aria-expanded', open ? 'true' : 'false');
     });
-    var start = nav.querySelector(':scope > ul > li:first-child');
-    if (start) start.querySelectorAll(':scope > ul > li > a').forEach(function (a) {
-      var name = START_ICON[a.getAttribute('href')];
-      if (name && !a.querySelector('.nav-ico')) a.insertAdjacentHTML('afterbegin', ICON[name].replace('<svg ', '<svg class="nav-ico" '));
-    });
+    decorateNav(nav);
     var done = readDone();
     nav.querySelectorAll('a[href^="#/"]').forEach(function (a) {
       a.classList.toggle('is-done', done.indexOf(hrefPath(a)) >= 0);
