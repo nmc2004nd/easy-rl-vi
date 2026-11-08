@@ -16,7 +16,7 @@
   };
   var REPO = 'https://github.com/nmc2004nd/easy-rl-vi';
   var LAST_KEY = 'easyrl-last';
-  var START_ICON = { '#/': 'home', '#/README_vi': 'book', '#/explorer_vi': 'map', '#/errata_vi': 'list' };
+  var START_ICON = { '#/': 'home', '#/explorer_vi': 'map' };
   var DONE_KEY = 'easyrl-done';
   var REWARD_KEY = 'easyrl-reward';
   var manuallyOpen = {};

@@ -1,9 +1,7 @@
 - Bắt đầu
   - [Trang chủ](/)
-  - [Giới thiệu sách](README_vi)
   - [Bản đồ kiến thức RL](explorer_vi)
   - [Quy ước ký hiệu](notation_vi)
-  - [Bảng đính chính](errata_vi)
 - Nền tảng
   - [Chương 1 Cơ bản về học tăng cường](chapter1/chapter1_vi)
     - [Ghi chú trọng tâm](chapter1/chapter1_notes_vi)
