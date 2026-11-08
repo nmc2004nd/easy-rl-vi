@@ -537,6 +537,6 @@ Kết quả: sai lệch lớn nhất giữa gradient theo định lý và gradie
 
 ## Đọc tiếp
 
-- Quay lại [Chương 8 Phương pháp hàm giá trị](mathrl/ch08_vi) · Chương 10 Phương pháp diễn viên–nhà phê bình *(đang biên soạn)*
+- Quay lại [Chương 8 Phương pháp hàm giá trị](mathrl/ch08_vi) · Tiếp theo [Chương 10 Phương pháp diễn viên–nhà phê bình](mathrl/ch10_vi)
 - Đối chiếu với EasyRL: [Chương 4 Gradient chính sách](chapter4/chapter4_vi) (REINFORCE, các mẹo cài đặt như baseline và gán điểm) và [Chương 5 PPO](chapter5/chapter5_vi). EasyRL viết $\pi_\theta$, $\bar R_\theta$, $R(\tau)$; xem [bảng quy đổi ký hiệu](notation_vi).
 - Thử tương tác: [mô phỏng chương 4](chapter4/chapter4_viz_vi) có REINFORCE.

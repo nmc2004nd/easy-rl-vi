@@ -31,6 +31,7 @@
   - [Chương 7 Phương pháp sai phân thời gian](mathrl/ch07_vi)
   - [Chương 8 Phương pháp hàm giá trị](mathrl/ch08_vi)
   - [Chương 9 Phương pháp gradient chính sách](mathrl/ch09_vi)
+  - [Chương 10 Phương pháp diễn viên–nhà phê bình](mathrl/ch10_vi)
 - Dựa trên chính sách
   - [Chương 4 Gradient chính sách](chapter4/chapter4_vi)
     - [Ghi chú trọng tâm](chapter4/chapter4_notes_vi)

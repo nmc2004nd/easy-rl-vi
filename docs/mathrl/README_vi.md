@@ -44,7 +44,7 @@ Sách chia làm hai phần:
 | [7 Phương pháp sai phân thời gian](mathrl/ch07_vi) | TD, Sarsa, Expected Sarsa, Sarsa n bước, Q-learning, theo và ngoài chính sách | đã có |
 | [8 Phương pháp hàm giá trị](mathrl/ch08_vi) | xấp xỉ hàm, phân phối dừng, TD-Linear, sai số Bellman chiếu, LSTD, DQN | đã có |
 | [9 Phương pháp gradient chính sách](mathrl/ch09_vi) | thước đo $\bar v_\pi$, $\bar r_\pi$, định lý gradient chính sách, REINFORCE | đã có |
-| 10 Phương pháp diễn viên-nhà phê bình | QAC, A2C, diễn viên-nhà phê bình ngoài chính sách, DPG | đang biên soạn |
+| [10 Phương pháp diễn viên–nhà phê bình](mathrl/ch10_vi) | QAC, A2C, lấy mẫu theo trọng số quan trọng, diễn viên–nhà phê bình ngoài chính sách, DPG | đã có |
 
 ## Đối chiếu với EasyRL
 
