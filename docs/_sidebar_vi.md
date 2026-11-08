@@ -1,5 +1,6 @@
 - Bắt đầu
   - [Trang chủ](/)
+  - [Hướng dẫn tiếp cận và đọc](guide_vi)
   - [Bản đồ kiến thức RL](explorer_vi)
   - [Quy ước ký hiệu](notation_vi)
 - Nền tảng

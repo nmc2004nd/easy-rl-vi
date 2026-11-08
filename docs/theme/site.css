@@ -456,6 +456,9 @@ body.is-home .markdown-section { max-width: 1120px; padding-top: 24px; }
 }
 .home-banner .home-ico { background: var(--bg); }
 .markdown-section .home-banner p { flex: 1; margin: 0; font-size: 16px; font-weight: 600; color: var(--accent-text); }
+.home-banner.home-guide { margin: 18px 0 0; }
+.markdown-section .home-guide p { font-size: 15px; font-weight: 500; color: var(--text); }
+.home-banner.home-guide .home-ico { color: var(--accent-text); }
 
 /* ===== Máy tính bảng ===== */
 @media (max-width: 1180px) {

@@ -28,7 +28,7 @@
     math: ['Sách của Shiyu Zhao', 'Mathematical Foundations of RL']
   };
   var PAGE_ICON = {
-    '/': 'house', '/explorer_vi': 'map', '/notation_vi': 'whole-word',
+    '/': 'house', '/guide_vi': 'compass', '/explorer_vi': 'map', '/notation_vi': 'whole-word',
     '/chapter1/chapter1_vi': 'sprout', '/chapter2/chapter2_vi': 'network', '/chapter3/chapter3_vi': 'table-2',
     '/chapter4/chapter4_vi': 'trending-up', '/chapter5/chapter5_vi': 'shield-check',
     '/chapter6/chapter6_vi': 'brain', '/chapter7/chapter7_vi': 'brain-circuit', '/chapter8/chapter8_vi': 'sliders-horizontal',
