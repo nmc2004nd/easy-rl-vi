@@ -28,6 +28,7 @@
   - [Chương 4 Lặp giá trị và lặp chính sách](mathrl/ch04_vi)
   - [Chương 5 Phương pháp Monte Carlo](mathrl/ch05_vi)
   - [Chương 6 Xấp xỉ ngẫu nhiên](mathrl/ch06_vi)
+  - [Chương 7 Phương pháp sai phân thời gian](mathrl/ch07_vi)
 - Dựa trên chính sách
   - [Chương 4 Gradient chính sách](chapter4/chapter4_vi)
     - [Ghi chú trọng tâm](chapter4/chapter4_notes_vi)

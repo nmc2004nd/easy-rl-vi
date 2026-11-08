@@ -701,5 +701,5 @@ Chương này không giới thiệu thuật toán học tăng cường mới, m�
 
 ## Đọc tiếp
 
-- Quay lại [Chương 5 Phương pháp Monte Carlo](mathrl/ch05_vi) · Chương 7 Phương pháp sai phân thời gian *(đang biên soạn)*
+- Quay lại [Chương 5 Phương pháp Monte Carlo](mathrl/ch05_vi) · Tiếp theo [Chương 7 Phương pháp sai phân thời gian](mathrl/ch07_vi)
 - EasyRL không có chương tương ứng. Kiến thức SGD được dùng ngầm ở mọi chương học sâu ([DQN chương 6](chapter6/chapter6_vi), [gradient chính sách chương 4](chapter4/chapter4_vi)).
