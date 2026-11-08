@@ -360,6 +360,50 @@
     return frag;
   }
 
+  // Tiêu đề trong chỉ mục tìm kiếm là markdown thô, có thể chứa $...$.
+  // Phần chữ vẫn tô sáng từ khóa, phần công thức thì vẽ bằng KaTeX.
+  function titleWithMath(title, terms) {
+    var parts = title.split(/\$([^$]+)\$/);
+    if (parts.length === 1 || !window.katex) return highlight(title, terms, 0);
+    var frag = document.createDocumentFragment();
+    parts.forEach(function (part, i) {
+      if (i % 2 === 0) { if (part) frag.appendChild(highlight(part, terms, 0)); return; }
+      var span = document.createElement('span');
+      // \tag chỉ dùng được trong công thức hiển thị riêng dòng; ở đây vẽ nội dòng nên bỏ đi.
+      var tex = part.replace(/\\tag\*?\{[^}]*\}/g, '');
+      try { span.innerHTML = katex.renderToString(tex, { throwOnError: false }); }
+      catch (e) { span.textContent = part; }
+      frag.appendChild(span);
+    });
+    return frag;
+  }
+
+  // Đoạn trích nội dung có công thức: cắt cửa sổ quanh từ khóa đầu tiên nhưng không cắt
+  // ngang một công thức $...$, rồi vẽ bằng titleWithMath.
+  function snippetWithMath(text, terms, maxLen) {
+    text = text.replace(/\$\$/g, '$');
+    if (text.indexOf('$') < 0 || !window.katex) return highlight(text, terms, maxLen);
+    var f = fold(text);
+    var first = -1;
+    terms.forEach(function (term) {
+      var at = term ? f.t.indexOf(term) : -1;
+      if (at >= 0 && (first < 0 || f.map[at] < first)) first = f.map[at];
+    });
+    var start = first > 0 ? Math.max(0, first - 30) : 0;
+    var end = Math.min(text.length, start + maxLen);
+    var re = /\$[^$]+\$/g, m;
+    while ((m = re.exec(text))) {
+      var a = m.index, b = a + m[0].length;
+      if (start > a && start < b) start = a;
+      if (end > a && end < b) end = b - a <= maxLen ? b : a;
+    }
+    var frag = document.createDocumentFragment();
+    if (start > 0) frag.appendChild(document.createTextNode('…'));
+    frag.appendChild(titleWithMath(text.slice(start, end), terms));
+    if (end < text.length) frag.appendChild(document.createTextNode('…'));
+    return frag;
+  }
+
   function fixSearchResults(panel, input) {
     var posts = panel.querySelectorAll('.matching-post:not([data-fixed])');
     if (!posts.length) return;
@@ -386,8 +430,8 @@
       if (!entry) return;
       var h2 = post.querySelector('h2');
       var p = post.querySelector('p');
-      if (h2 && entry.title) { h2.textContent = ''; h2.appendChild(highlight(decodeHtml(entry.title), terms, 0)); }
-      if (p && entry.body) { p.textContent = ''; p.appendChild(highlight(entry.body.replace(/\s+/g, ' ').trim(), terms, 150)); }
+      if (h2 && entry.title) { h2.textContent = ''; h2.appendChild(titleWithMath(decodeHtml(entry.title), terms)); }
+      if (p && entry.body) { p.textContent = ''; p.appendChild(snippetWithMath(entry.body.replace(/\s+/g, ' ').trim(), terms, 150)); }
     });
     if (!panel.querySelector('.matching-post')) {
       panel.innerHTML = '<p class="empty">Không tìm thấy kết quả</p>';
@@ -480,6 +524,16 @@
     section.insertBefore(box, section.firstChild);
   }
 
+  // Nhãn mục lục cho một tiêu đề. Công thức KaTeX chứa thêm bản MathML ẩn (có cả mã LaTeX),
+  // nên textContent sẽ ra "v∗v^{\ast}v∗". Giữ phần HTML hiển thị của KaTeX, bỏ phần MathML.
+  function setHeadingLabel(link, h) {
+    if (!h.querySelector('.katex')) { link.textContent = h.textContent; return; }
+    var clone = (h.querySelector('a.anchor') || h).cloneNode(true);
+    clone.querySelectorAll('.katex-mathml').forEach(function (m) { m.remove(); });
+    link.innerHTML = clone.innerHTML;
+    link.setAttribute('aria-label', clone.textContent.replace(/\s+/g, ' ').trim());
+  }
+
   function renderPageToc(section) {
     if (tocObserver) { tocObserver.disconnect(); tocObserver = null; }
     var heads = Array.prototype.filter.call(section.querySelectorAll('h2, h3'), function (h) {
@@ -498,7 +552,7 @@
     var links = toc.querySelectorAll('a');
     heads.forEach(function (h, i) {
       links[i].href = h.querySelector('a.anchor').getAttribute('href');
-      links[i].textContent = h.textContent;
+      setHeadingLabel(links[i], h);
     });
     var wide = matchMedia('(min-width: 1320px)');
     toc.open = wide.matches;
