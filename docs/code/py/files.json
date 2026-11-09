@@ -1,7 +1,0 @@
-[
-"zhao_grid.py",
-"minrl_vi/__init__.py",
-"minrl_vi/grid_world.py",
-"minrl_vi/policy_evaluation.py",
-"minrl_vi/policy_optimization.py"
-]

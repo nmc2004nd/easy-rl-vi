@@ -44,6 +44,8 @@ def build(md_path):
     os.environ["CODE_FIG_DIR"] = str(fig_dir)
     rel = os.path.relpath(fig_dir, md_path.parent)
 
+    # Chạy từ docs/code/py, giống hướng dẫn "Chạy trên máy" trên trang.
+    os.chdir(DOCS / "code" / "py")
     scope = {"__name__": "__main__"}
     out_parts, pos, n = [], 0, 0
     for m in BLOCK.finditer(text):
