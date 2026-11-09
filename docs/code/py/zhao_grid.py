@@ -78,6 +78,8 @@ def plot_grid(v=None, pi=None, title=None, ax=None, fmt="{:.1f}",
     """Vẽ lưới như trong sách: ô cấm màu cam, ô đích màu xanh, giá trị và mũi tên chính sách.
 
     pi có thể là mảng chỉ số hành động (tất định) hoặc ma trận |S|x5 xác suất (ngẫu nhiên).
+    Với chính sách ngẫu nhiên, độ dài mũi tên tỉ lệ với xác suất, so với hành động có xác suất
+    lớn nhất trong ô; vòng tròn là hành động "đứng yên".
     """
     import matplotlib.pyplot as plt
     from matplotlib.patches import Rectangle, Circle
@@ -101,13 +103,14 @@ def plot_grid(v=None, pi=None, title=None, ax=None, fmt="{:.1f}",
                 ax.text(j + 0.5, ty, fmt.format(v[s]), ha="center", va="center",
                         fontsize=8 if probs is None else 6.5, color="#222")
             if probs is not None:
+                p_max = probs[s].max()
                 for a, (di, dj) in enumerate(MOVES):
-                    p = probs[s, a]
+                    p = probs[s, a] / p_max          # độ dài tương đối so với hành động chính
                     if p <= 1e-9:
                         continue
                     cx, cy = j + 0.5, y + (0.5 if v is None else 0.38)
                     if a == 4:
-                        ax.add_patch(Circle((cx, cy), 0.12, fill=False, color="#2e7d32", lw=1.2))
+                        ax.add_patch(Circle((cx, cy), 0.04 + 0.08 * p, fill=False, color="#2e7d32", lw=1.2))
                     else:
                         L = (0.38 if v is None else 0.3) * p
                         ax.arrow(cx, cy, dj * L, -di * L, head_width=0.1, head_length=0.08,
