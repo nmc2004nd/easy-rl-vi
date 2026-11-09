@@ -2,7 +2,7 @@
 
 > Ghi chú của người biên soạn: trang này không có trong sách. Nó cài đặt lại các thuật toán của [chương 4](mathrl/ch04_vi) bằng numpy, theo đúng ký hiệu của sách, rồi đối chiếu với lớp `PolicyOptimizer` của [MinRL](https://github.com/10-OASIS-01/minrl/tree/ed5eb99) (Yibin Liu, giấy phép MIT). Ký hiệu theo [Quy ước ký hiệu](notation_vi): $v_k$, $q_k$ là giá trị trung gian của vòng lặp $k$; $v_{\pi_k}$ là giá trị trạng thái thật của chính sách $\pi_k$.
 
-Bấm **▶ Chạy** để chạy code ngay trong trình duyệt. Lần đầu phải tải Python, mất khoảng 10–20 giây. Các khối trên trang dùng chung biến như notebook: chạy một khối thì các khối phía trên chưa chạy sẽ được tự chạy trước. Bấm **Sửa** để đổi tham số rồi chạy lại.
+Mỗi khối code đã được chạy sẵn, kết quả, hình và ảnh động nằm ngay bên dưới. Các khối chạy lần lượt từ trên xuống, dùng chung biến như notebook. Muốn tự chạy, xem [mục 7](#_7-chạy-trên-máy).
 
 ## 1. Thế giới lưới của sách
 
@@ -10,7 +10,8 @@ Bấm **▶ Chạy** để chạy code ngay trong trình duyệt. Lần đầu p
 
 Hàm `make_grid` trả về mô hình dưới dạng hai mảng: `P[s, a, s']` $= p(s'\mid s,a)$ và `R[s, a]` $= r(s,a)$. Đây là đúng hàm ở mục kiểm tra bằng mã của chương 3, có thêm tham số `shape`, `forbidden`, `target` để dựng các lưới khác. Hàm đã nạp sẵn trong mô-đun `zhao_grid`, cùng hàm vẽ `plot_grid`.
 
-```pyrun
+<!-- run -->
+```python
 import numpy as np
 import matplotlib.pyplot as plt
 from zhao_grid import make_grid, value_iteration, plot_grid, print_policy
@@ -20,6 +21,14 @@ print("P:", P.shape, " R:", R.shape)     # 25 trạng thái, 5 hành động
 v_star, pi_star = value_iteration(P, R, gamma=0.9)
 plot_grid(v_star, pi_star, title="v* và π* (hình 3.4a)")
 ```
+
+<!-- output -->
+```output
+P: (25, 5, 25)  R: (25, 5)
+```
+
+<div align=center><img src="../img/code/ch04_code/01_1.png" alt="Hình do khối code vẽ"/></div>
+<!-- /output -->
 
 [zhao_grid.py](../code/py/zhao_grid.py ':include :type=code :fragment=make_grid')
 
@@ -40,7 +49,8 @@ Mỗi vòng lặp đi qua chuỗi $v_k(s) \to q_k(s,a) \to \pi_{k+1}(s) \to v_{k
 | $v_{k+1}(s) = \max_a q_k(s,a)$ | `v_new[s] = q[s].max()` |
 | dừng khi $\lVert v_{k+1} - v_k \rVert$ nhỏ | `if np.abs(v_new - v).max() < tol` |
 
-```pyrun
+<!-- run -->
+```python
 def value_iteration_elementwise(P, R, gamma, tol=1e-6, verbose=False):
     n_s, n_a = R.shape
     v = np.zeros(n_s)                                   # v_0
@@ -64,7 +74,8 @@ def value_iteration_elementwise(P, R, gamma, tol=1e-6, verbose=False):
 
 Lưới ở hình 4.2 có ô cấm $s_2$ và ô đích $s_4$. Ta chạy ba vòng đầu để so với bảng 4.2, 4.3 và các giá trị $v_1$, $v_2$ trong sách:
 
-```pyrun
+<!-- run -->
+```python
 P2, R2 = make_grid(shape=(2, 2), forbidden={(0, 1)}, target=(1, 1))
 v = np.zeros(4)
 for k in range(3):
@@ -74,16 +85,85 @@ for k in range(3):
     v = q.max(axis=1)
 ```
 
+<!-- output -->
+```output
+k = 0
+q_0 =
+[[-1. -1.  0. -1.  0.]
+ [-1. -1.  1.  0. -1.]
+ [ 0.  1. -1. -1.  0.]
+ [-1. -1. -1.  0.  1.]]
+π_1: ['a3', 'a3', 'a2', 'a5']   v_1 = [0. 1. 1. 1.]
+
+k = 1
+q_1 =
+[[-1.  -0.1  0.9 -1.   0. ]
+ [-0.1 -0.1  1.9  0.  -0.1]
+ [ 0.   1.9 -0.1 -0.1  0.9]
+ [-0.1 -0.1 -0.1  0.9  1.9]]
+π_2: ['a3', 'a3', 'a2', 'a5']   v_2 = [0.9 1.9 1.9 1.9]
+
+k = 2
+q_2 =
+[[-0.19  0.71  1.71 -0.19  0.81]
+ [ 0.71  0.71  2.71  0.81  0.71]
+ [ 0.81  2.71  0.71  0.71  1.71]
+ [ 0.71  0.71  0.71  1.71  2.71]]
+π_3: ['a3', 'a3', 'a2', 'a5']   v_3 = [1.71 2.71 2.71 2.71]
+```
+<!-- /output -->
+
 Ở $k = 0$, $q_0(s_1, a_3) = q_0(s_1, a_5) = 0$. Sách chọn $a_5$ (đứng yên), còn `argmax` của numpy lấy chỉ số nhỏ nhất nên chọn $a_3$. Cả hai đều đúng, vì chọn hành động nào trong các hành động cùng đạt cực đại cũng không ảnh hưởng tới sự hội tụ. Các giá trị $v_1 = (0, 1, 1, 1)$ và $v_2 = (0.9, 1.9, 1.9, 1.9)$ khớp với sách.
 
 ### 2.3 Trên lưới 5×5
 
-```pyrun
+<!-- run -->
+```python
 v_vi, pi_vi, n_iter = value_iteration_elementwise(P, R, gamma=0.9)
 print(f"Hội tụ sau {n_iter} vòng lặp")
 print(v_vi.reshape(5, 5).round(1))
 print_policy(pi_vi)
 ```
+
+<!-- output -->
+```output
+Hội tụ sau 133 vòng lặp
+[[ 5.8  5.6  6.2  6.5  5.8]
+ [ 6.5  7.2  8.   7.2  6.5]
+ [ 7.2  8.  10.   8.   7.2]
+ [ 8.  10.  10.  10.   8. ]
+ [ 7.2  9.  10.   9.   8.1]]
+↓ → ↓ ↓ ↓
+↓ ↓ ↓ ↓ ↓
+→ → ↓ ↓ ↓
+→ → ○ ← ←
+↑ → ↑ ← ←
+```
+<!-- /output -->
+
+Ảnh động dưới vẽ $v_{k+1}$ và chính sách tham lam $\pi_{k+1}$ sau từng vòng lặp. Để ý: chính sách đã đúng ở hầu hết các ô từ rất sớm, trong khi các con số còn tăng dần thêm nhiều vòng nữa. Đó đúng là nhận xét ở cuối mục 4.1.2.
+
+<!-- run -->
+```python
+from viz import save_gif
+
+frames, v = [], np.zeros(25)
+for k in range(n_iter):
+    q = R + 0.9 * P @ v
+    v = q.max(axis=1)
+    if k < 12 or k % 10 == 9 or k == n_iter - 1:
+        frames.append((k + 1, v.copy(), q.argmax(axis=1)))
+
+def draw_vi(fig, i):
+    k, v_k, pi_k = frames[i]
+    plot_grid(v_k, pi_k, title=f"v_{k} và π_{k}", ax=fig.add_subplot(1, 1, 1))
+
+save_gif(draw_vi, len(frames), "value_iteration.gif", fps=2, figsize=(3.4, 3.6), dpi=90)
+```
+
+<!-- output -->
+<div align=center><img src="../img/code/ch04_code/value_iteration.gif" alt="Ảnh động do khối code tạo"/></div>
+<!-- /output -->
 
 ## 3. Lặp chính sách
 
@@ -96,7 +176,8 @@ Mỗi vòng có hai bước:
 
 Với chính sách tất định `pi` (mảng chỉ số hành động), $P_{\pi}$ và $r_\pi$ chỉ là các hàng của `P`, `R` ứng với hành động đã chọn: `P[np.arange(n), pi]`.
 
-```pyrun
+<!-- run -->
+```python
 def policy_evaluation_exact(P, R, pi, gamma):
     n = len(pi)
     P_pi, r_pi = P[np.arange(n), pi], R[np.arange(n), pi]
@@ -117,26 +198,41 @@ def policy_iteration(P, R, gamma, pi0, max_iter=100):
 
 Bây giờ dựng lại hình 4.4: $r_{\text{forbidden}} = -10$, xuất phát từ một chính sách tất định ngẫu nhiên. Chính sách ban đầu trong sách không được cho cụ thể, nên ta tự sinh một chính sách bằng hạt giống `seed=0`.
 
-```pyrun
+<!-- run -->
+```python
 P10, R10 = make_grid(r_forbidden=-10)
 pi0 = np.random.default_rng(0).integers(0, 5, size=25)        # π_0 ngẫu nhiên
 pi_pi, v_pi, history = policy_iteration(P10, R10, 0.9, pi0)
 print(f"Hội tụ sau {len(history) - 1} lần cải thiện")
 
-show = [0, 1, 2, 3, 5, len(history) - 1]
-fig, axes = plt.subplots(2, 3, figsize=(8.4, 6))
-for ax, k in zip(axes.flat, show):
+def draw_pi(fig, k):
     pi_k, v_k = history[k]
-    plot_grid(v_k, pi_k, title=f"π_{k} và v_π{k}", ax=ax)
-plt.tight_layout()
+    plot_grid(v_k, pi_k, title=f"π_{k} và v_π{k}", ax=fig.add_subplot(1, 1, 1))
+
+save_gif(draw_pi, len(history), "policy_iteration.gif", fps=1, figsize=(3.4, 3.6), dpi=90, hold_last=2)
 ```
 
-Hai hiện tượng mà sách nêu đều thấy rõ. Thứ nhất, các ô **gần đích** tìm được hành động đúng trước, rồi thông tin lan dần ra xa. Thứ hai, ở $\pi_0$, ô nào chọn "đứng yên" trong ô cấm có giá trị $-10/(1-0.9) = -100$. Giá trị cuối cùng phải trùng với $v^{\ast}$ tìm bằng lặp giá trị:
+<!-- output -->
+```output
+Hội tụ sau 10 lần cải thiện
+```
 
-```pyrun
+<div align=center><img src="../img/code/ch04_code/policy_iteration.gif" alt="Ảnh động do khối code tạo"/></div>
+<!-- /output -->
+
+Ảnh động đi từ $\pi_0$ tới chính sách cuối cùng, mỗi giây một vòng. Hai hiện tượng mà sách nêu đều thấy rõ. Thứ nhất, các ô **gần đích** tìm được hành động đúng trước, rồi thông tin lan dần ra xa. Thứ hai, ở $\pi_0$, ô nào chọn "đứng yên" trong ô cấm có giá trị $-10/(1-0.9) = -100$. Giá trị cuối cùng phải trùng với $v^{\ast}$ tìm bằng lặp giá trị:
+
+<!-- run -->
+```python
 v_star10, _ = value_iteration(P10, R10, 0.9, tol=1e-10)
 print("‖v_π_cuối − v*‖∞ =", np.abs(v_pi - v_star10).max())
 ```
+
+<!-- output -->
+```output
+‖v_π_cuối − v*‖∞ = 8.577338839188542e-10
+```
+<!-- /output -->
 
 ## 4. Lặp chính sách cắt cụt
 
@@ -144,7 +240,8 @@ print("‖v_π_cuối − v*‖∞ =", np.abs(v_pi - v_star10).max())
 
 Thay vì giải chính xác $v_{\pi_k}$, ta chỉ lặp $j_{\text{truncate}}$ bước $v \leftarrow r_{\pi_k} + \gamma P_{\pi_k} v$, khởi tạo từ $v$ của vòng trước. Với $j_{\text{truncate}} = 1$ ta được lặp giá trị, còn khi $j_{\text{truncate}} \to \infty$ ta được lặp chính sách. Khối dưới vẽ sai số $\lVert v_k - v^{\ast}\rVert_\infty$ theo số vòng lặp ngoài. Đó là số liệu của bảng ở mục "Kiểm tra bằng số" trong chương 4, nhưng vẽ thành đường.
 
-```pyrun
+<!-- run -->
+```python
 def truncated_policy_iteration(P, R, gamma, j_truncate, n_iter=60):
     n = P.shape[0]
     v, pi, history = np.zeros(n), np.zeros(n, dtype=int), []   # π_0: luôn đi lên
@@ -165,6 +262,10 @@ plt.xlabel("vòng lặp ngoài k"); plt.ylabel("‖v_k − v*‖∞")
 plt.legend(); plt.grid(alpha=.3)
 ```
 
+<!-- output -->
+<div align=center><img src="../img/code/ch04_code/09_1.png" alt="Hình do khối code vẽ"/></div>
+<!-- /output -->
+
 ## 5. Đối chiếu với MinRL
 
 Lớp `PolicyOptimizer` của MinRL cài cả hai thuật toán cho `GridWorld` của nó. Lớp này đã nạp sẵn trong gói `minrl_vi`. Code viết theo kiểu "từng trạng thái một" (một vòng `for` qua các trạng thái, không dùng ma trận), rất gần với thuật toán 4.1 và 4.2.
@@ -179,7 +280,8 @@ Lớp `PolicyOptimizer` của MinRL cài cả hai thuật toán cho `GridWorld` 
 | Lặp giá trị | $v_{k+1}(s) = \max_a q_k(s,a)$ | `state_values[s] = action_values(s, old_values).max()`, cùng kiểu cập nhật đồng bộ (dùng `old_values`) |
 | Đánh giá trong lặp chính sách | Giải đúng hoặc lặp tới hội tụ | Lặp tới khi thay đổi `< theta` (`PolicyEvaluator`) |
 
-```pyrun
+<!-- run -->
+```python
 from minrl_vi import GridWorld, PolicyOptimizer
 
 env = GridWorld(size=4)
@@ -190,6 +292,20 @@ print(V_vi.reshape(4, 4).round(3))
 print("Lặp giá trị và lặp chính sách cho cùng V:", np.allclose(V_vi, V_pi))
 opt.print_policy(policy_vi)                 # T: trạng thái kết thúc
 ```
+
+<!-- output -->
+```output
+[[0.181 0.312 0.458 0.   ]
+ [0.312 0.458 0.62  0.8  ]
+ [0.458 0.62  0.8   1.   ]
+ [0.    0.8   1.    0.   ]]
+Lặp giá trị và lặp chính sách cho cùng V: True
+→ → ↓ T
+→ → → ↓
+→ → → ↓
+T → → T
+```
+<!-- /output -->
 
 Trên lưới của MinRL, cả hai thuật toán cũng cho cùng một giá trị tối ưu. Ô càng gần đích thì giá trị càng lớn, giống hiện tượng thứ hai của hình 4.4.
 
@@ -209,3 +325,13 @@ Trên lưới của MinRL, cả hai thuật toán cũng cho cùng một giá tr�
 4. `v = np.zeros(n)`, rồi lặp `v_new = r_pi + gamma * P_pi @ v` cho tới khi `np.abs(v_new - v).max() < tol`. Kết quả khớp với `np.linalg.solve` tới cỡ `tol / (1 - gamma)`.
 
 </details>
+
+## 7. Chạy trên máy
+
+```bash
+git clone https://github.com/nmc2004nd/easy-rl-vi.git
+cd easy-rl-vi/docs/code/py          # chạy từ đây để import được zhao_grid, minrl_vi, viz
+pip install numpy matplotlib pillow
+```
+
+Chép lần lượt các khối code trên trang vào Jupyter (hoặc một file `.py`) rồi chạy theo thứ tự. Ảnh GIF được lưu vào thư mục hiện tại. Kết quả trên trang được dựng bằng `python3 scripts/build_code_pages.py docs/mathrl/ch04_code_vi.md`.

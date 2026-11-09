@@ -96,19 +96,20 @@ def plot_grid(v=None, pi=None, title=None, ax=None, fmt="{:.1f}",
             ax.add_patch(Rectangle((j, y), 1, 1, facecolor=color, edgecolor="#555", lw=0.8))
             s = i * n_cols + j
             if v is not None:
-                ax.text(j + 0.5, y + 0.5, fmt.format(v[s]), ha="center", va="center",
-                        fontsize=8 if probs is None else 6.5,
-                        color="#333" if probs is None else "#777")
+                # Có vẽ chính sách thì đẩy số lên mép trên của ô để không bị mũi tên đè.
+                ty = y + 0.5 if probs is None else y + 0.8
+                ax.text(j + 0.5, ty, fmt.format(v[s]), ha="center", va="center",
+                        fontsize=8 if probs is None else 6.5, color="#222")
             if probs is not None:
                 for a, (di, dj) in enumerate(MOVES):
                     p = probs[s, a]
                     if p <= 1e-9:
                         continue
-                    cx, cy = j + 0.5, y + 0.5
+                    cx, cy = j + 0.5, y + (0.5 if v is None else 0.38)
                     if a == 4:
                         ax.add_patch(Circle((cx, cy), 0.12, fill=False, color="#2e7d32", lw=1.2))
                     else:
-                        L = 0.38 * p
+                        L = (0.38 if v is None else 0.3) * p
                         ax.arrow(cx, cy, dj * L, -di * L, head_width=0.1, head_length=0.08,
                                  length_includes_head=True, color="#2e7d32", lw=1.2)
     ax.set_xlim(0, n_cols)

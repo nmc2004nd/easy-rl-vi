@@ -711,41 +711,9 @@ body.is-app .markdown-section iframe.app-frame { display: block; width: 100%; he
 .home-banner .home-ico { color: var(--c5); }
 .brand-text b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
 
-/* Khối code chạy được (theme/pyrun.js) */
-.pyrun { margin: 1.2em 0 1.6em; }
-.pyrun > pre { margin-bottom: 0; border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-.pyrun.is-running > pre, .pyrun.is-running > .pyrun-area { border-color: var(--accent); }
-.pyrun-area {
-  display: block; width: 100%; box-sizing: border-box; resize: vertical; tab-size: 4;
-  font: 13.5px/1.6 var(--mono); color: var(--text); background: var(--card);
-  border: 1px solid var(--accent); border-radius: 12px 12px 0 0; padding: 16px; outline: none;
-}
-.pyrun-bar {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px;
-  border: 1px solid var(--border); border-top: 0; border-radius: 0 0 12px 12px; background: var(--card);
-}
-.pyrun-out:not([hidden]) + * { margin-top: 0; }
-.pyrun-btn {
-  font: 500 13px/1 var(--sans); padding: 7px 12px; border-radius: 8px; cursor: pointer;
-  border: 1px solid var(--border); background: var(--surface); color: var(--text);
-}
-.pyrun-btn:hover { border-color: var(--accent); color: var(--accent-text); }
-.pyrun-btn.is-primary { background: var(--btn); border-color: var(--btn); color: var(--on-btn); }
-.pyrun-btn.is-primary:hover { background: var(--btn-hover); color: var(--on-btn); }
-.pyrun-btn.is-stop { color: #c2410c; }
-.pyrun-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.pyrun-status { font-size: 12.5px; color: var(--muted); margin-left: 4px; }
-.pyrun-out { margin-top: 8px; border-left: 3px solid var(--accent); padding: 2px 0 2px 12px; }
-.markdown-section .pyrun-out > pre {
-  margin: 0; padding: 8px 0; border: 0; background: none; white-space: pre-wrap; word-break: break-word;
-  font: 12.5px/1.55 var(--mono); color: var(--text); max-height: 420px; overflow: auto;
-}
-.markdown-section .pyrun-out > pre::after { content: none; }
-.pyrun-out > pre:empty { display: none; }
-.pyrun-err { color: #dc2626; }
-:root[data-theme="dark"] .pyrun-err { color: #fca5a5; }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .pyrun-err { color: #fca5a5; } }
-.pyrun-imgs img { display: block; max-width: 100%; margin: 6px 0; }
+/* Trang Code: kết quả chạy sẵn và mã nguồn thu gọn */
+.markdown-section pre[data-lang="output"] { background: var(--card); border-left: 3px solid var(--accent); }
+.markdown-section pre[data-lang="output"]::after { content: "kết quả"; }
 .markdown-section details.code-include { margin: 1em 0 1.4em; border: 1px solid var(--border); border-radius: 12px; background: var(--card); }
 .markdown-section details.code-include > summary { cursor: pointer; padding: 10px 14px; font-size: 14px; font-weight: 500; color: var(--accent-text); }
 .markdown-section details.code-include > pre { margin: 0; border: 0; border-top: 1px solid var(--border); border-radius: 0 0 12px 12px; }

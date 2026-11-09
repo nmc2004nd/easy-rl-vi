@@ -6,13 +6,9 @@
 
 ## Cách dùng trang này
 
-Mỗi khối có nút **▶ Chạy** sẽ chạy Python ngay trong trình duyệt bằng [Pyodide](https://pyodide.org). Không cần cài đặt gì. Lần chạy đầu tiên phải tải khoảng 10 MB, nên mất chừng 10–20 giây.
+Mỗi khối code trên trang đã được chạy sẵn. Ngay bên dưới là kết quả (khung có nhãn "kết quả"), hình vẽ và ảnh động. Các khối chạy lần lượt từ trên xuống, dùng chung biến như các ô của một notebook.
 
-- Các khối trên cùng một trang **dùng chung biến**, như các ô của một notebook. Khi bạn chạy một khối, mọi khối phía trên chưa chạy sẽ được tự chạy trước.
-- Bấm **Sửa** để thay đổi code (ví dụ đổi `alpha`, `epsilon`), rồi bấm **▶ Chạy** hoặc nhấn Ctrl+Enter. Bấm **Khôi phục** để quay về code gốc.
-- Bấm **■ Dừng** nếu một khối chạy quá lâu. Khi đó toàn bộ biến của trang bị xóa.
-
-Môi trường lưới và bộ đánh giá chính sách nằm trong gói nhỏ `minrl_vi` (thư mục [`docs/code/py/`](https://github.com/nmc2004nd/easy-rl-vi/tree/main/docs/code/py)), đã nạp sẵn. Phần thuật toán của chương được viết thẳng trên trang để bạn đọc và sửa.
+Muốn tự sửa tham số (ví dụ `alpha`, `epsilon`) rồi chạy lại, xem [mục 6](#_6-chạy-trên-máy). Môi trường lưới, bộ đánh giá chính sách và hàm vẽ nằm trong thư mục [`docs/code/py/`](https://github.com/nmc2004nd/easy-rl-vi/tree/main/docs/code/py) (gói nhỏ `minrl_vi` và mô-đun `viz`). Phần thuật toán của chương được viết thẳng trên trang để đọc cho dễ.
 
 ## 1. Môi trường lưới
 
@@ -20,7 +16,8 @@ Môi trường lưới và bộ đánh giá chính sách nằm trong gói nhỏ 
 
 `GridWorld` của MinRL là một lưới vuông tất định. Tác tử xuất phát ở góc trên trái. Mỗi bước nhận phần thưởng $-0.1$. Bước vào ô kết thúc thì nhận phần thưởng của ô đó và tập kết thúc: góc dưới phải là đích ($+1$), hai góc còn lại là bẫy ($-1$). Hành động đâm vào biên bị loại khỏi tập hành động hợp lệ.
 
-```pyrun
+<!-- run -->
+```python
 from minrl_vi import GridWorld, Action
 
 env = GridWorld(size=4)
@@ -36,6 +33,20 @@ for a in [Action.RIGHT, Action.RIGHT, Action.DOWN]:
     s, r, done, _ = env.step(a)
     print(f"a = {a.name:5s} → s' = {s:2d}, r = {r:+.1f}, kết thúc = {done}")
 ```
+
+<!-- output -->
+```output
+A . . T
+. . . .
+. . . .
+T . . T
+Hành động hợp lệ ở ô 0: ['RIGHT', 'DOWN']
+Từ ô 2 đi phải: (3, -1.0, True)
+a = RIGHT → s' =  1, r = -0.1, kết thúc = False
+a = RIGHT → s' =  2, r = -0.1, kết thúc = False
+a = DOWN  → s' =  6, r = -0.1, kết thúc = False
+```
+<!-- /output -->
 
 Mã nguồn của lớp này (bấm để mở):
 
@@ -55,7 +66,8 @@ $$
 V(s) \leftarrow \sum_{a} \pi(a\mid s)\big[r + \gamma V(s')\big]
 $$
 
-```pyrun
+<!-- run -->
+```python
 import numpy as np
 from minrl_vi import PolicyEvaluator, random_policy
 
@@ -64,6 +76,15 @@ policy = random_policy(env)                      # policy[s] = vector xác suấ
 V_true = PolicyEvaluator(env, gamma).evaluate_policy(policy)
 print(V_true.reshape(4, 4).round(3))
 ```
+
+<!-- output -->
+```output
+[[-0.892 -0.88  -0.883  0.   ]
+ [-0.88  -0.825 -0.73  -0.638]
+ [-0.883 -0.73  -0.456 -0.061]
+ [ 0.    -0.638 -0.061  0.   ]]
+```
+<!-- /output -->
 
 [policy_evaluation.py](../code/py/minrl_vi/policy_evaluation.py ':include :type=code :fragment=PolicyEvaluator')
 
@@ -82,7 +103,8 @@ $$
 | $N(s_t) \leftarrow N(s_t)+1$ | `counts[s] += 1` |
 | $V(s_t) \leftarrow V(s_t) + \frac{1}{N}(G_t - V(s_t))$ | `self.V[s] += (G - self.V[s]) / counts[s]` |
 
-```pyrun
+<!-- run -->
+```python
 class MonteCarloEvaluator:
     def __init__(self, env, gamma=0.99, seed=0):
         self.env, self.gamma = env, gamma
@@ -126,6 +148,16 @@ print(V_mc.reshape(4, 4).round(3))
 print("Sai số lớn nhất so với đáp án:", np.abs(V_mc - V_true).max().round(4))
 ```
 
+<!-- output -->
+```output
+[[-0.889 -0.875 -0.885  0.   ]
+ [-0.878 -0.821 -0.739 -0.667]
+ [-0.878 -0.714 -0.45  -0.051]
+ [ 0.    -0.611 -0.055  0.   ]]
+Sai số lớn nhất so với đáp án: 0.0297
+```
+<!-- /output -->
+
 ### 2.3 Sai phân thời gian TD(0) *(thêm)*
 
 MinRL không có TD(0) để dự đoán, nên đoạn này được viết thêm theo cùng phong cách. Khác với Monte Carlo, TD(0) cập nhật ngay sau **mỗi bước** và dùng ước lượng $V(s_{t+1})$ thay cho phần lợi tức còn lại (tự cập nhật, bootstrapping). Đó là công thức (3.1):
@@ -134,7 +166,8 @@ $$
 V(s_t) \leftarrow V(s_t) + \alpha\big(r_{t+1} + \gamma V(s_{t+1}) - V(s_t)\big)
 $$
 
-```pyrun
+<!-- run -->
+```python
 def td0_evaluate(env, policy, gamma, alpha=0.05, num_episodes=2000, seed=0):
     rng = np.random.default_rng(seed)
     V = np.zeros(env.n_states)
@@ -155,11 +188,22 @@ print(V_td.reshape(4, 4).round(3))
 print("Sai số lớn nhất so với đáp án:", np.abs(V_td - V_true).max().round(4))
 ```
 
+<!-- output -->
+```output
+[[-0.87  -0.856 -0.892  0.   ]
+ [-0.852 -0.812 -0.749 -0.703]
+ [-0.829 -0.655 -0.377  0.182]
+ [ 0.    -0.619  0.013  0.   ]]
+Sai số lớn nhất so với đáp án: 0.2436
+```
+<!-- /output -->
+
 ### 2.4 So sánh theo số tập
 
 Khối dưới vẽ sai số trung bình $\frac{1}{|\mathcal S|}\sum_s |V(s) - V_\pi(s)|$ theo số tập.
 
-```pyrun
+<!-- run -->
+```python
 import matplotlib.pyplot as plt
 
 budgets = [10, 30, 100, 300, 1000]
@@ -173,6 +217,10 @@ plt.xscale("log"); plt.xlabel("số tập"); plt.ylabel("sai số trung bình")
 plt.legend(); plt.grid(alpha=.3)
 ```
 
+<!-- output -->
+<div align=center><img src="../img/code/chapter3_code/05_1.png" alt="Hình do khối code vẽ"/></div>
+<!-- /output -->
+
 Với $\alpha$ cố định, TD(0) không hội tụ hẳn mà dao động quanh đáp án. Monte Carlo dùng $1/N(s)$ nên sai số tiếp tục giảm. Hãy thử sửa `alpha=0.05` thành `0.01` hoặc `0.2` để xem sự đánh đổi giữa tốc độ và độ ồn.
 
 ## 3. Sarsa và Q-learning trên bài toán vách đá
@@ -181,7 +229,8 @@ Với $\alpha$ cố định, TD(0) không hội tụ hẳn mà dao động quanh
 
 Lưới có 4×12 ô (hình 3.9). Tác tử đi từ S tới G, mỗi bước nhận $-1$. Rơi xuống vách đá thì nhận $-100$ và bị đưa về S, nhưng tập **không** kết thúc. Đâm vào biên thì đứng yên và vẫn nhận $-1$. Lớp `CliffWalking` được viết thêm, cùng giao diện với `GridWorld`.
 
-```pyrun
+<!-- run -->
+```python
 from minrl_vi import CliffWalking
 
 cliff = CliffWalking()
@@ -189,11 +238,22 @@ print(cliff.render())                      # S xuất phát, G đích, C vách �
 print(cliff.transition(36, Action.RIGHT))  # từ S bước sang phải → rơi xuống vách đá
 ```
 
+<!-- output -->
+```output
+. . . . . . . . . . . .
+. . . . . . . . . . . .
+. . . . . . . . . . . .
+S C C C C C C C C C C G
+(36, -100.0, False)
+```
+<!-- /output -->
+
 ### 3.1 Phần chung: bảng Q và chính sách ε-tham lam
 
 `select_action` lấy từ `QLearningAgent` của MinRL: với xác suất $\varepsilon$ thì chọn ngẫu nhiên, còn lại thì chọn hành động có $Q$ lớn nhất. Khi nhiều hành động bằng nhau, bản này chọn ngẫu nhiên trong số đó *(thêm)*. Nếu luôn lấy hành động đầu tiên, bảng Q toàn số 0 lúc đầu sẽ khiến tác tử luôn đi lên.
 
-```pyrun
+<!-- run -->
+```python
 class TabularAgent:
     def __init__(self, env, alpha=0.5, gamma=1.0, epsilon=0.1, seed=0):
         self.env, self.alpha, self.gamma, self.epsilon = env, alpha, gamma, epsilon
@@ -227,10 +287,11 @@ $$
 Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha\Big[r_{t+1} + \gamma \max_{a'} Q(s_{t+1},a') - Q(s_t,a_t)\Big]
 $$
 
-```pyrun
-def q_learning(env, n_episodes=500, max_steps=1000, **kw):
+<!-- run -->
+```python
+def q_learning(env, n_episodes=500, max_steps=1000, on_episode=None, **kw):
     agent, rewards = TabularAgent(env, **kw), []
-    for _ in range(n_episodes):
+    for ep in range(n_episodes):
         s, total = env.reset(), 0.0
         for _ in range(max_steps):
             a = agent.select_action(s)                      # hành vi: ε-tham lam
@@ -242,6 +303,8 @@ def q_learning(env, n_episodes=500, max_steps=1000, **kw):
             if done:
                 break
         rewards.append(total)
+        if on_episode:
+            on_episode(ep, agent)       # để ghi lại quá trình học (dùng ở mục 3.5)
     return agent, rewards
 ```
 
@@ -253,10 +316,11 @@ $$
 Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha\big[r_{t+1} + \gamma Q(s_{t+1},a_{t+1}) - Q(s_t,a_t)\big]
 $$
 
-```pyrun
-def sarsa(env, n_episodes=500, max_steps=1000, **kw):
+<!-- run -->
+```python
+def sarsa(env, n_episodes=500, max_steps=1000, on_episode=None, **kw):
     agent, rewards = TabularAgent(env, **kw), []
-    for _ in range(n_episodes):
+    for ep in range(n_episodes):
         s, total = env.reset(), 0.0
         a = agent.select_action(s)
         for _ in range(max_steps):
@@ -269,6 +333,8 @@ def sarsa(env, n_episodes=500, max_steps=1000, **kw):
             if done:
                 break
         rewards.append(total)
+        if on_episode:
+            on_episode(ep, agent)       # để ghi lại quá trình học (dùng ở mục 3.5)
     return agent, rewards
 ```
 
@@ -276,7 +342,8 @@ def sarsa(env, n_episodes=500, max_steps=1000, **kw):
 
 Cả hai dùng $\alpha = 0.5$, $\gamma = 1$, $\varepsilon = 0.1$ cố định, chạy 500 tập.
 
-```pyrun
+<!-- run -->
+```python
 agent_q, rew_q = q_learning(cliff, seed=0)
 agent_s, rew_s = sarsa(cliff, seed=0)
 
@@ -296,6 +363,24 @@ plt.ylim(-120, 0); plt.xlabel("tập"); plt.ylabel("tổng phần thưởng (tru
 plt.legend(); plt.grid(alpha=.3)
 ```
 
+<!-- output -->
+```output
+Q-learning: tổng thưởng trung bình 100 tập cuối = -30.1, đường tham lam dài 13 bước
+. . . . . . . . . . . .
+. . . . . . . . . . . .
+* * * * * * * * * * * *
+S C C C C C C C C C C G 
+
+Sarsa: tổng thưởng trung bình 100 tập cuối = -22.2, đường tham lam dài 17 bước
+. . . * * * * * * * * .
+* * * * . . . . . . * .
+* . . . . . . . . . * *
+S C C C C C C C C C C G 
+```
+
+<div align=center><img src="../img/code/chapter3_code/10_1.png" alt="Hình do khối code vẽ"/></div>
+<!-- /output -->
+
 Kết quả khớp với phân tích ở mục 3.4.3:
 
 - **Q-learning** học được đường **ngắn nhất** (13 bước), đi sát mép vách đá. Nhưng trong lúc huấn luyện, tác tử vẫn khám phá với $\varepsilon = 0.1$, nên thỉnh thoảng bước hụt xuống vách đá. Vì thế tổng thưởng *khi huấn luyện* của nó thấp hơn.
@@ -303,11 +388,71 @@ Kết quả khớp với phân tích ở mục 3.4.3:
 
 Có thể xem từng bước cập nhật bảng Q ở trang [Mô phỏng](chapter3/chapter3_viz_vi).
 
-## 4. Chạy code notebook của EasyRL
+### 3.5 Xem quá trình học
 
-Bản gốc EasyRL có notebook cho chương này. Bản dịch đã chuyển chúng từ Gym sang Gymnasium. Lớp `QLearning` dưới đây lấy nguyên từ [`QLearning_vi.ipynb`](https://github.com/nmc2004nd/easy-rl-vi/blob/main/notebooks/Q-learning/QLearning_vi.ipynb). Khác biệt so với MinRL: bảng Q là `defaultdict`, và $\varepsilon$ giảm dần theo hàm mũ thay vì cố định. Khối này cài thêm `gymnasium` vào trình duyệt, nên lần đầu chạy lâu hơn một chút. Phần vẽ bằng `turtle` và `seaborn` đã được bỏ đi.
+Khối dưới chạy lại hai thuật toán và chụp bảng Q sau mỗi 10 tập. Màu nền là $\max_a Q(s,a)$: càng nhạt thì càng gần 0, tức càng gần đích. Đường màu cam là đường đi tham lam ở thời điểm đó.
 
-```pyrun
+<!-- run -->
+```python
+from viz import save_gif, plot_cliff
+
+snaps = {"Q-learning": [], "Sarsa": []}
+def recorder(name):
+    def on_episode(ep, agent):
+        if ep % 10 == 0 or ep == 499:
+            snaps[name].append((ep, agent.Q.copy(), agent.greedy_path(max_steps=60)))
+    return on_episode
+
+q_learning(cliff, seed=0, on_episode=recorder("Q-learning"))
+sarsa(cliff, seed=0, on_episode=recorder("Sarsa"))
+cliff.reset()
+
+def draw(fig, i):
+    for row, name in enumerate(snaps):
+        ep, Q, path = snaps[name][i]
+        ax = fig.add_subplot(2, 1, row + 1)
+        done = path and path[-1] == cliff.goal
+        plot_cliff(ax, cliff, Q=Q, path=path if done else (),
+                   title=f"{name} · sau {ep + 1} tập" + ("" if done else " (chưa tới được đích)"))
+
+save_gif(draw, len(snaps["Sarsa"]), "cliff_training.gif", fps=5, figsize=(6, 4.2))
+```
+
+<!-- output -->
+<div align=center><img src="../img/code/chapter3_code/cliff_training.gif" alt="Ảnh động do khối code tạo"/></div>
+<!-- /output -->
+
+Ở vài chục tập đầu, đường tham lam còn chưa tới được đích. Sau đó Q-learning nhanh chóng "dán" vào mép vách đá. Sarsa lùi ra xa dần, vì những lần bước hụt do khám phá kéo giá trị của các ô sát mép xuống.
+
+Cuối cùng là hai tác tử đã học xong đi theo chính sách tham lam ($\varepsilon = 0$):
+
+<!-- run -->
+```python
+paths = {"Q-learning": agent_q.greedy_path(), "Sarsa": agent_s.greedy_path()}
+cliff.reset()
+n_frames = max(len(p) for p in paths.values()) + 1
+
+def draw_walk(fig, t):
+    for row, (name, path) in enumerate(paths.items()):
+        ax = fig.add_subplot(2, 1, row + 1)
+        k = min(t, len(path))
+        pos = cliff.start_state if k == 0 else path[k - 1]
+        plot_cliff(ax, cliff, path=path[:k], agent=pos,
+                   title=f"{name} · bước {k}/{len(path)}")
+
+save_gif(draw_walk, n_frames, "cliff_walk.gif", fps=3, figsize=(6, 4.2))
+```
+
+<!-- output -->
+<div align=center><img src="../img/code/chapter3_code/cliff_walk.gif" alt="Ảnh động do khối code tạo"/></div>
+<!-- /output -->
+
+## 4. Code notebook của EasyRL
+
+Bản gốc EasyRL có notebook cho chương này. Bản dịch đã chuyển chúng từ Gym sang Gymnasium. Lớp `QLearning` dưới đây lấy nguyên từ [`QLearning_vi.ipynb`](https://github.com/nmc2004nd/easy-rl-vi/blob/main/notebooks/Q-learning/QLearning_vi.ipynb). Khác biệt so với MinRL: bảng Q là `defaultdict`, và $\varepsilon$ giảm dần theo hàm mũ thay vì cố định. Khối này cần thêm `gymnasium`. Phần vẽ bằng `turtle` và `seaborn` đã được bỏ đi.
+
+<!-- run -->
+```python
 import math
 from collections import defaultdict
 import gymnasium as gym
@@ -390,6 +535,17 @@ for _ in range(100):
 print("Phần thưởng khi kiểm thử:", ep_reward, "(tối ưu là -13)")
 ```
 
+<!-- output -->
+```output
+Tập: 80/400, Phần thưởng: -39.0, Epsilon: 0.010
+Tập: 160/400, Phần thưởng: -124.0, Epsilon: 0.010
+Tập: 240/400, Phần thưởng: -32.0, Epsilon: 0.010
+Tập: 320/400, Phần thưởng: -13.0, Epsilon: 0.010
+Tập: 400/400, Phần thưởng: -13.0, Epsilon: 0.010
+Phần thưởng khi kiểm thử: -13 (tối ưu là -13)
+```
+<!-- /output -->
+
 Các notebook đầy đủ của chương này. Notebook nào chỉ dùng môi trường có sẵn của Gymnasium thì có thêm link Colab. Hai notebook còn lại cần các file trong `notebooks/envs/`, nên hãy clone repo rồi chạy trên máy.
 
 | Notebook | Nội dung | Mở |
@@ -418,13 +574,17 @@ Các notebook đầy đủ của chương này. Notebook nào chỉ dùng môi t
 
 ## 6. Chạy trên máy
 
-Gói `minrl_vi` chỉ cần `numpy` (và `matplotlib` để vẽ):
+Gói `minrl_vi` chỉ cần `numpy`, thêm `matplotlib` để vẽ (và `pillow` để lưu GIF). Mục 4 cần thêm `gymnasium`.
 
 ```bash
 git clone https://github.com/nmc2004nd/easy-rl-vi.git
-cd easy-rl-vi/docs/code/py
-pip install numpy matplotlib
+cd easy-rl-vi/docs/code/py          # chạy từ thư mục này để import được minrl_vi, viz
+pip install numpy matplotlib pillow gymnasium
 python -c "from minrl_vi import CliffWalking; print(CliffWalking().render())"
 ```
+
+Sau đó chép lần lượt các khối code trên trang vào Jupyter (hoặc một file `.py`) rồi chạy, theo đúng thứ tự từ trên xuống. Ảnh GIF sẽ được lưu vào thư mục hiện tại.
+
+Kết quả và hình trên trang này được dựng bằng `python3 scripts/build_code_pages.py docs/chapter3/chapter3_code_vi.md`. Sửa code trên trang thì chạy lại lệnh đó để cập nhật kết quả.
 
 Muốn xem bản đầy đủ, gồm DQN, actor-critic, PPO và các bài kiểm thử, hãy dùng repo gốc [MinRL](https://github.com/10-OASIS-01/minrl).
