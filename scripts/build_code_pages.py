@@ -18,6 +18,7 @@ import sys
 import time
 from pathlib import Path
 
+sys.dont_write_bytecode = True    # không để lại __pycache__ trong docs/ và notebooks/
 ROOT = Path(__file__).resolve().parent.parent
 DOCS = ROOT / "docs"
 sys.path.insert(0, str(DOCS / "code" / "py"))
