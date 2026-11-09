@@ -185,7 +185,7 @@ save_gif(draw, 100, "pendulum.gif", fps=15, figsize=(5, 2.8), dpi=72)
 <div align=center><img src="../img/code/chapter12_code/pendulum.gif" alt="Ảnh động do khối code tạo"/></div>
 <!-- /output -->
 
-## 4. Notebook của EasyRL, và một lỗi cần biết
+## 4. Notebook của EasyRL, và một lỗi đã sửa
 
 | Notebook | Nội dung | Mở |
 |---|---|---|
@@ -193,7 +193,7 @@ save_gif(draw, 100, "pendulum.gif", fps=15, figsize=(5, 2.8), dpi=72)
 | `TD3_vi.ipynb` | TD3 trên Pendulum-v1 | [GitHub](https://github.com/nmc2004nd/easy-rl-vi/blob/main/notebooks/TD3_vi.ipynb) · [Colab](https://colab.research.google.com/github/nmc2004nd/easy-rl-vi/blob/main/notebooks/TD3_vi.ipynb) |
 | `SAC_vi.ipynb` | SAC (diễn viên-nhà phê bình mềm), không có trong sách | [GitHub](https://github.com/nmc2004nd/easy-rl-vi/blob/main/notebooks/SAC_vi.ipynb) · [Colab](https://colab.research.google.com/github/nmc2004nd/easy-rl-vi/blob/main/notebooks/SAC_vi.ipynb) |
 
-Trong `DDPG_vi.ipynb`, mạng mục tiêu được tạo như sau:
+Bản gốc của `DDPG_vi.ipynb` tạo mạng mục tiêu như sau:
 
 ```python
 self.critic = models['critic'].to(self.device)
@@ -202,7 +202,7 @@ self.actor = models['actor'].to(self.device)
 self.target_actor = models['actor'].to(self.device)
 ```
 
-`nn.Module.to()` trả về **chính** mô-đun đó, không tạo bản sao. Vì vậy `target_critic` và `critic` là cùng một mạng, `target_actor` và `actor` cũng vậy. Phép cập nhật mềm phía sau không có tác dụng gì: notebook thực chất chạy DDPG **không có mạng mục tiêu**. Kiểm tra nhanh:
+`nn.Module.to()` trả về **chính** mô-đun đó, không tạo bản sao. Vì vậy `target_critic` và `critic` là cùng một mạng, `target_actor` và `actor` cũng vậy. Phép cập nhật mềm phía sau không có tác dụng gì: bản gốc thực chất chạy DDPG **không có mạng mục tiêu**. Kiểm tra nhanh:
 
 <!-- run -->
 ```python
@@ -218,7 +218,7 @@ copy.deepcopy(net) is net: False
 ```
 <!-- /output -->
 
-Cách sửa là dùng `copy.deepcopy(models['critic'])` cho mạng mục tiêu, như code ở mục 2. Theo output lưu sẵn trong notebook, nó vẫn học được trên Pendulum: 20 tập kiểm thử cho tổng thưởng từ khoảng $-1$ đến $-356$. Lý do là bài này đủ dễ. Nhưng đó không phải là DDPG đúng như mục 12.2 mô tả. Notebook `TD3_vi` tạo các mạng mục tiêu riêng nên không mắc lỗi này.
+Theo output lưu sẵn trong notebook, bản gốc vẫn học được trên Pendulum: 20 tập kiểm thử cho tổng thưởng từ khoảng $-1$ đến $-356$. Lý do là bài này đủ dễ. Nhưng đó không phải là DDPG đúng như mục 12.2 mô tả. **Bản dịch đã sửa notebook**: mạng mục tiêu giờ được tạo bằng `copy.deepcopy(models['critic'])` và `copy.deepcopy(models['actor'])`, giống code ở mục 2. Khi chạy thử bản đã sửa với 40 tập huấn luyện, 3 tập kiểm thử cho tổng thưởng khoảng $-120$. Output lưu sẵn trong notebook vẫn là của bản gốc. Notebook `TD3_vi` tạo các mạng mục tiêu riêng nên không mắc lỗi này.
 
 ## 5. Chạy trên máy
 
