@@ -90,7 +90,8 @@ Mỗi chương EasyRL có một bộ trang đi kèm. Dùng chúng theo thứ t�
 3. **[Bài tập](chapter1/chapter1_questions&keywords_vi)**: tự trả lời các câu hỏi và từ khóa trước khi xem đáp án.
 4. **[Ôn tập](chapter1/chapter1_review_vi)**: flashcard và quiz. Quay lại sau vài ngày để nhớ lâu.
 5. **Mô phỏng** (nếu có, ví dụ [chương 2](chapter2/chapter2_viz_vi)): tự chỉnh tham số và quan sát thuật toán chạy.
-6. **Dự án và code**: chạy lại [code đi kèm](https://github.com/datawhalechina/easy-rl/tree/master/notebooks), đổi thử siêu tham số.
+6. **Code** (nếu có, ví dụ [chương 3](chapter3/chapter3_code_vi)): đọc code của thuật toán cạnh công thức, kèm kết quả và ảnh động đã chạy sẵn. Chương Zhao cũng có trang Code riêng, ví dụ [chương 4](mathrl/ch04_code_vi).
+7. **Dự án và notebook**: chạy lại [notebook đi kèm](https://github.com/nmc2004nd/easy-rl-vi/tree/main/notebooks), đổi thử siêu tham số.
 
 ### Chương Zhao
 
